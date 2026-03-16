@@ -62,38 +62,35 @@ export function VowelCard({ card, onReview }: VowelCardProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex justify-center gap-2 mb-4">
-        {FACE_ORDER.map((face, index) => (
-          <button
-            key={face}
-            onClick={() => {
-              if (revealedFaces.has(face)) {
-                setCurrentFaceIndex(index)
-              }
-            }}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
-              currentFace === face
-                ? 'bg-blue-600 text-white'
-                : revealedFaces.has(face)
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  : 'bg-gray-100 text-gray-400'
-            }`}
-          >
-            {FACE_LABELS[face]}
-          </button>
-        ))}
-      </div>
-
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col justify-center items-center cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleNext}
       >
-        {renderFaceContent(currentFace)}
-      </div>
+        <div className="flex justify-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
+          {FACE_ORDER.map((face, index) => (
+            <button
+              key={face}
+              onClick={() => {
+                setCurrentFaceIndex(index)
+                setRevealedFaces((prev) => new Set([...prev, face]))
+              }}
+              className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                currentFace === face
+                  ? 'bg-blue-600 text-white'
+                  : revealedFaces.has(face)
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+              }`}
+            >
+              {FACE_LABELS[face]}
+            </button>
+          ))}
+        </div>
 
-      <p className="text-center text-gray-400 mt-4 text-sm">
-        {allRevealed ? 'All sides revealed' : 'Click card to reveal next side'}
-      </p>
+        <div className="flex-1 flex flex-col justify-center items-center">
+          {renderFaceContent(currentFace)}
+        </div>
+      </div>
 
       {allRevealed && (
         <div className="mt-6 flex justify-center gap-2">

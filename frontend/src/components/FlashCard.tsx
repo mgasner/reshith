@@ -31,22 +31,43 @@ export function FlashCard({
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col justify-center cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleFlip}
       >
-        {!isFlipped ? (
-          <div className={`text-center ${isRtl ? 'rtl hebrew-text' : ''}`}>
-            <p className="text-3xl">{front}</p>
-            {transliteration && (
-              <p className="text-lg text-gray-500 mt-4">{transliteration}</p>
-            )}
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-2xl mb-4">{back}</p>
-            {notes && <p className="text-sm text-gray-600 mt-4">{notes}</p>}
-          </div>
-        )}
+        <div className="flex justify-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setIsFlipped(false)}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              !isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Front
+          </button>
+          <button
+            onClick={() => setIsFlipped(true)}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center">
+          {!isFlipped ? (
+            <div className={`text-center ${isRtl ? 'rtl hebrew-text' : ''}`}>
+              <p className="text-3xl">{front}</p>
+              {transliteration && (
+                <p className="text-lg text-gray-500 mt-4">{transliteration}</p>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-2xl mb-4">{back}</p>
+              {notes && <p className="text-sm text-gray-600 mt-4">{notes}</p>}
+            </div>
+          )}
+        </div>
       </div>
 
       {isFlipped && (
@@ -76,10 +97,6 @@ export function FlashCard({
             Easy
           </button>
         </div>
-      )}
-
-      {!isFlipped && (
-        <p className="text-center text-gray-400 mt-4">Click to reveal answer</p>
       )}
     </div>
   )

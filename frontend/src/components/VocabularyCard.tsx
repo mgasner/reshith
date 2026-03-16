@@ -11,20 +11,16 @@ export interface VocabularyCardData {
 
 type CardFace = 'hebrew' | 'transliteration' | 'definition'
 
-const CATEGORY_COLORS: Record<string, string> = {
-  nouns: 'bg-blue-100 text-blue-800',
-  prepositions: 'bg-purple-100 text-purple-800',
-  adverbs: 'bg-green-100 text-green-800',
-  conjunction: 'bg-orange-100 text-orange-800',
-  verbs: 'bg-red-100 text-red-800',
-  adjectives: 'bg-yellow-100 text-yellow-800',
-  pronouns: 'bg-pink-100 text-pink-800',
-  proper_names: 'bg-indigo-100 text-indigo-800',
-  other: 'bg-gray-200 text-gray-700',
-}
-
-const formatCategoryName = (category: string): string => {
-  return category.replace(/_/g, ' ')
+const CATEGORY_ABBREVS: Record<string, string> = {
+  nouns: 'n.',
+  prepositions: 'prep.',
+  adverbs: 'adv.',
+  conjunction: 'conj.',
+  verbs: 'v.',
+  adjectives: 'adj.',
+  pronouns: 'pron.',
+  proper_names: 'prop. n.',
+  other: '',
 }
 
 interface VocabularyCardProps {
@@ -63,17 +59,7 @@ export function VocabularyCard({ card, onReview }: VocabularyCardProps) {
   const renderFaceContent = (face: CardFace) => {
     switch (face) {
       case 'hebrew':
-        return (
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <p className="text-7xl font-hebrew rtl">{card.hebrew}</p>
-              <SpeakButton text={card.hebrew} size="lg" />
-            </div>
-            <span className={`inline-block px-3 py-1 text-sm rounded-full ${CATEGORY_COLORS[card.category] || 'bg-gray-100 text-gray-600'}`}>
-              {formatCategoryName(card.category)}
-            </span>
-          </div>
-        )
+        return <p className="text-7xl font-hebrew rtl">{card.hebrew}</p>
       case 'transliteration':
         return <p className="text-4xl font-mono">{card.transliteration}</p>
       case 'definition':
@@ -90,38 +76,43 @@ export function VocabularyCard({ card, onReview }: VocabularyCardProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex justify-center gap-2 mb-4">
-        {FACE_ORDER.map((face, index) => (
-          <button
-            key={face}
-            onClick={() => {
-              if (revealedFaces.has(face)) {
-                setCurrentFaceIndex(index)
-              }
-            }}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
-              currentFace === face
-                ? 'bg-blue-600 text-white'
-                : revealedFaces.has(face)
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  : 'bg-gray-100 text-gray-400'
-            }`}
-          >
-            {FACE_LABELS[face]}
-          </button>
-        ))}
-      </div>
-
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col justify-center items-center cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleNext}
       >
-        {renderFaceContent(currentFace)}
-      </div>
+        <div className="flex-1 flex flex-col justify-center items-center">
+          {renderFaceContent(currentFace)}
+        </div>
 
-      <p className="text-center text-gray-400 mt-4 text-sm">
-        {allRevealed ? 'All sides revealed' : 'Click card to reveal next side'}
-      </p>
+        <div className="flex items-center justify-between mt-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2">
+            <SpeakButton text={card.hebrew} size="sm" />
+            {CATEGORY_ABBREVS[card.category] && (
+              <span className="text-xs text-gray-400">{CATEGORY_ABBREVS[card.category]}</span>
+            )}
+          </div>
+          <div className="flex gap-1">
+            {FACE_ORDER.map((face, index) => (
+              <button
+                key={face}
+                onClick={() => {
+                  setCurrentFaceIndex(index)
+                  setRevealedFaces((prev) => new Set([...prev, face]))
+                }}
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+                  currentFace === face
+                    ? 'bg-blue-600 text-white'
+                    : revealedFaces.has(face)
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                }`}
+              >
+                {FACE_LABELS[face]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {allRevealed && (
         <div className="mt-6 flex justify-center gap-2">
