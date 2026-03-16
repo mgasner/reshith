@@ -51,10 +51,58 @@ check_dependencies() {
     fi
 }
 
+dep_hash() {
+    md5 -q "$SCRIPT_DIR/backend/pyproject.toml" "$SCRIPT_DIR/backend/uv.lock" 2>/dev/null | md5 -q
+}
+
+# Wraps uvicorn in a loop that watches pyproject.toml / uv.lock.
+# Exports BACKEND_PID so the caller's cleanup() can kill it.
+watch_backend() {
+    local last_hash dep_changed uvicorn_pid
+
+    last_hash=$(dep_hash)
+
+    while true; do
+        echo -e "${YELLOW}[backend] Installing dependencies...${NC}"
+        (cd "$SCRIPT_DIR/backend" && uv sync --extra dev)
+
+        echo -e "${GREEN}[backend] Starting uvicorn...${NC}"
+        (cd "$SCRIPT_DIR/backend" && uv run uvicorn reshith.main:app --reload --host 0.0.0.0 --port 8000) &
+        uvicorn_pid=$!
+        # Expose to cleanup() in the parent shell
+        BACKEND_PID=$uvicorn_pid
+
+        dep_changed=0
+
+        # Poll for dependency changes while uvicorn is running
+        while kill -0 "$uvicorn_pid" 2>/dev/null; do
+            sleep 2
+            local current_hash
+            current_hash=$(dep_hash)
+            if [ "$current_hash" != "$last_hash" ]; then
+                echo -e "${YELLOW}[backend] Dependencies changed — reinstalling and restarting...${NC}"
+                kill "$uvicorn_pid" 2>/dev/null
+                wait "$uvicorn_pid" 2>/dev/null || true
+                last_hash="$current_hash"
+                dep_changed=1
+                break
+            fi
+        done
+
+        if [ "$dep_changed" -eq 0 ]; then
+            # uvicorn exited on its own — propagate its exit code
+            wait "$uvicorn_pid" 2>/dev/null || true
+            local exit_code=$?
+            if [ $exit_code -ne 0 ]; then
+                echo -e "${RED}[backend] uvicorn exited with code $exit_code${NC}"
+                return $exit_code
+            fi
+        fi
+    done
+}
+
 start_backend() {
-    echo -e "${GREEN}Starting backend (FastAPI + Strawberry GraphQL)...${NC}"
-    cd "$SCRIPT_DIR/backend"
-    uv run uvicorn reshith.main:app --reload --host 0.0.0.0 --port 8000
+    watch_backend
 }
 
 start_frontend() {
@@ -82,10 +130,8 @@ start_both() {
     echo -e "${GREEN}Starting Reshith development servers...${NC}"
     echo ""
 
-    # Start backend
-    echo -e "${YELLOW}Starting backend (FastAPI + Strawberry GraphQL)...${NC}"
-    cd "$SCRIPT_DIR/backend"
-    uv run uvicorn reshith.main:app --reload --host 0.0.0.0 --port 8000 &
+    # Start backend (with dependency watcher)
+    watch_backend &
     BACKEND_PID=$!
 
     # Give backend a moment to start
