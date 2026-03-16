@@ -41,7 +41,7 @@ from .abbreviations import is_abbreviation, lookup_abbreviation
 from .custom_lexicon import lookup_custom
 from .dicta_client import DictaClient
 from .language_id import LanguageIdentifier
-from .models import DictionaryEntry, Language, Morphology, Token, UncertaintyReason
+from .models import DictionaryEntry, Language, Morphology, Token, UncertaintyReason  # noqa: F401
 from .morph_parser import parse_morph_code
 from .sefaria_lexicon import SefariaLexicon
 from .tokenizer import is_hebrew_word, strip_vowels, tokenize_comment
@@ -121,8 +121,9 @@ def _build_token(
         dt = dicta_result
         if dt.lemma:
             token.lemma = dt.lemma
-        if dt.morph_code:
-            morph = parse_morph_code(dt.morph_code)
+        if dt.vocalized:
+            # Store vocalized form in morphology.raw_code until we have a morph decoder
+            morph = Morphology(raw_code=dt.morph_id)
             token.morphology = morph
         token.confidence = dt.confidence
 
@@ -132,7 +133,7 @@ def _build_token(
         if dt.has_multiple_analyses:
             token.uncertain = True
             token.uncertainty_reasons.append(UncertaintyReason.MULTIPLE_ANALYSES)
-        if not dt.options:
+        if not dt.lemma and not dt.vocalized:
             token.uncertain = True
             token.uncertainty_reasons.append(UncertaintyReason.UNRECOGNIZED)
 
