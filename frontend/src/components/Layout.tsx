@@ -95,6 +95,20 @@ const LANGUAGES = [
     hasVowels: false,
   },
   {
+    code: 'ang',
+    label: 'ƿ',
+    name: 'Old English',
+    lessons: [{ num: '1', name: 'Lesson 1' }],
+    lessonPath: (num: string) => `/old-english/lesson/${num}`,
+    homePath: '/old-english',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/old-english',
+    resourcesPath: '/old-english/beowulf',
+    hasAlphabet: false,
+    hasVowels: false,
+  },
+  {
     code: 'ecl',
     label: 'V',
     name: 'Eccl. Latin',
@@ -149,6 +163,9 @@ export function Layout() {
       location.pathname.startsWith('/exercises/ecclesiastical-latin')
     ) {
       return LANGUAGES.find((l) => l.code === 'ecl')!
+    }
+    if (location.pathname.startsWith('/old-english')) {
+      return LANGUAGES.find((l) => l.code === 'ang')!
     }
     return LANGUAGES.find((l) => l.code === 'hbo')!
   }

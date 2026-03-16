@@ -36,6 +36,8 @@ import { SanskritLessonPage } from '@/pages/SanskritLessonPage'
 import { SanskritExercisesPage } from '@/pages/SanskritExercisesPage'
 import { SanskritDeclensionExercisePage } from '@/pages/SanskritDeclensionExercisePage'
 import { LanmanReaderPage } from '@/pages/LanmanReaderPage'
+import { OldEnglishHomePage } from '@/pages/OldEnglishHomePage'
+import { BeowulfReaderPage } from '@/pages/BeowulfReaderPage'
 import { EcclesiasticalLatinHomePage } from '@/pages/EcclesiasticalLatinHomePage'
 import { EcclesiasticalLatinLessonPage } from '@/pages/EcclesiasticalLatinLessonPage'
 import { EcclesiasticalLatinExercisesPage } from '@/pages/EcclesiasticalLatinExercisesPage'
@@ -105,6 +107,10 @@ function App() {
         {/* Sanskrit exercises */}
         <Route path="exercises/sanskrit" element={<SanskritExercisesPage />} />
         <Route path="exercises/sanskrit/declension" element={<SanskritDeclensionExercisePage />} />
+
+        {/* Old English */}
+        <Route path="old-english" element={<OldEnglishHomePage />} />
+        <Route path="old-english/beowulf" element={<BeowulfReaderPage />} />
 
         {/* Ecclesiastical Latin */}
         <Route path="ecclesiastical-latin" element={<EcclesiasticalLatinHomePage />} />
