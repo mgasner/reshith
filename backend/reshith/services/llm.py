@@ -3,6 +3,7 @@
 from openai import AsyncOpenAI
 
 from reshith.core.config import get_settings
+from reshith.services.reference import format_for_prompt, search_gesenius
 
 settings = get_settings()
 
@@ -16,7 +17,7 @@ develop reading and translation skills. You provide:
 1. Accurate translations with grammatical explanations
 2. Parsing of verb forms, noun declensions, and other morphology
 3. Contextual notes about idioms, syntax, and usage
-4. References to standard grammars when helpful
+4. References to standard grammars when helpful, citing GKC section numbers (e.g. GKC §47)
 
 Be concise but thorough. Focus on helping the student understand the underlying \
 grammar and patterns."""
@@ -35,12 +36,20 @@ async def get_translation_help(
     if context:
         user_prompt += f"\n\nContext: {context}"
 
+    # Retrieve relevant GKC sections for Hebrew queries
+    gkc_context = ""
+    if language.lower() in ("biblical hebrew", "hebrew", "hbo"):
+        chunks = await search_gesenius(text, top_k=3, api_key=settings.openai_api_key)
+        gkc_context = format_for_prompt(chunks)
+
+    messages: list[dict] = [{"role": "system", "content": TRANSLATION_SYSTEM_PROMPT}]
+    if gkc_context:
+        messages.append({"role": "system", "content": gkc_context})
+    messages.append({"role": "user", "content": user_prompt})
+
     response = await client.chat.completions.create(
         model=settings.openai_model,
-        messages=[
-            {"role": "system", "content": TRANSLATION_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
+        messages=messages,  # type: ignore[arg-type]
         temperature=0.3,
     )
 

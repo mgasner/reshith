@@ -100,11 +100,28 @@ reshith/
 │   │   └── hooks/       # Custom React hooks
 │   └── public/
 ├── data/              # Language data
-│   └── hebrew/        # Hebrew vocabulary by lesson
+│   ├── hebrew/        # Hebrew vocabulary by lesson
+│   └── references/    # Reference grammars (raw text + embedding index)
 ├── .nvmrc             # Pinned Node.js version (for nvm)
 ├── Makefile           # Dev workflow commands
 └── run.sh             # Development helper script
 ```
+
+## Reference Grammars
+
+Reshith ships with the full text of *Gesenius' Hebrew Grammar* (Gesenius-Kautzsch-Cowley, 28th ed., 1910 — public domain) in `data/references/gesenius_hebrew_grammar.txt`. The translation-help feature automatically retrieves the most relevant sections and injects them into the LLM context so it can cite GKC section numbers in its explanations.
+
+### Building the embedding index
+
+The semantic search index is not committed to the repo (it requires an OpenAI API call to generate). Build it once after cloning:
+
+```bash
+uv run --directory backend python scripts/build_gesenius_index.py
+```
+
+This reads `OPENAI_API_KEY` from `backend/.env`, embeds the 164 GKC sections using `text-embedding-3-small`, and writes the index to `data/references/gesenius_index.jsonl`. The script is incremental — re-running it only embeds sections not already present in the index.
+
+If the index has not been built, the reference service automatically falls back to keyword search, so the app remains fully functional without it.
 
 ## Environment Variables
 
