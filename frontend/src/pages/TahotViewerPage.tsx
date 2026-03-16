@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery, useLazyQuery } from '@apollo/client'
-import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY } from '@/graphql/operations'
+import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
+import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH } from '@/graphql/operations'
 import { hebrewToLambdin } from '@/utils/hebrewTranslit'
 import { SpeakButton } from '@/components/SpeakButton'
 
@@ -98,45 +98,6 @@ const TAHOT_TO_RASHI_FILE: Record<string, string> = {
   Mic: 'mic', Nah: 'nah', Hab: 'hab', Zep: 'zep', Hag: 'hag', Zec: 'zec', Mal: 'mal',
 }
 
-/**
- * Speak a full verse as one utterance (preserving cantillation-based phrasing),
- * calling onWord(i) as each word begins if the browser supports onboundary.
- */
-function speakVerseAsync(
-  wordTexts: string[],
-  onWord: (i: number) => void,
-  onDone: () => void,
-): SpeechSynthesisUtterance {
-  // Join with spaces; compute each word's UTF-16 offset in the full string.
-  const offsets: number[] = []
-  let pos = 0
-  for (const t of wordTexts) {
-    offsets.push(pos)
-    pos += t.length + 1 // +1 for the space separator
-  }
-  const fullText = wordTexts.join(' ')
-
-  const utterance = new SpeechSynthesisUtterance(fullText)
-  utterance.lang = 'he-IL'
-  utterance.rate = 0.8
-
-  utterance.onboundary = (e: SpeechSynthesisEvent) => {
-    if (e.name !== 'word') return
-    // Find the last word whose start offset is ≤ charIndex
-    for (let i = offsets.length - 1; i >= 0; i--) {
-      if (e.charIndex >= offsets[i]) {
-        onWord(i)
-        break
-      }
-    }
-  }
-  utterance.onend = onDone
-  utterance.onerror = onDone
-
-  if (window.speechSynthesis.paused) window.speechSynthesis.resume()
-  window.speechSynthesis.speak(utterance)
-  return utterance
-}
 
 function WordCard({
   word,
@@ -146,7 +107,6 @@ function WordCard({
   showCantillation,
   showVowels,
   compact = false,
-  isHighlighted = false,
 }: {
   word: InterlinearWord
   showBreaks: boolean
@@ -155,7 +115,6 @@ function WordCard({
   showCantillation: boolean
   showVowels: boolean
   compact?: boolean
-  isHighlighted?: boolean
 }) {
   const [showDetail, setShowDetail] = useState(false)
   const [fetchLexicon, { data: lexiconData, loading: lexiconLoading }] = useLazyQuery<{
@@ -185,9 +144,7 @@ function WordCard({
       className={`inline-block cursor-pointer select-none text-center px-1 transition-colors
         ${showDetail
           ? 'rounded-lg border border-blue-400 bg-blue-50 shadow-md p-2'
-          : isHighlighted
-            ? 'rounded-md bg-amber-100 ring-2 ring-amber-400'
-            : 'hover:opacity-70'
+          : 'hover:opacity-70'
         }`}
       onClick={handleClick}
     >
@@ -293,44 +250,61 @@ function VerseDisplay({
   const variantWords = words.filter((w) => w.textType !== 'L')
   const cardProps = { showBreaks, showTranslit, showTranslation, showCantillation, showVowels }
 
-  const [playingIdx, setPlayingIdx] = useState<number | null>(null)
-  const isPlayingRef = useRef(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [synthesizeSpeech] = useMutation(SYNTHESIZE_SPEECH)
 
-  const handlePlayVerse = () => {
-    if (isPlayingRef.current) {
-      window.speechSynthesis.cancel()
-      isPlayingRef.current = false
-      setPlayingIdx(null)
-      return
-    }
-    isPlayingRef.current = true
-    // Preserve cantillation marks so the TTS can honour pausal forms and
-    // phrase boundaries encoded in the teamim.  Only strip TAHOT artefacts
-    // (\׃ sof pasuq, \־ maqaf) and morpheme-break slashes.
-    const wordTexts = mainWords.map((w) =>
-      w.native.replace(/\\.*$/, '').replace(/\//g, ''),
-    )
-    speakVerseAsync(
-      wordTexts,
-      (i) => setPlayingIdx(i),
-      () => {
-        isPlayingRef.current = false
-        setPlayingIdx(null)
-      },
-    )
-  }
-
-  // Cancel on unmount
   useEffect(() => {
-    return () => {
-      if (isPlayingRef.current) {
-        window.speechSynthesis.cancel()
-        isPlayingRef.current = false
-      }
-    }
+    return () => { audioRef.current?.pause() }
   }, [])
 
-  const isVersePlaying = isPlayingRef.current
+  const handlePlayVerse = async () => {
+    if (isPlaying) {
+      audioRef.current?.pause()
+      audioRef.current = null
+      setIsPlaying(false)
+      return
+    }
+
+    setIsPlaying(true)
+    // Preserve cantillation marks so Google TTS can honour pausal forms and
+    // phrase boundaries encoded in the teamim.  Only strip TAHOT artefacts
+    // (\׃ sof pasuq, \־ maqaf) and morpheme-break slashes.
+    const verseText = mainWords
+      .map((w) => w.native.replace(/\\.*$/, '').replace(/\//g, ''))
+      .join(' ')
+
+    const fallbackToWebSpeech = () => {
+      if (!('speechSynthesis' in window)) { setIsPlaying(false); return }
+      const utterance = new SpeechSynthesisUtterance(verseText)
+      utterance.lang = 'he-IL'
+      utterance.rate = 0.8
+      const voices = speechSynthesis.getVoices()
+      const heVoice = voices.find((v) => v.lang.startsWith('he'))
+      if (heVoice) utterance.voice = heVoice
+      utterance.onend = () => setIsPlaying(false)
+      utterance.onerror = () => setIsPlaying(false)
+      if (speechSynthesis.paused) speechSynthesis.resume()
+      speechSynthesis.speak(utterance)
+    }
+
+    try {
+      const result = await synthesizeSpeech({ variables: { text: verseText, language: 'he-IL' } })
+      const data = result.data?.synthesizeSpeech
+      if (data?.available && data.audioBase64) {
+        const mimeType = data.mimeType ?? 'audio/mp3'
+        const audio = new Audio(`data:${mimeType};base64,${data.audioBase64}`)
+        audioRef.current = audio
+        audio.onended = () => { audioRef.current = null; setIsPlaying(false) }
+        audio.onerror = () => { audioRef.current = null; setIsPlaying(false) }
+        audio.play().catch(() => setIsPlaying(false))
+      } else {
+        fallbackToWebSpeech()
+      }
+    } catch {
+      fallbackToWebSpeech()
+    }
+  }
 
   return (
     <div id={`verse-${verse}`} className="mb-2">
@@ -339,13 +313,13 @@ function VerseDisplay({
         <button
           onClick={handlePlayVerse}
           className={`inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors
-            ${isVersePlaying && playingIdx !== null
+            ${isPlaying
               ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
               : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
             }`}
-          title={isVersePlaying ? 'Stop' : 'Read verse aloud'}
+          title={isPlaying ? 'Stop' : 'Read verse aloud'}
         >
-          {isVersePlaying && playingIdx !== null ? (
+          {isPlaying ? (
             <svg className="w-full h-full p-0.5" fill="currentColor" viewBox="0 0 24 24">
               <rect x="6" y="6" width="4" height="12" rx="1" />
               <rect x="14" y="6" width="4" height="12" rx="1" />
@@ -363,7 +337,6 @@ function VerseDisplay({
             key={`${w.ref}-${i}`}
             word={w}
             {...cardProps}
-            isHighlighted={playingIdx === i}
           />
         ))}
       </div>
