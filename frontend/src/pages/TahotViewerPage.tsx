@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH } from '@/graphql/operations'
@@ -255,13 +255,17 @@ function VerseDisplay({
   const [synthesizeSpeech] = useMutation(SYNTHESIZE_SPEECH)
 
   useEffect(() => {
-    return () => { audioRef.current?.pause() }
+    return () => {
+      audioRef.current?.pause()
+      if ('speechSynthesis' in window) speechSynthesis.cancel()
+    }
   }, [])
 
   const handlePlayVerse = async () => {
     if (isPlaying) {
       audioRef.current?.pause()
       audioRef.current = null
+      if ('speechSynthesis' in window) speechSynthesis.cancel()
       setIsPlaying(false)
       return
     }
@@ -359,10 +363,54 @@ function VerseDisplay({
   )
 }
 
-// ── Rashi flow layout ────────────────────────────────────────────────────────
-// Verse column is absolutely positioned left; ResizeObserver measures its height
-// so the container never collapses. Rashi flows naturally in the right gutter
-// and continues below the verse column when it overflows.
+// ── Rashi flow layout ─────────────────────────────────────────────────────────
+// Walk all text nodes in el, binary-searching within any node that straddles
+// maxHeight (measured relative to el's top via getBoundingClientRect, which is
+// scroll-safe because we subtract el's own top).  Returns a Range whose start
+// is the word boundary just past maxHeight, or null if everything fits.
+function findSplitRange(el: HTMLElement, maxHeight: number): Range | null {
+  const elTop = el.getBoundingClientRect().top
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+
+  const probe = document.createRange()
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text
+    const len = node.textContent?.length ?? 0
+    if (len === 0) continue
+
+    // Check if the END of this text node is still above the split line.
+    // Use a non-collapsed range (last char) so getBoundingClientRect() works.
+    probe.setStart(node, len - 1)
+    probe.setEnd(node, len)
+    const endY = probe.getBoundingClientRect().bottom - elTop
+    if (endY < maxHeight) continue   // node is entirely above — keep going
+
+    // This node straddles maxHeight.  Binary-search for the first character
+    // whose rendered top is >= maxHeight.
+    let lo = 0, hi = len
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1
+      probe.setStart(node, mid)
+      probe.setEnd(node, Math.min(mid + 1, len))  // non-collapsed
+      const midY = probe.getBoundingClientRect().top - elTop
+      if (midY < maxHeight) lo = mid + 1
+      else hi = mid
+    }
+
+    const text = node.textContent ?? ''
+
+    // Walk back to the previous word boundary so we don't cut mid-word.
+    let offset = lo
+    while (offset > 0 && text[offset - 1] !== ' ') offset--
+    if (offset === 0) offset = lo   // no space found — split at char boundary
+
+    const split = document.createRange()
+    split.setStart(node, offset)
+    return split
+  }
+  return null   // all content fits
+}
 
 interface RashiFlowProps {
   verses: InterlinearVerse[]
@@ -382,49 +430,95 @@ function RashiFlowLayout({
   verses, rashiData, rashiLoading, selectedChapter, selectedBook,
   showBreaks, showTranslit, showTranslation, showCantillation, showVowels, showVariants,
 }: RashiFlowProps) {
-  const verseColRef = useRef<HTMLDivElement>(null)
-  const rashiColRef = useRef<HTMLDivElement>(null)
+  const verseColRef     = useRef<HTMLDivElement>(null)
+  const rashiMeasureRef = useRef<HTMLDivElement>(null)
   const [verseColHeight, setVerseColHeight] = useState(0)
-  const [rashiColHeight, setRashiColHeight] = useState(0)
+  const [split, setSplit] = useState<{ before: string; after: string } | null>(null)
 
-  useEffect(() => {
-    const pairs: [React.RefObject<HTMLDivElement | null>, (h: number) => void][] = [
-      [verseColRef, setVerseColHeight],
-      [rashiColRef, setRashiColHeight],
-    ]
-    const observers = pairs.map(([ref, set]) => {
-      const el = ref.current
-      if (!el) return null
-      const ro = new ResizeObserver(([entry]) => set(entry.contentRect.height))
-      ro.observe(el)
-      return ro
-    })
-    return () => observers.forEach((ro) => ro?.disconnect())
-  }, [verses])
+  // Build one HTML string from all available Rashi paragraphs.
+  const fullHtml = useMemo(() => {
+    if (!rashiData) return ''
+    return verses.flatMap((v) => {
+      const text = rashiData[String(selectedChapter)]?.[String(v.verse)]
+      if (!text) return []
+      return [
+        `<p class="mb-3"><span style="font-size:10px;font-weight:700;color:#d97706;` +
+        `margin-left:2px;vertical-align:super;line-height:1">${v.verse}</span>${text}</p>`,
+      ]
+    }).join('')
+  }, [verses, rashiData, selectedChapter])
 
-  const rashiParas = verses.flatMap((v) => {
-    const text = rashiData?.[String(selectedChapter)]?.[String(v.verse)]
-    if (!text) return []
-    return [{ verse: v.verse, text }]
-  })
+  // Recompute the split whenever the verse column height or Rashi HTML changes.
+  const computeSplit = useCallback(() => {
+    const el = rashiMeasureRef.current
+    if (!el || verseColHeight <= 0 || !fullHtml) return
 
-  // When Rashi is taller than the verse column, show the overflow below at full width.
-  // We split by finding which paragraph indices fall within the verse column height by
-  // measuring each paragraph's offsetTop in the Rashi column.
-  const rashiParaRefs = useRef<(HTMLParagraphElement | null)[]>([])
-  const overflowStart = (() => {
-    if (verseColHeight === 0 || rashiColHeight <= verseColHeight) return null
-    for (let i = 0; i < rashiParaRefs.current.length; i++) {
-      const el = rashiParaRefs.current[i]
-      if (el && el.offsetTop >= verseColHeight) return i
+    const totalHeight = el.getBoundingClientRect().height
+    if (totalHeight <= verseColHeight) {
+      setSplit({ before: fullHtml, after: '' })
+      return
     }
-    return null
-  })()
+
+    const splitRange = findSplitRange(el, verseColHeight)
+    if (!splitRange) {
+      setSplit({ before: fullHtml, after: '' })
+      return
+    }
+
+    const beforeRange = document.createRange()
+    beforeRange.selectNodeContents(el)
+    beforeRange.setEnd(splitRange.startContainer, splitRange.startOffset)
+
+    const afterRange = document.createRange()
+    afterRange.selectNodeContents(el)
+    afterRange.setStart(splitRange.startContainer, splitRange.startOffset)
+
+    const tmp = document.createElement('div')
+    tmp.appendChild(beforeRange.cloneContents())
+    const before = tmp.innerHTML
+    tmp.innerHTML = ''
+    tmp.appendChild(afterRange.cloneContents())
+    const after = tmp.innerHTML
+
+    setSplit({ before, after })
+  }, [verseColHeight, fullHtml])
+
+  // Observe verse column height.
+  useEffect(() => {
+    const el = verseColRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setVerseColHeight(e.contentRect.height))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Observe measurement div width (fires on window resize → invalidate split).
+  useEffect(() => {
+    const el = rashiMeasureRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setSplit(null))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fullHtml])   // re-register when html changes (new chapter/book)
+
+  // Recompute after layout whenever split is invalidated.
+  useEffect(() => {
+    if (split !== null) return
+    const id = requestAnimationFrame(computeSplit)
+    return () => cancelAnimationFrame(id)
+  }, [split, computeSplit])
+
+  // Invalidate split when content or verse height changes.
+  useEffect(() => { setSplit(null) }, [fullHtml, verseColHeight])
+
+  const rashiLabel = (
+    <div className="text-xs font-semibold text-amber-700 tracking-wide mb-2">רש״י</div>
+  )
 
   return (
     <>
-      {/* Two-column grid: verse left, Rashi right, both top-aligned */}
       <div className="grid gap-7" style={{ gridTemplateColumns: '56fr 44fr', alignItems: 'start' }}>
+        {/* Left: all verses */}
         <div ref={verseColRef} className="space-y-1 min-w-0">
           {verses.map((v) => (
             <VerseDisplay
@@ -441,12 +535,9 @@ function RashiFlowLayout({
           ))}
         </div>
 
-        <div
-          ref={rashiColRef}
-          className="font-rashi text-sm leading-relaxed text-gray-800 min-w-0"
-          dir="rtl"
-        >
-          <div className="text-xs font-semibold text-amber-700 tracking-wide mb-2">רש״י</div>
+        {/* Right: Rashi */}
+        <div className="relative min-w-0 font-rashi text-sm leading-relaxed" dir="rtl">
+          {rashiLabel}
           {rashiLoading && <div className="text-xs text-gray-400">Loading…</div>}
           {!rashiLoading && !TAHOT_TO_RASHI_FILE[selectedBook] && (
             <div className="text-xs text-gray-400">No Rashi on this book.</div>
@@ -454,37 +545,41 @@ function RashiFlowLayout({
           {!rashiLoading && TAHOT_TO_RASHI_FILE[selectedBook] && !rashiData && (
             <div className="text-xs text-red-400">Could not load — run fetch_rashi.py first.</div>
           )}
-          {rashiData && rashiParas.map(({ verse, text }, i) => (
-            <p
-              key={verse}
-              ref={(el) => { rashiParaRefs.current[i] = el }}
-              className="mb-3 last:mb-0"
-              style={overflowStart !== null && i >= overflowStart ? { visibility: 'hidden' } : undefined}
-            >
-              <span className="inline-block text-[10px] font-bold text-amber-600 ml-1 leading-none align-super">
-                {verse}
-              </span>
-              <span dangerouslySetInnerHTML={{ __html: text }} />
-            </p>
-          ))}
+          {fullHtml && (
+            <>
+              {/* Measurement div: always rendered at right-column width.
+                  Before split is ready it IS the visible content (one frame).
+                  Once split is computed it moves to position:absolute/visibility:hidden
+                  so it stays in the DOM for the ResizeObserver to watch width changes. */}
+              <div
+                ref={rashiMeasureRef}
+                className="text-gray-800"
+                style={
+                  split
+                    ? { position: 'absolute', top: 0, left: 0, right: 0, visibility: 'hidden', pointerEvents: 'none' }
+                    : undefined
+                }
+                dangerouslySetInnerHTML={{ __html: fullHtml }}
+              />
+              {/* Once split is computed, show only the beside-verse portion */}
+              {split && (
+                <div
+                  className="text-gray-800"
+                  dangerouslySetInnerHTML={{ __html: split.before }}
+                />
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      {/* Overflow paragraphs below both columns at full width */}
-      {overflowStart !== null && (
+      {/* Overflow: the part of Rashi that extends below the verse column, full width */}
+      {split?.after && (
         <div
-          className="font-rashi text-sm leading-relaxed text-gray-800 mt-4 pt-4 border-t border-amber-100"
+          className="font-rashi text-sm leading-relaxed text-gray-800 mt-6 pt-4 border-t border-amber-100"
           dir="rtl"
-        >
-          {rashiParas.slice(overflowStart).map(({ verse, text }) => (
-            <p key={verse} className="mb-3 last:mb-0">
-              <span className="inline-block text-[10px] font-bold text-amber-600 ml-1 leading-none align-super">
-                {verse}
-              </span>
-              <span dangerouslySetInnerHTML={{ __html: text }} />
-            </p>
-          ))}
-        </div>
+          dangerouslySetInnerHTML={{ __html: split.after }}
+        />
       )}
     </>
   )
