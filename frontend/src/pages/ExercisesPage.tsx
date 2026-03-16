@@ -1,71 +1,85 @@
 import { Link } from 'react-router-dom'
 
-const EXERCISE_TYPES = [
-  {
-    path: '/exercises/prepositions',
-    title: 'Prepositions',
-    description: 'Practice the inseparable prepositions בְּ לְ כְּ prefixed to nouns.',
-    tag: 'Hebrew → English / English → Hebrew',
-  },
-  {
-    path: '/exercises/article',
-    title: 'Definite Article',
-    description: 'Add or remove the definite article הַ with its phonological variations.',
-    tag: 'Hebrew forms',
-  },
-  {
-    path: '/exercises/sentences',
-    title: 'Sentence Reading',
-    description: 'Read Hebrew sentences and reveal the English translation.',
-    tag: 'Read & reveal',
-  },
-  {
-    path: '/exercises/translation',
-    title: 'Translation',
-    description: 'Translate English sentences into Hebrew.',
-    tag: 'English → Hebrew',
-  },
-  {
-    path: '/exercises/verbal',
-    title: 'Verbal',
-    description: 'Translate Hebrew verbal sentences to English.',
-    tag: 'Hebrew → English',
-  },
-  {
-    path: '/exercises/comparative',
-    title: 'Comparative',
-    description: 'Translate comparative constructions using מִן.',
-    tag: 'Hebrew → English',
-  },
-  {
-    path: '/exercises/relative-clauses',
-    title: 'Relative Clauses',
-    description: 'Translate relative clauses using אֲשֶׁר.',
-    tag: 'Hebrew → English',
-  },
-]
-
 export function ExercisesPage() {
   return (
     <div className="px-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Exercises</h1>
-        <p className="text-gray-600">Choose an exercise type to practice.</p>
+        <p className="text-gray-600">Choose a language to practice.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {EXERCISE_TYPES.map((ex) => (
-          <Link
-            key={ex.path}
-            to={ex.path}
-            className="block bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all"
-          >
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">{ex.title}</h2>
-            <p className="text-sm text-gray-600 mb-3">{ex.description}</p>
-            <span className="inline-block text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-              {ex.tag}
-            </span>
-          </Link>
-        ))}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
+        <Link
+          to="/exercises/hebrew"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-hebrew">בְּ</span>
+            <h2 className="text-lg font-semibold text-gray-900">Biblical Hebrew</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Prepositions, definite article, sentences, translation, verbal, comparative, and relative clause exercises.
+          </p>
+        </Link>
+        <Link
+          to="/exercises/latin"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-serif font-bold text-gray-700">L</span>
+            <h2 className="text-lg font-semibold text-gray-900">Latin</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Noun declension and verb conjugation drills based on Wheelock's Latin vocabulary.
+          </p>
+        </Link>
+        <Link
+          to="/exercises/greek"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-serif font-bold text-gray-700">α</span>
+            <h2 className="text-lg font-semibold text-gray-900">Ancient Greek</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Noun declension and verb conjugation drills for Attic Greek.
+          </p>
+        </Link>
+        <Link
+          to="/exercises/nt-greek"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-serif font-bold text-gray-700">κ</span>
+            <h2 className="text-lg font-semibold text-gray-900">NT Greek</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Noun declension and verb conjugation drills for Koine Greek New Testament study.
+          </p>
+        </Link>
+        <Link
+          to="/exercises/sanskrit"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-serif font-bold text-gray-700">अ</span>
+            <h2 className="text-lg font-semibold text-gray-900">Sanskrit</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Noun declension drills for Classical Sanskrit using IAST transliteration.
+          </p>
+        </Link>
+        <Link
+          to="/exercises/ecclesiastical-latin"
+          className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl font-serif font-bold text-gray-700">E</span>
+            <h2 className="text-lg font-semibold text-gray-900">Ecclesiastical Latin</h2>
+          </div>
+          <p className="text-sm text-gray-600">
+            Noun declension and verb conjugation drills for the Latin of the Vulgate and Church Fathers.
+          </p>
+        </Link>
       </div>
     </div>
   )

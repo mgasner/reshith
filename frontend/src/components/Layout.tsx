@@ -1,19 +1,164 @@
 import { useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
-
-const LESSONS = [
-  { num: '01', name: 'Lesson 1' },
-  { num: '02', name: 'Lesson 2' },
-  { num: '03', name: 'Lesson 3' },
-]
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
 
 const LANGUAGES = [
-  { code: 'he', label: 'א', name: 'Hebrew' },
+  {
+    code: 'hbo',
+    label: 'א',
+    name: 'Hebrew',
+    lessons: [
+      { num: '01', name: 'Lesson 1' },
+      { num: '02', name: 'Lesson 2' },
+      { num: '03', name: 'Lesson 3' },
+      { num: '04', name: 'Lesson 4' },
+      { num: '05', name: 'Lesson 5' },
+    ],
+    lessonPath: (num: string) => `/hebrew/lesson/${num}`,
+    homePath: '/',
+    alphabetPath: '/hebrew/alphabet',
+    vowelsPath: '/hebrew/vowels',
+    exercisesPath: '/exercises/hebrew',
+    resourcesPath: '/hebrew/tahot',
+    hasAlphabet: true,
+    hasVowels: true,
+  },
+  {
+    code: 'lat',
+    label: 'L',
+    name: 'Latin',
+    lessons: [
+      { num: '01', name: 'Lesson 1' },
+      { num: '02', name: 'Lesson 2' },
+      { num: '03', name: 'Lesson 3' },
+    ],
+    lessonPath: (num: string) => `/latin/lesson/${num}`,
+    homePath: '/latin',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/exercises/latin',
+    resourcesPath: null,
+    hasAlphabet: false,
+    hasVowels: false,
+  },
+  {
+    code: 'grc',
+    label: 'ε',
+    name: 'Ancient Greek',
+    lessons: [
+      { num: '1', name: 'Lesson 1' },
+      { num: '2', name: 'Lesson 2' },
+      { num: '3', name: 'Lesson 3' },
+    ],
+    lessonPath: (num: string) => `/greek/lesson/${num}`,
+    homePath: '/greek',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/exercises/greek',
+    resourcesPath: null,
+    hasAlphabet: false,
+    hasVowels: false,
+  },
+  {
+    code: 'gnt',
+    label: 'κ',
+    name: 'NT Greek',
+    lessons: [
+      { num: '1', name: 'Lesson 1' },
+      { num: '2', name: 'Lesson 2' },
+      { num: '3', name: 'Lesson 3' },
+    ],
+    lessonPath: (num: string) => `/nt-greek/lesson/${num}`,
+    homePath: '/nt-greek',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/exercises/nt-greek',
+    resourcesPath: null,
+    hasAlphabet: false,
+    hasVowels: false,
+  },
+  {
+    code: 'san',
+    label: 'अ',
+    name: 'Sanskrit',
+    lessons: [
+      { num: '1', name: 'Lesson 1' },
+      { num: '2', name: 'Lesson 2' },
+      { num: '3', name: 'Lesson 3' },
+    ],
+    lessonPath: (num: string) => `/sanskrit/lesson/${num}`,
+    homePath: '/sanskrit',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/exercises/sanskrit',
+    resourcesPath: null,
+    hasAlphabet: false,
+    hasVowels: false,
+  },
+  {
+    code: 'ecl',
+    label: 'V',
+    name: 'Eccl. Latin',
+    lessons: [
+      { num: '1', name: 'Lesson 1' },
+      { num: '2', name: 'Lesson 2' },
+      { num: '3', name: 'Lesson 3' },
+    ],
+    lessonPath: (num: string) => `/ecclesiastical-latin/lesson/${num}`,
+    homePath: '/ecclesiastical-latin',
+    alphabetPath: null,
+    vowelsPath: null,
+    exercisesPath: '/exercises/ecclesiastical-latin',
+    resourcesPath: null,
+    hasAlphabet: false,
+    hasVowels: false,
+  },
 ]
 
 export function Layout() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [lessonsOpen, setLessonsOpen] = useState(false)
-  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0])
+
+  const getActiveLang = () => {
+    if (
+      location.pathname.startsWith('/latin') ||
+      location.pathname.startsWith('/exercises/latin')
+    ) {
+      return LANGUAGES.find((l) => l.code === 'lat')!
+    }
+    if (
+      location.pathname.startsWith('/greek') ||
+      location.pathname.startsWith('/exercises/greek')
+    ) {
+      return LANGUAGES.find((l) => l.code === 'grc')!
+    }
+    if (
+      location.pathname.startsWith('/nt-greek') ||
+      location.pathname.startsWith('/exercises/nt-greek')
+    ) {
+      return LANGUAGES.find((l) => l.code === 'gnt')!
+    }
+    if (
+      location.pathname.startsWith('/sanskrit') ||
+      location.pathname.startsWith('/exercises/sanskrit')
+    ) {
+      return LANGUAGES.find((l) => l.code === 'san')!
+    }
+    if (
+      location.pathname.startsWith('/ecclesiastical-latin') ||
+      location.pathname.startsWith('/exercises/ecclesiastical-latin')
+    ) {
+      return LANGUAGES.find((l) => l.code === 'ecl')!
+    }
+    return LANGUAGES.find((l) => l.code === 'hbo')!
+  }
+  const activeLang = getActiveLang()
+
+  const handleLangSwitch = (lang: typeof LANGUAGES[0]) => {
+    if (lang.code !== activeLang.code) {
+      navigate(lang.homePath)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -25,9 +170,9 @@ export function Layout() {
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
-                onClick={() => setSelectedLang(lang)}
+                onClick={() => handleLangSwitch(lang)}
                 className={`flex items-center gap-1.5 px-3 py-0.5 rounded text-sm font-medium transition-colors ${
-                  selectedLang.code === lang.code
+                  activeLang.code === lang.code
                     ? 'bg-gray-700 text-white'
                     : 'hover:bg-gray-800 hover:text-white'
                 }`}
@@ -44,24 +189,28 @@ export function Layout() {
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-14 gap-8">
-            <Link to="/" className="flex-shrink-0">
+            <Link to={activeLang.homePath} className="flex-shrink-0">
               <span className="text-xl font-semibold text-gray-900">Reshith</span>
             </Link>
             <div className="hidden sm:flex sm:items-center sm:gap-6">
+              {activeLang.hasAlphabet && activeLang.alphabetPath && (
+                <Link
+                  to={activeLang.alphabetPath}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Alphabet
+                </Link>
+              )}
+              {activeLang.hasVowels && activeLang.vowelsPath && (
+                <Link
+                  to={activeLang.vowelsPath}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Vowels
+                </Link>
+              )}
               <Link
-                to="/alphabet"
-                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-              >
-                Alphabet
-              </Link>
-              <Link
-                to="/vowels"
-                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-              >
-                Vowels
-              </Link>
-              <Link
-                to="/exercises"
+                to={activeLang.exercisesPath}
                 className="text-sm font-medium text-gray-500 hover:text-gray-900"
               >
                 Exercises
@@ -83,10 +232,10 @@ export function Layout() {
                 </button>
                 {lessonsOpen && (
                   <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 z-10">
-                    {LESSONS.map((lesson) => (
+                    {activeLang.lessons.map((lesson) => (
                       <Link
                         key={lesson.num}
-                        to={`/lesson/${lesson.num}`}
+                        to={activeLang.lessonPath(lesson.num)}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setLessonsOpen(false)}
                       >
@@ -96,6 +245,14 @@ export function Layout() {
                   </div>
                 )}
               </div>
+              {activeLang.resourcesPath && (
+                <Link
+                  to={activeLang.resourcesPath}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Resources
+                </Link>
+              )}
               <Link
                 to="/decks"
                 className="text-sm font-medium text-gray-500 hover:text-gray-900"

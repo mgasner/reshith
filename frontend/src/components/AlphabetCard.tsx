@@ -29,6 +29,7 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const [revealedFaces, setRevealedFaces] = useState<Set<CardFace>>(new Set(['letter']))
   const [handwriting, setHandwriting] = useState(false)
+  const [swapVersion, setSwapVersion] = useState(0)
 
   const currentFace = FACE_ORDER[currentFaceIndex]
   const allRevealed = revealedFaces.size === FACE_ORDER.length
@@ -48,17 +49,21 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
 
   const renderFaceContent = (face: CardFace) => {
     switch (face) {
-      case 'letter':
+      case 'letter': {
+        const fontKey = handwriting ? 'script' : 'print'
+        const letterClass = `text-8xl leading-[1.6] ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`
         return (
-          <div className="text-center">
-            <p className={`text-8xl rtl ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`}>{card.letter}</p>
+          <div key={fontKey} className="flex gap-8 justify-center items-baseline rtl overflow-visible">
+            <span className={letterClass}>{card.letter}</span>
             {card.finalForm && (
-              <p className={`text-4xl rtl text-gray-500 mt-4 ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`}>
-                final: {card.finalForm}
-              </p>
+              <div className="flex flex-col items-center">
+                <span className={`${letterClass} text-gray-400`}>{card.finalForm}</span>
+                <span className="text-xs text-gray-400 mt-1 tracking-wide">final</span>
+              </div>
             )}
           </div>
         )
+      }
       case 'name':
         return <p className="text-4xl capitalize">{card.name}</p>
       case 'transcription':
@@ -71,11 +76,11 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer relative"
+        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer relative overflow-visible"
         onClick={handleNext}
       >
         <button
-          onClick={(e) => { e.stopPropagation(); setHandwriting((v) => !v) }}
+          onClick={(e) => { e.stopPropagation(); setHandwriting((v) => !v); setSwapVersion((n) => n + 1) }}
           className={`absolute top-3 right-3 p-1.5 rounded transition-colors ${
             handwriting ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-600'
           }`}
@@ -86,9 +91,11 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
           </svg>
         </button>
 
-        <div className="flex-1 flex flex-col justify-center items-center">
+        <div className="flex-1 flex flex-col justify-center items-center overflow-visible">
           {renderFaceContent(currentFace)}
         </div>
+
+        <div key={swapVersion} className="absolute inset-0 bg-white rounded-xl pointer-events-none glyph-swap" />
 
         <div className="flex items-center justify-between mt-4" onClick={(e) => e.stopPropagation()}>
           <SpeakButton text={card.letter} size="sm" />

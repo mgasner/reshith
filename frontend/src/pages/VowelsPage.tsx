@@ -103,7 +103,7 @@ export function VowelsPage() {
         ))}
       </div>
 
-      <VowelCard card={currentCard} onReview={handleReview} />
+      <VowelCard key={currentIndex} card={currentCard} onReview={handleReview} />
 
       <div className="mt-8 flex justify-center gap-4">
         <button

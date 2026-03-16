@@ -3,13 +3,14 @@ import { SpeakButton } from './SpeakButton'
 
 export interface VocabularyCardData {
   category: string
-  hebrew: string
+  hebrew?: string
+  word?: string
   transliteration: string
   definition: string
   notes?: string
 }
 
-type CardFace = 'hebrew' | 'transliteration' | 'definition'
+type CardFace = 'native' | 'transliteration' | 'definition'
 
 const CATEGORY_ABBREVS: Record<string, string> = {
   nouns: 'n.',
@@ -26,19 +27,38 @@ const CATEGORY_ABBREVS: Record<string, string> = {
 interface VocabularyCardProps {
   card: VocabularyCardData
   onReview: (quality: number) => void
+  language?: string
+  nativeFaceLabel?: string
 }
 
-const FACE_ORDER: CardFace[] = ['hebrew', 'transliteration', 'definition']
+const RTL_LANGUAGES = new Set(['hbo', 'arc', 'heb'])
 
-const FACE_LABELS: Record<CardFace, string> = {
-  hebrew: 'Hebrew',
-  transliteration: 'Transliteration',
-  definition: 'Definition',
-}
-
-export function VocabularyCard({ card, onReview }: VocabularyCardProps) {
+export function VocabularyCard({
+  card,
+  onReview,
+  language = 'hbo',
+  nativeFaceLabel,
+}: VocabularyCardProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
-  const [revealedFaces, setRevealedFaces] = useState<Set<CardFace>>(new Set(['hebrew']))
+  const [revealedFaces, setRevealedFaces] = useState<Set<CardFace>>(new Set(['native']))
+
+  const FACE_ORDER: CardFace[] = ['native', 'transliteration', 'definition']
+
+  const isRtl = RTL_LANGUAGES.has(language)
+  const nativeWord = card.word ?? card.hebrew ?? ''
+
+  const defaultNativeLabel =
+    language === 'lat' ? 'Latin' :
+    language === 'grc' ? 'Greek' :
+    language === 'hbo' ? 'Hebrew' :
+    'Word'
+  const nativeLabel = nativeFaceLabel ?? defaultNativeLabel
+
+  const FACE_LABELS: Record<CardFace, string> = {
+    native: nativeLabel,
+    transliteration: language === 'lat' ? 'Forms' : 'Transliteration',
+    definition: 'Definition',
+  }
 
   const currentFace = FACE_ORDER[currentFaceIndex]
   const allRevealed = revealedFaces.size === FACE_ORDER.length
@@ -53,13 +73,19 @@ export function VocabularyCard({ card, onReview }: VocabularyCardProps) {
   const handleReview = (quality: number) => {
     onReview(quality)
     setCurrentFaceIndex(0)
-    setRevealedFaces(new Set(['hebrew']))
+    setRevealedFaces(new Set(['native']))
   }
 
   const renderFaceContent = (face: CardFace) => {
     switch (face) {
-      case 'hebrew':
-        return <p className="text-7xl font-hebrew rtl">{card.hebrew}</p>
+      case 'native':
+        return (
+          <p
+            className={`text-7xl ${isRtl ? 'font-hebrew rtl' : 'font-serif'}`}
+          >
+            {nativeWord}
+          </p>
+        )
       case 'transliteration':
         return <p className="text-4xl font-mono">{card.transliteration}</p>
       case 'definition':
@@ -86,7 +112,7 @@ export function VocabularyCard({ card, onReview }: VocabularyCardProps) {
 
         <div className="flex items-center justify-between mt-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2">
-            <SpeakButton text={card.hebrew} size="sm" />
+            {isRtl && <SpeakButton text={nativeWord} size="sm" />}
             {CATEGORY_ABBREVS[card.category] && (
               <span className="text-xs text-gray-400">{CATEGORY_ABBREVS[card.category]}</span>
             )}

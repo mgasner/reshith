@@ -23,7 +23,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: 'bg-gray-100 text-gray-800',
 }
 
-export function LessonPage() {
+interface LessonPageProps {
+  languageCode?: string
+  dataDir?: string
+}
+
+export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonPageProps) {
   const { lessonId } = useParams()
   const [deck, setDeck] = useState<LessonDeck | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -33,7 +38,11 @@ export function LessonPage() {
 
   useEffect(() => {
     const lessonNum = lessonId || '01'
-    fetch(`/data/hebrew/lesson${lessonNum}.json`)
+    setDeck(null)
+    setCurrentIndex(0)
+    setCompleted(new Set())
+    setLoading(true)
+    fetch(`/data/${dataDir}/lesson${lessonNum}.json`)
       .then((res) => res.json())
       .then((data) => {
         setDeck(data)
@@ -43,7 +52,7 @@ export function LessonPage() {
         console.error('Failed to load lesson data:', err)
         setLoading(false)
       })
-  }, [lessonId])
+  }, [lessonId, dataDir])
 
   const handleReview = (quality: number) => {
     if (quality >= 3) {
@@ -81,6 +90,8 @@ export function LessonPage() {
     setCurrentIndex(index)
   }
 
+  const getNativeWord = (card: VocabularyCardData) => card.word ?? card.hebrew ?? ''
+
   if (loading) {
     return (
       <div className="px-4 text-center py-12">
@@ -101,6 +112,7 @@ export function LessonPage() {
   const filteredCards = getFilteredCards()
   const currentCard = deck.cards[currentIndex]
   const progress = (completed.size / deck.cards.length) * 100
+  const isRtl = ['hbo', 'arc', 'heb'].includes(languageCode)
 
   return (
     <div className="px-4">
@@ -157,7 +169,9 @@ export function LessonPage() {
             <button
               key={originalIndex}
               onClick={() => handleCardSelect(originalIndex)}
-              className={`px-3 py-2 rounded-lg font-hebrew text-lg rtl transition-colors ${
+              className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                isRtl ? 'font-hebrew text-lg rtl' : 'font-mono'
+              } ${
                 originalIndex === currentIndex
                   ? 'bg-blue-600 text-white'
                   : completed.has(originalIndex)
@@ -166,13 +180,13 @@ export function LessonPage() {
               }`}
               title={card.transliteration}
             >
-              {card.hebrew}
+              {getNativeWord(card)}
             </button>
           )
         })}
       </div>
 
-      <VocabularyCard card={currentCard} onReview={handleReview} />
+      <VocabularyCard key={currentIndex} card={currentCard} onReview={handleReview} language={languageCode} />
 
       <div className="mt-8 flex justify-center gap-4">
         <button
