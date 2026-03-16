@@ -1,3 +1,6 @@
+/* Noto Rashi Hebrew — Rashi script (semi-cursive) for traditional commentary display */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Rashi+Hebrew:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,14 +18,24 @@
   text-align: right;
 }
 
-/* Hebrew handwriting font (Guttman Yad — standard Israeli educational script).
-   Falls back to Karantina (Google Fonts) if not present.
-   To use Guttman Yad: place GuttmanYad.ttf in public/fonts/ (see public/fonts/README.md) */
+/* Gveret Levin — Hebrew handwritten script font by Alef Alef Alef (free for web use).
+   Described as "the new Guttman-Hand". https://alefalefalef.co.il */
 @font-face {
-  font-family: 'Guttman Yad';
-  src: url('/fonts/GuttmanYad.ttf') format('truetype');
+  font-family: 'Hebrew Script';
+  src: url('/fonts/GveretLevinAlefAlefAlef-Regular.woff2') format('woff2'),
+       url('/fonts/GveretLevinAlefAlefAlef-Regular.woff') format('woff'),
+       url('/fonts/NachlieliCLM-Light.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
+}
+
+@keyframes glyph-in {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.glyph-swap {
+  animation: glyph-in 80ms ease-out forwards;
 }
 
 .hebrew-text {

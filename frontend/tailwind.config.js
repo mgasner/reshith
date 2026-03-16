@@ -8,6 +8,8 @@ export default {
     extend: {
       fontFamily: {
         hebrew: ['SBL Hebrew', 'Ezra SIL', 'serif'],
+        'hebrew-script': ['Hebrew Script', 'cursive'],
+        rashi: ['Noto Rashi Hebrew', 'serif'],
         greek: ['SBL Greek', 'Gentium Plus', 'serif'],
         devanagari: ['Siddhanta', 'Sanskrit 2003', 'serif'],
       },
