@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.hebrew-text {
+  font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+  font-size: 1.5rem;
+  line-height: 2;
+}
+
+.greek-text {
+  font-family: 'SBL Greek', 'Gentium Plus', serif;
+  font-size: 1.25rem;
+}
+
+.sanskrit-text {
+  font-family: 'Siddhanta', 'Sanskrit 2003', serif;
+  font-size: 1.25rem;
+}
