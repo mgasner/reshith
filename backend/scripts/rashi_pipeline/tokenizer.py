@@ -28,7 +28,10 @@ NIKUD = set(range(0x05B0, 0x05BD + 1)) | {0x05C1, 0x05C2, 0x05C4, 0x05C5, 0x05C7
 HEBREW_LETTERS = set(range(0x05D0, 0x05EA + 1))
 
 # Punctuation characters that should be split off as separate tokens
-PUNCTUATION_CHARS = set('.,;:!?()[]{}""\'\'–—\u2013\u2014\u201c\u201d\u2018\u2019')
+# Punctuation to split off — deliberately excludes " and ' because those
+# appear as abbreviation markers (gershayim/geresh) within Hebrew tokens.
+# We only split them when they appear in isolation (not adjacent to Hebrew letters).
+PUNCTUATION_CHARS = set('.,;:!?()[]{}–—\u2013\u2014\u201c\u201d\u2018\u2019')
 
 MAQQEF = "\u05BE"  # ־
 GERESH = "\u05F3"  # ׳

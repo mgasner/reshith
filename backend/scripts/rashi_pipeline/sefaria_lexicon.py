@@ -122,7 +122,9 @@ class SefariaLexicon:
         self._delay = 1.0 / requests_per_second
         self._client: httpx.AsyncClient | None = None
         self._last_request: float = 0.0
-        # In-memory cache for this session
+        # Serialise concurrent callers so throttle is race-free
+        self._lock = asyncio.Lock()
+        # In-memory cache for this session (checked before acquiring lock)
         self._memory: dict[str, DictionaryEntry | None] = {}
 
     async def __aenter__(self) -> "SefariaLexicon":
@@ -169,6 +171,7 @@ class SefariaLexicon:
         self._memory[normalized_lemma] = entry
 
     async def _throttle(self) -> None:
+        """Wait so that we don't exceed requests_per_second. Must be called under self._lock."""
         now = time.monotonic()
         wait = self._delay - (now - self._last_request)
         if wait > 0:
@@ -176,41 +179,55 @@ class SefariaLexicon:
         self._last_request = time.monotonic()
 
     async def lookup(self, lemma: str, retries: int = 3) -> DictionaryEntry | None:
-        """Look up a lemma, using cache if available."""
+        """
+        Look up a lemma, using cache if available.
+
+        Cache hits are returned immediately without acquiring the lock.
+        Network calls are serialised through self._lock so that concurrent
+        asyncio.gather callers don't race on _throttle or duplicate requests.
+        """
         assert self._client is not None, "Use as async context manager"
 
         norm = strip_vowels(lemma)
-        cached = self._read_cache(norm)
-        if cached is not False:
-            return cached  # type: ignore[return-value]
 
-        await self._throttle()
+        # Fast path: check in-memory cache before touching the lock
+        if norm in self._memory:
+            return self._memory[norm]
 
-        for attempt in range(retries):
-            try:
-                url = SEFARIA_WORDS_URL.format(word=norm)
-                resp = await self._client.get(url, params={"lookup_ref": "", "nevuchadnezar": "1"})
-                if resp.status_code == 404:
-                    self._write_cache(norm, None)
-                    return None
-                resp.raise_for_status()
-                data = resp.json()
-                entries = data if isinstance(data, list) else data.get("entries", [])
-                entry = _best_entry(entries)
-                self._write_cache(norm, entry)
-                return entry
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429 and attempt < retries - 1:
-                    await asyncio.sleep(2 ** attempt * 2)
-                    continue
-                logger.warning(f"Sefaria error for {norm!r}: {e}")
-                break
-            except httpx.RequestError as e:
-                logger.warning(f"Sefaria request error for {norm!r}: {e}")
-                if attempt < retries - 1:
-                    await asyncio.sleep(2 ** attempt)
-                    continue
-                break
+        # Serialise all cache-miss paths
+        async with self._lock:
+            # Re-check after acquiring lock — another coroutine may have populated it
+            cached = self._read_cache(norm)
+            if cached is not False:
+                return cached  # type: ignore[return-value]
+
+            await self._throttle()
+
+            for attempt in range(retries):
+                try:
+                    url = SEFARIA_WORDS_URL.format(word=norm)
+                    resp = await self._client.get(url, params={"lookup_ref": "", "nevuchadnezar": "1"})
+                    if resp.status_code == 404:
+                        self._write_cache(norm, None)
+                        return None
+                    resp.raise_for_status()
+                    data = resp.json()
+                    entries = data if isinstance(data, list) else data.get("entries", [])
+                    entry = _best_entry(entries)
+                    self._write_cache(norm, entry)
+                    return entry
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429 and attempt < retries - 1:
+                        await asyncio.sleep(2 ** attempt * 2)
+                        continue
+                    logger.warning(f"Sefaria error for {norm!r}: {e}")
+                    break
+                except httpx.RequestError as e:
+                    logger.warning(f"Sefaria request error for {norm!r}: {e}")
+                    if attempt < retries - 1:
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+                    break
 
         self._write_cache(norm, None)
         return None

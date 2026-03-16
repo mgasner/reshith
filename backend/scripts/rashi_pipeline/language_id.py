@@ -51,14 +51,16 @@ ARAMAIC_FUNCTION_WORDS = {
     "מאי", "אמאי", "למאי", "היכי", "כיצד",  # כיצד is actually Heb/Aram both
     "כד", "עד", "כי", "די", "דלא", "דהוה", "דהוי",
     "ליה", "לה", "לן", "להו",
-    "ביה", "בה", "בהו",
+    "ביה", "בה",
+    # NOTE: בהו removed — too easily confused with Biblical Hebrew תֹּהוּ וָבֹהוּ
     "מיניה", "מינה", "מינייהו",
     "קמיה", "קמה", "קמן",
     "גביה", "גבה",
     "מאן", "דמאן",
     "איכא", "ליכא",
     "הוה", "הוי", "הויא", "הוין",
-    "אמר", "אמרי", "אמרינן",  # ambiguous but common in Aramaic discourse
+    # NOTE: אמר/אמרי/אמרינן deliberately excluded — too common in Hebrew
+    # to use as an Aramaic signal without wider context
     "בעי", "בעינן",
     "אזל", "אתא", "אייתי",
     "שרי", "אסר",

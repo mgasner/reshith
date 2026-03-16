@@ -39,7 +39,7 @@ from pathlib import Path
 
 from .abbreviations import is_abbreviation, lookup_abbreviation
 from .custom_lexicon import lookup_custom
-from .dicta_client import DictaClient, split_into_batches
+from .dicta_client import DictaClient
 from .language_id import LanguageIdentifier
 from .models import DictionaryEntry, Language, Morphology, Token, UncertaintyReason
 from .morph_parser import parse_morph_code
@@ -186,38 +186,34 @@ async def process_verse(
         if lang in (Language.HEBREW, Language.ARAMAIC) and is_hebrew_word(surface):
             to_analyze.append((i, surface))
 
-    # Step 4: batch Dicta requests
-    indices = [idx for idx, _ in to_analyze]
-    surfaces = [s for _, s in to_analyze]
-    batches = split_into_batches(surfaces)
-
-    dicta_results: dict[int, object] = {}  # index → DictaToken
-    surface_idx = 0
-    for batch in batches:
-        batch_text = " ".join(batch)
+    # Step 4: Dicta analysis — cache-aware, only fetches cache misses
+    dicta_results: dict[int, object] = {}
+    if to_analyze:
+        indices = [idx for idx, _ in to_analyze]
+        surfaces = [s for _, s in to_analyze]
         try:
-            results = await dicta.analyze_text(batch_text)
-            # Align results to indices (Dicta may return different token count due to splitting)
-            for j, result in enumerate(results):
-                if j < len(batch):
-                    dicta_results[indices[surface_idx + j]] = result
+            results = await dicta.analyze_tokens(surfaces)
+            for idx, result in zip(indices, results):
+                dicta_results[idx] = result
         except Exception as e:
-            logger.warning(f"Dicta batch failed for ch{chapter}:v{verse}: {e}")
-        surface_idx += len(batch)
+            logger.warning(f"Dicta analysis failed for ch{chapter}:v{verse}: {e}")
 
     # Step 5: collect unique lemmas for Sefaria lookup
-    lemmas: dict[str, DictionaryEntry | None] = {}  # lemma → entry
-    for idx, dicta_result in dicta_results.items():
+    unique_lemmas: set[str] = set()
+    for dicta_result in dicta_results.values():
         from .dicta_client import DictaToken as DT
         if isinstance(dicta_result, DT) and dicta_result.lemma:
-            lemma = strip_vowels(dicta_result.lemma)
-            if lemma not in lemmas:
-                lemmas[lemma] = None  # placeholder
+            unique_lemmas.add(strip_vowels(dicta_result.lemma))
 
-    # Sefaria lookups (deduplicated)
-    for lemma in list(lemmas.keys()):
-        entry = await sefaria.lookup(lemma)
-        lemmas[lemma] = entry
+    # Sefaria lookups — run concurrently (each is independent; Sefaria has its own
+    # internal throttle + disk cache, so parallel coroutines serialise via _throttle)
+    lemma_entries = await asyncio.gather(
+        *[sefaria.lookup(lemma) for lemma in unique_lemmas],
+        return_exceptions=True,
+    )
+    lemmas: dict[str, DictionaryEntry | None] = {}
+    for lemma, entry in zip(unique_lemmas, lemma_entries):
+        lemmas[lemma] = entry if not isinstance(entry, BaseException) else None
 
     # Step 6: assemble Token objects
     tokens: list[Token] = []
@@ -341,7 +337,7 @@ async def main(args: argparse.Namespace) -> None:
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    async with DictaClient(requests_per_second=1.0) as dicta:
+    async with DictaClient(cache_dir=CACHE_DIR, requests_per_second=1.0) as dicta:
         async with SefariaLexicon(CACHE_DIR, requests_per_second=2.0) as sefaria:
             for book in books:
                 logger.info(f"=== {book.upper()} ===")

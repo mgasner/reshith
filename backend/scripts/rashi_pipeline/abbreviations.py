@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import re
 
-GERESH = "\u05F3"   # ׳
-GERSHAYIM = "\u05F4"  # ״
+GERESH = "\u05F3"   # ׳  (Hebrew geresh)
+GERSHAYIM = "\u05F4"  # ״  (Hebrew gershayim)
+# ASCII equivalents appear frequently in the source text
+_ABBREV_CHARS = frozenset([GERESH, GERSHAYIM, '"', "'"])
 
 # Abbreviation lookup: normalized form (no geresh/gershayim, no nikud) → expansion
 # The expansion is in Hebrew; an English gloss is provided for UI display.
@@ -78,6 +80,8 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     # Common phrases
     "וכ": ("וכולי", "etc."),
     "וכו": ("וכולי", "etc."),
+    "וג": ("וגו׳ (וגומר)", "etc. (and so on — biblical citation continues)"),
+    "וגו": ("וגומר", "and so on (biblical citation continues)"),
     "אבל": ("אבל", "(but — not abbreviated)"),
     "דבר": ("דבר אחר", "another interpretation"),
     "דא": ("דבר אחר", "another interpretation"),
@@ -105,12 +109,23 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
 
 
 def normalize_abbreviation(token: str) -> str:
-    """Remove geresh, gershayim, and nikud/cantillation for dictionary lookup."""
-    # Remove geresh and gershayim
-    token = token.replace(GERESH, "").replace(GERSHAYIM, "")
+    """Remove geresh, gershayim, ASCII quotes, and nikud for dictionary lookup."""
+    token = "".join(ch for ch in token if ch not in _ABBREV_CHARS)
     # Remove nikud (U+05B0–U+05C7 range covers all Hebrew diacritics)
     token = "".join(ch for ch in token if not (0x05B0 <= ord(ch) <= 0x05C7))
     return token
+
+
+def _is_numeric_reference(normalized: str) -> bool:
+    """
+    Return True if this looks like a biblical chapter/verse number written
+    in Hebrew numerals with gershayim. Examples: קי"א (111), כ"ז (27), ח' (8).
+    Hebrew numbers use the letter values: א=1 יוד=10 ק=100 etc.
+    We detect the pattern: optional hundreds letter + optional tens + units.
+    """
+    # Hebrew numeric letters
+    numeric = set("אבגדהוזחטיכלמנסעפצקרש")
+    return all(ch in numeric for ch in normalized) and 1 <= len(normalized) <= 4
 
 
 def lookup_abbreviation(token: str) -> tuple[str, str] | None:
@@ -119,9 +134,43 @@ def lookup_abbreviation(token: str) -> tuple[str, str] | None:
     Returns (expansion_hebrew, english_gloss) or None if not found.
     """
     key = normalize_abbreviation(token)
-    return ABBREVIATIONS.get(key)
+    if key in ABBREVIATIONS:
+        return ABBREVIATIONS[key]
+    # Detect Hebrew numeral references (biblical chapter/verse citations)
+    if _is_numeric_reference(key):
+        return (key, "biblical chapter/verse number")
+    return None
+
+
+# Full words that contain quote chars but are NOT abbreviations.
+# Typically words where the " is a vowel-marker or scribal convention.
+_NOT_ABBREVIATIONS: frozenset[str] = frozenset([
+    "בלעז",    # "in a foreign language" — not an abbreviation despite the "
+    "וגו",     # וְגוֹ׳ / וגו' = "and so on" — treated as its own abbreviation below
+])
 
 
 def is_abbreviation(token: str) -> bool:
-    """Return True if token contains geresh or gershayim (standard abbreviation markers)."""
-    return GERESH in token or GERSHAYIM in token
+    """
+    Return True if token is a Hebrew abbreviation (has an abbreviation mark
+    AND is short enough to plausibly be an abbreviation rather than a long
+    Old French/other-language word written in Hebrew characters).
+
+    Rashi's abbreviations are almost always 2–5 Hebrew letters total.
+    Old French glosses written in Hebrew script are typically longer (6+ letters)
+    and also contain quote-chars but are NOT abbreviations.
+    """
+    if not any(ch in _ABBREV_CHARS for ch in token):
+        return False
+    # Count only Hebrew letters (no diacritics, no quote chars)
+    hebrew_letters = [ch for ch in token if 0x05D0 <= ord(ch) <= 0x05EA]
+    if not hebrew_letters:
+        return False
+    # Long tokens (6+ Hebrew letters) are likely Old French glosses or foreign words
+    if len(hebrew_letters) >= 6:
+        return False
+    # Check against known full words that happen to contain quote chars
+    normalized = normalize_abbreviation(token)
+    if normalized in _NOT_ABBREVIATIONS:
+        return False
+    return True
