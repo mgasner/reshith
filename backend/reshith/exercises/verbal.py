@@ -49,6 +49,7 @@ class VerbalExercise:
     transliteration: str
     english_answer: str
     components: dict[str, str]
+    lesson: int = 1
 
 
 @dataclass
@@ -300,6 +301,7 @@ async def generate_subject_verb_exercise(
             "subject": subj.hebrew,
             "verb": verb.hebrew,
         },
+        lesson=max(verb.lesson, subj.lesson),
     )
 
 
@@ -354,6 +356,7 @@ async def generate_subject_verb_object_exercise(
             "verb": verb.hebrew,
             "object": obj.hebrew,
         },
+        lesson=max(verb.lesson, subj.lesson, obj.lesson),
     )
 
 
@@ -426,6 +429,7 @@ async def generate_subject_verb_prep_exercise(
             "preposition": prep.hebrew,
             "prep_object": prep_obj.hebrew,
         },
+        lesson=max(verb.lesson, subj.lesson, prep_obj.lesson),
     )
 
 
@@ -507,6 +511,7 @@ async def generate_subject_verb_object_prep_exercise(
             "preposition": prep.hebrew,
             "prep_object": prep_obj.hebrew,
         },
+        lesson=max(verb.lesson, subj.lesson, obj.lesson, prep_obj.lesson),
     )
 
 

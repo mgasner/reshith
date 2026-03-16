@@ -25,6 +25,7 @@ class Noun:
     transliteration: str
     definition: str
     category: str
+    lesson: int = 1
 
     @property
     def starts_with_bgdkpt(self) -> bool:
@@ -65,6 +66,7 @@ class PrepositionalPhrase:
     hebrew: str
     transliteration: str
     english: str
+    lesson: int = 1
 
 
 PREPOSITION_DATA = {
@@ -168,6 +170,7 @@ def generate_phrase(prep: Preposition, noun: Noun) -> PrepositionalPhrase:
         hebrew=hebrew,
         transliteration=transliteration,
         english=english,
+        lesson=noun.lesson,
     )
 
 
@@ -201,9 +204,11 @@ def load_nouns_up_to_lesson(max_lesson: int) -> list[Noun]:
             transliteration=item.transliteration,
             definition=item.definition,
             category=item.category,
+            lesson=item.lesson,
         )
         for item in vocab_items
     ]
+
 
 
 def generate_exercises(

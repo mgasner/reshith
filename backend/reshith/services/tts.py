@@ -1,5 +1,6 @@
 """Text-to-speech service with Google Cloud TTS and file-based caching."""
 
+import asyncio
 import base64
 import hashlib
 import logging
@@ -13,6 +14,10 @@ logger = logging.getLogger(__name__)
 CACHE_DIR = Path(__file__).parent.parent.parent / "tts_cache"
 _google_tts_available = False
 _google_client = None
+
+# MMS-TTS (Facebook) for Latin — loaded lazily on first use
+_mms_model = None
+_mms_tokenizer = None
 
 
 def init_tts() -> bool:
@@ -75,16 +80,67 @@ def _prepare_hebrew_for_tts(text: str) -> str:
     return biblical_hebrew.strip_vowels(text)
 
 
-async def synthesize_speech(text: str, language: str = "he-IL") -> str | None:
+def _synthesize_latin_mms(text: str) -> bytes | None:
+    """Synthesize Latin text using Facebook MMS-TTS (neural VITS model).
+
+    Returns raw WAV bytes, or None on failure.
+    Loads the model lazily on first call (~100 MB download on first run).
+    """
+    global _mms_model, _mms_tokenizer
+
+    try:
+        import io
+
+        import scipy.io.wavfile
+        import torch
+        from transformers import AutoTokenizer, VitsModel
+
+        if _mms_model is None or _mms_tokenizer is None:
+            logger.info("Loading facebook/mms-tts-lat model (first run may download ~100 MB)…")
+            _mms_tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-lat")
+            _mms_model = VitsModel.from_pretrained("facebook/mms-tts-lat")
+            logger.info("MMS-TTS Latin model loaded.")
+
+        inputs = _mms_tokenizer(text, return_tensors="pt")
+        with torch.no_grad():
+            waveform = _mms_model(**inputs).waveform.squeeze().numpy()
+
+        sampling_rate: int = _mms_model.config.sampling_rate  # type: ignore[attr-defined]
+        buf = io.BytesIO()
+        scipy.io.wavfile.write(buf, sampling_rate, waveform)
+        return buf.getvalue()
+
+    except Exception as e:
+        logger.error(f"MMS-TTS Latin synthesis failed: {e}")
+        return None
+
+
+async def synthesize_speech(text: str, language: str = "he-IL") -> tuple[str, str] | None:
     """Synthesize speech for the given text.
 
     Args:
-        text: The text to synthesize (can include Hebrew vowel points)
+        text: The text to synthesize
         language: BCP-47 language code (default: he-IL for Hebrew)
 
     Returns:
-        Base64-encoded MP3 audio data, or None if synthesis failed
+        (base64_audio, mime_type) tuple, or None if synthesis failed.
+        MIME type is "audio/wav" for Latin (MMS-TTS) and "audio/mp3" otherwise.
     """
+    # Latin: use MMS-TTS neural model regardless of Google TTS availability
+    if language == "la":
+        # Check disk cache first
+        cache_path = _get_cache_path(text, language).with_suffix(".wav")
+        if cache_path.exists():
+            logger.debug(f"MMS-TTS cache hit for: {text[:20]}...")
+            return base64.b64encode(cache_path.read_bytes()).decode("utf-8"), "audio/wav"
+        # Run blocking inference in a thread so we don't stall the event loop
+        wav_bytes = await asyncio.to_thread(_synthesize_latin_mms, text)
+        if wav_bytes is None:
+            return None
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_bytes(wav_bytes)
+        return base64.b64encode(wav_bytes).decode("utf-8"), "audio/wav"
+
     if not _google_tts_available or _google_client is None:
         return None
 
@@ -94,7 +150,7 @@ async def synthesize_speech(text: str, language: str = "he-IL") -> str | None:
     if cache_path.exists():
         logger.debug(f"TTS cache hit for: {text[:20]}...")
         audio_content = cache_path.read_bytes()
-        return base64.b64encode(audio_content).decode("utf-8")
+        return base64.b64encode(audio_content).decode("utf-8"), "audio/mp3"
 
     try:
         from google.cloud import texttospeech
@@ -123,7 +179,7 @@ async def synthesize_speech(text: str, language: str = "he-IL") -> str | None:
         cache_path.write_bytes(response.audio_content)
         logger.debug(f"TTS synthesized and cached: {text[:20]}...")
 
-        return base64.b64encode(response.audio_content).decode("utf-8")
+        return base64.b64encode(response.audio_content).decode("utf-8"), "audio/mp3"
 
     except Exception as e:
         logger.error(f"TTS synthesis failed: {e}")

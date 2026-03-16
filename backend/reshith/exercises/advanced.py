@@ -42,6 +42,7 @@ class ComparativeExercise:
     transliteration: str
     english_answer: str
     components: dict[str, str]
+    lesson: int = 1
 
 
 @dataclass
@@ -64,6 +65,7 @@ class RelativeClauseExercise:
     transliteration: str
     english_answer: str
     components: dict[str, str]
+    lesson: int = 1
 
 
 def load_adjectives(max_lesson: int) -> list[Adjective]:
@@ -383,6 +385,7 @@ async def generate_comparative_exercise(
             "compared_noun": noun2.hebrew,
             "preposition": "מִן",
         },
+        lesson=max(adj.lesson, noun1.lesson, noun2.lesson),
     )
 
 
@@ -421,6 +424,7 @@ async def generate_relative_clause_exercise(
             "relative_pronoun": "אֲשֶׁר",
             "adjective": adj.hebrew,
         },
+        lesson=max(noun.lesson, adj.lesson),
     )
 
 

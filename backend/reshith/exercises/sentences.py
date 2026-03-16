@@ -286,6 +286,7 @@ class SentenceExercise:
     transliteration: str
     english: str
     components: dict[str, str]
+    lesson: int = 1
 
 
 async def generate_where_is_x_exercise(
@@ -359,6 +360,7 @@ async def generate_where_is_x_exercise(
             "preposition": prep.hebrew,
             "adverb": where_adv.hebrew,
         },
+        lesson=max(noun1.lesson, noun2.lesson),
     )
 
 
@@ -417,6 +419,7 @@ async def generate_x_is_prep_y_exercise(
             "noun2": noun2.hebrew,
             "preposition": prep.hebrew,
         },
+        lesson=max(noun1.lesson, noun2.lesson),
     )
 
 
@@ -502,6 +505,7 @@ async def generate_x_and_y_are_prep_z_exercise(
             "preposition": prep.hebrew,
             "conjunction": and_conj.hebrew,
         },
+        lesson=max(noun1.lesson, noun2.lesson, noun3.lesson),
     )
 
 

@@ -11,7 +11,9 @@ import strawberry
 class LanguageCode(enum.Enum):
     BIBLICAL_HEBREW = "hbo"
     LATIN = "lat"
+    ECCLESIASTICAL_LATIN = "ecl"
     ANCIENT_GREEK = "grc"
+    NT_GREEK = "gnt"
     SANSKRIT = "san"
     PALI = "pli"
     BUDDHIST_HYBRID_SANSKRIT = "bhs"
@@ -23,8 +25,21 @@ class LanguageCode(enum.Enum):
 class User:
     id: UUID
     email: str
+    username: str
     display_name: str
     created_at: datetime
+
+
+@strawberry.type
+class AuthPayload:
+    token: str
+    user: User
+
+
+@strawberry.input
+class LoginInput:
+    username: str
+    password: str
 
 
 @strawberry.type
@@ -146,6 +161,7 @@ class PrepositionExercise:
     direction: ExerciseDirection
     prompt: str
     answer: str
+    lesson: int
 
 
 @strawberry.type
@@ -169,6 +185,7 @@ class GradeExerciseInput:
 class SpeechSynthesisResult:
     available: bool
     audio_base64: str | None
+    mime_type: str
     text: str
     language: str
 
@@ -194,6 +211,7 @@ class ArticleExercise:
     prompt_transliteration: str
     answer: str
     answer_transliteration: str
+    lesson: int
 
 
 @strawberry.input
@@ -220,6 +238,7 @@ class SentenceExercise:
     transliteration: str
     english: str
     components: str
+    lesson: int
 
 
 @strawberry.enum
@@ -237,6 +256,7 @@ class TranslationExercise:
     hebrew_answer: str
     transliteration_answer: str
     components: str
+    lesson: int
 
 
 @strawberry.type
@@ -273,6 +293,7 @@ class VerbalExercise:
     transliteration: str
     english_answer: str
     components: str
+    lesson: int
 
 
 @strawberry.type
@@ -304,6 +325,7 @@ class ComparativeExercise:
     transliteration: str
     english_answer: str
     components: str
+    lesson: int
 
 
 @strawberry.type
@@ -335,6 +357,7 @@ class RelativeClauseExercise:
     transliteration: str
     english_answer: str
     components: str
+    lesson: int
 
 
 @strawberry.type
@@ -351,3 +374,231 @@ class GradeRelativeClauseInput:
     exercise_id: str
     submitted: str
     expected_english: str
+
+
+# ── Latin exercise types ──────────────────────────────────────────────────────
+
+@strawberry.enum
+class LatinVariant(enum.Enum):
+    CLASSICAL = "lat"
+    ECCLESIASTICAL = "ecl"
+
+
+@strawberry.type
+class LatinDeclensionExercise:
+    id: str
+    dict_form: str
+    definition: str
+    case: str
+    number: str
+    prompt: str
+    answer: str
+    lesson: int
+    variant: LatinVariant
+
+
+@strawberry.type
+class LatinConjugationExercise:
+    id: str
+    dict_form: str
+    definition: str
+    person: str
+    number: str
+    prompt: str
+    answer: str
+    lesson: int
+    variant: LatinVariant
+
+
+@strawberry.type
+class LatinGradeResult:
+    correct: bool
+    expected: str
+    submitted: str
+    feedback: str
+
+
+@strawberry.input
+class GradeLatinExerciseInput:
+    exercise_id: str
+    submitted: str
+    expected: str
+
+
+@strawberry.type
+class InterlinearWord:
+    """A single word token in an interlinear text, source-agnostic."""
+    ref: str                  # Source-specific position key (e.g. "Gen.1.1#01=L")
+    position: int             # Token index within the verse
+    text_type: str            # Text variant marker (L/Q/K for Hebrew, etc.)
+    native: str               # Text in native script
+    transliteration: str      # Romanised form
+    gloss: str                # Word-level translation/gloss
+    morphology: str           # Morphological code (source-specific)
+    lemma_id: str             # Root/lemma identifier (Strong's for Hebrew, etc.)
+    lemma: str                # Lemma in native script
+    lemma_definition: str     # Lemma gloss/definition
+
+
+@strawberry.type
+class InterlinearVerse:
+    """A single verse with its interlinear word tokens."""
+    book: str
+    chapter: int
+    verse: int
+    words: list[InterlinearWord]
+
+
+@strawberry.type
+class TahotWord:
+    ref: str
+    book: str
+    chapter: int
+    verse: int
+    token: int
+    text_type: str
+    hebrew: str
+    transliteration: str
+    translation: str
+    dstrongs: str
+    grammar: str
+    root_strongs: str
+    expanded: str
+
+
+@strawberry.type
+class StrongsEntry:
+    """A TBESH (Hebrew) or TBESG (Greek) lexicon entry keyed by Extended Strong's ID."""
+    strongs_id: str        # dStrong ID, e.g. H0776G
+    e_strongs_id: str      # eStrong#, e.g. H0776
+    native: str            # Hebrew / Greek form
+    transliteration: str
+    morph: str
+    gloss: str
+    meaning: str           # HTML definition (may include <br>, <b>, <i>)
+
+
+@strawberry.type
+class TahotBookInfo:
+    abbrev: str
+    chapters: int
+
+
+@strawberry.type
+class TahotChapterInfo:
+    chapter: int
+    verse_count: int
+
+
+# ── Vulgate interlinear types ─────────────────────────────────────────────────
+
+@strawberry.type
+class VulgateToken:
+    ref: str
+    book: str
+    chapter: int
+    verse: int
+    token: int
+    form: str
+    lemma: str
+    pos: str
+    morphology: str
+    relation: str
+
+
+@strawberry.type
+class VulgateBookInfo:
+    abbrev: str
+    name: str
+    chapters: int
+
+
+@strawberry.type
+class VulgateChapterInfo:
+    chapter: int
+    verse_count: int
+
+
+@strawberry.type
+class VulgateVerseTranslation:
+    verse: int
+    text: str
+
+
+# ── Greek exercise types ──────────────────────────────────────────────────────
+
+@strawberry.enum
+class GreekVariant(enum.Enum):
+    ANCIENT = "grc"
+    KOINE = "gnt"
+
+
+@strawberry.type
+class GreekDeclensionExercise:
+    id: str
+    dict_form: str
+    definition: str
+    case: str
+    number: str
+    prompt: str
+    answer: str
+    lesson: int
+    variant: GreekVariant
+
+
+@strawberry.type
+class GreekConjugationExercise:
+    id: str
+    dict_form: str
+    definition: str
+    person: str
+    number: str
+    prompt: str
+    answer: str
+    lesson: int
+    variant: GreekVariant
+
+
+@strawberry.type
+class GreekGradeResult:
+    correct: bool
+    expected: str
+    submitted: str
+    feedback: str
+
+
+@strawberry.input
+class GradeGreekExerciseInput:
+    exercise_id: str
+    submitted: str
+    expected: str
+
+
+# ── Sanskrit exercise types ───────────────────────────────────────────────────
+
+@strawberry.type
+class SanskritDeclensionExercise:
+    id: str
+    dict_form: str
+    devanagari: str
+    definition: str
+    case: str
+    number: str
+    prompt: str
+    answer: str
+    lesson: int
+
+
+@strawberry.type
+class SanskritGradeResult:
+    correct: bool
+    expected: str
+    submitted: str
+    feedback: str
+
+
+@strawberry.input
+class GradeSanskritExerciseInput:
+    exercise_id: str
+    submitted: str
+    expected: str

@@ -31,6 +31,7 @@ class TranslationExercise:
     hebrew_answer: str
     transliteration_answer: str
     components: dict[str, str]
+    lesson: int = 1
 
 
 @dataclass
@@ -108,6 +109,7 @@ async def generate_where_question_exercise(
             "noun2": noun2.hebrew,
             "conjunction": and_conj.hebrew,
         }
+        lesson = max(noun1.lesson, noun2.lesson)
     else:
         noun = random.choice(nouns)
         noun_eng = _get_english_noun(noun)
@@ -122,6 +124,7 @@ async def generate_where_question_exercise(
             "adverb": where_adv.hebrew,
             "noun1": noun.hebrew,
         }
+        lesson = noun.lesson
 
     return TranslationExercise(
         pattern="where_question",
@@ -129,6 +132,7 @@ async def generate_where_question_exercise(
         hebrew_answer=hebrew,
         transliteration_answer=translit,
         components=components,
+        lesson=lesson,
     )
 
 
@@ -196,6 +200,7 @@ async def generate_simple_statement_exercise(
             "noun2": noun2.hebrew,
             "preposition": prep.hebrew,
         },
+        lesson=max(noun1.lesson, noun2.lesson),
     )
 
 
@@ -285,6 +290,7 @@ async def generate_conjunction_exercise(
             "preposition": prep.hebrew,
             "conjunction": and_conj.hebrew,
         },
+        lesson=max(noun1.lesson, noun2.lesson, noun3.lesson),
     )
 
 

@@ -1,5 +1,6 @@
 """GraphQL resolvers."""
 
+import re
 from datetime import datetime
 from uuid import UUID
 
@@ -10,6 +11,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from reshith.api.types import (
     ArticleDirection,
     ArticleExercise,
+    AuthPayload,
+    InterlinearVerse,
+    InterlinearWord,
+    TahotBookInfo,
+    TahotChapterInfo,
+    TahotWord as TahotWordGQL,
+    VulgateBookInfo,
+    VulgateChapterInfo,
+    VulgateToken as VulgateTokenGQL,
+    VulgateVerseTranslation,
     Card,
     CardWithSRS,
     ComparativeExercise,
@@ -28,7 +39,21 @@ from reshith.api.types import (
     GradeTranslationInput,
     GradeVerbalInput,
     LanguageCode,
+    GreekConjugationExercise,
+    GreekDeclensionExercise,
+    GreekGradeResult,
+    GreekVariant,
+    GradeGreekExerciseInput,
+    GradeSanskritExerciseInput,
+    SanskritDeclensionExercise,
+    SanskritGradeResult,
+    LatinConjugationExercise,
+    LatinDeclensionExercise,
+    LatinGradeResult,
+    LatinVariant,
+    GradeLatinExerciseInput,
     LexiconEntry,
+    LoginInput,
     PrepositionExercise,
     PrepositionType,
     RelativeClauseExercise,
@@ -44,9 +69,11 @@ from reshith.api.types import (
     TranslationGradeResult,
     TranslationHelp,
     TranslationPattern,
+    User,
     VerbalExercise,
     VerbalGradeResult,
     VerbalPattern,
+    StrongsEntry as StrongsEntryGQL,
 )
 from reshith.db import models
 from reshith.exercises import advanced as advanced_exercises
@@ -55,7 +82,17 @@ from reshith.exercises import prepositions as prep_exercises
 from reshith.exercises import sentences as sentence_exercises
 from reshith.exercises import translation as translation_exercises
 from reshith.exercises import verbal as verbal_exercises
+from reshith.exercises.latin import declension as latin_declension
+from reshith.exercises.latin import conjugation as latin_conjugation
+from reshith.exercises.greek import declension as greek_declension
+from reshith.exercises.greek import conjugation as greek_conjugation
+from reshith.exercises.sanskrit import declension as sanskrit_declension
+from reshith.services import tahot as tahot_svc
+from reshith.services import tbesh as tbesh_svc
+from reshith.services import drc as drc_svc
+from reshith.services import vulgate as vulgate_svc
 from reshith.services import llm, srs, tts
+from reshith.services.auth import create_access_token, verify_password
 
 
 def db_language_to_gql(db_lang: models.LanguageCode) -> LanguageCode:
@@ -453,6 +490,7 @@ async def resolve_preposition_exercises(
                 direction=direction,
                 prompt=exercise.prompt,
                 answer=exercise.answer,
+                lesson=phrase.lesson,
             )
         )
 
@@ -519,19 +557,32 @@ async def mutate_synthesize_speech(
     If Google Cloud TTS is not available, returns available=False so the
     frontend can fall back to the Web Speech API.
     """
-    if not tts.is_available():
+    # Latin always routes to MMS-TTS regardless of Google TTS availability
+    if language != "la" and not tts.is_available():
         return SpeechSynthesisResult(
             available=False,
             audio_base64=None,
+            mime_type="audio/mp3",
             text=text,
             language=language,
         )
 
-    audio_base64 = await tts.synthesize_speech(text, language)
+    result = await tts.synthesize_speech(text, language)
 
+    if result is None:
+        return SpeechSynthesisResult(
+            available=False,
+            audio_base64=None,
+            mime_type="audio/mp3",
+            text=text,
+            language=language,
+        )
+
+    audio_base64, mime_type = result
     return SpeechSynthesisResult(
-        available=audio_base64 is not None,
+        available=True,
         audio_base64=audio_base64,
+        mime_type=mime_type,
         text=text,
         language=language,
     )
@@ -574,6 +625,7 @@ async def resolve_article_exercises(
                 prompt_transliteration=exercise.prompt_transliteration,
                 answer=exercise.answer,
                 answer_transliteration=exercise.answer_transliteration,
+                lesson=phrase.noun.lesson,
             )
         )
 
@@ -648,6 +700,7 @@ async def resolve_sentence_exercises(
                 transliteration=ex.transliteration,
                 english=ex.english,
                 components=json.dumps(ex.components),
+                lesson=ex.lesson,
             )
         )
 
@@ -897,4 +950,418 @@ async def mutate_grade_relative_clause_exercise(
         expected=result.expected,
         submitted=result.submitted,
         feedback=result.feedback,
+    )
+
+
+# ── Latin exercise resolvers ──────────────────────────────────────────────────
+
+async def resolve_latin_declension_exercises(
+    info: strawberry.Info,
+    count: int = 10,
+    max_lesson: int = 2,
+    variant: LatinVariant = LatinVariant.CLASSICAL,
+) -> list[LatinDeclensionExercise]:
+    exercises = latin_declension.generate_exercises(max_lesson=max_lesson, count=count, variant=variant.value)
+    return [
+        LatinDeclensionExercise(
+            id=ex.id,
+            dict_form=ex.dict_form,
+            definition=ex.definition,
+            case=ex.case,
+            number=ex.number,
+            prompt=ex.prompt,
+            answer=ex.answer,
+            lesson=ex.lesson,
+            variant=variant,
+        )
+        for ex in exercises
+    ]
+
+
+async def resolve_latin_conjugation_exercises(
+    info: strawberry.Info,
+    count: int = 10,
+    max_lesson: int = 2,
+    variant: LatinVariant = LatinVariant.CLASSICAL,
+) -> list[LatinConjugationExercise]:
+    exercises = latin_conjugation.generate_exercises(max_lesson=max_lesson, count=count, variant=variant.value)
+    return [
+        LatinConjugationExercise(
+            id=ex.id,
+            dict_form=ex.dict_form,
+            definition=ex.definition,
+            person=ex.person,
+            number=ex.number,
+            prompt=ex.prompt,
+            answer=ex.answer,
+            lesson=ex.lesson,
+            variant=variant,
+        )
+        for ex in exercises
+    ]
+
+
+async def mutate_grade_latin_declension_exercise(
+    info: strawberry.Info,
+    input: GradeLatinExerciseInput,
+) -> LatinGradeResult:
+    correct, feedback = latin_declension.grade_exercise(
+        submitted=input.submitted,
+        expected=input.expected,
+    )
+    return LatinGradeResult(
+        correct=correct,
+        expected=input.expected,
+        submitted=input.submitted,
+        feedback=feedback,
+    )
+
+
+async def mutate_grade_latin_conjugation_exercise(
+    info: strawberry.Info,
+    input: GradeLatinExerciseInput,
+) -> LatinGradeResult:
+    correct, feedback = latin_conjugation.grade_exercise(
+        submitted=input.submitted,
+        expected=input.expected,
+    )
+    return LatinGradeResult(
+        correct=correct,
+        expected=input.expected,
+        submitted=input.submitted,
+        feedback=feedback,
+    )
+
+
+# ── Greek exercise resolvers ──────────────────────────────────────────────────
+
+async def resolve_greek_declension_exercises(
+    info: strawberry.Info,
+    count: int = 10,
+    max_lesson: int = 2,
+    variant: GreekVariant = GreekVariant.ANCIENT,
+) -> list[GreekDeclensionExercise]:
+    exercises = greek_declension.generate_exercises(
+        max_lesson=max_lesson, count=count, variant=variant.value
+    )
+    return [
+        GreekDeclensionExercise(
+            id=ex.id,
+            dict_form=ex.dict_form,
+            definition=ex.definition,
+            case=ex.case,
+            number=ex.number,
+            prompt=ex.prompt,
+            answer=ex.answer,
+            lesson=ex.lesson,
+            variant=variant,
+        )
+        for ex in exercises
+    ]
+
+
+async def resolve_greek_conjugation_exercises(
+    info: strawberry.Info,
+    count: int = 10,
+    max_lesson: int = 2,
+    variant: GreekVariant = GreekVariant.ANCIENT,
+) -> list[GreekConjugationExercise]:
+    exercises = greek_conjugation.generate_exercises(
+        max_lesson=max_lesson, count=count, variant=variant.value
+    )
+    return [
+        GreekConjugationExercise(
+            id=ex.id,
+            dict_form=ex.dict_form,
+            definition=ex.definition,
+            person=ex.person,
+            number=ex.number,
+            prompt=ex.prompt,
+            answer=ex.answer,
+            lesson=ex.lesson,
+            variant=variant,
+        )
+        for ex in exercises
+    ]
+
+
+async def mutate_grade_greek_exercise(
+    info: strawberry.Info,
+    input: GradeGreekExerciseInput,
+) -> GreekGradeResult:
+    correct, feedback = greek_declension.grade_exercise(
+        submitted=input.submitted,
+        expected=input.expected,
+    )
+    return GreekGradeResult(
+        correct=correct,
+        expected=input.expected,
+        submitted=input.submitted,
+        feedback=feedback,
+    )
+
+
+# ── Sanskrit exercise resolvers ───────────────────────────────────────────────
+
+async def resolve_sanskrit_declension_exercises(
+    info: strawberry.Info,
+    count: int = 10,
+    max_lesson: int = 2,
+) -> list[SanskritDeclensionExercise]:
+    exercises = sanskrit_declension.generate_exercises(max_lesson=max_lesson, count=count)
+    return [
+        SanskritDeclensionExercise(
+            id=ex.id,
+            dict_form=ex.dict_form,
+            devanagari=ex.devanagari,
+            definition=ex.definition,
+            case=ex.case,
+            number=ex.number,
+            prompt=ex.prompt,
+            answer=ex.answer,
+            lesson=ex.lesson,
+        )
+        for ex in exercises
+    ]
+
+
+async def mutate_grade_sanskrit_exercise(
+    info: strawberry.Info,
+    input: GradeSanskritExerciseInput,
+) -> SanskritGradeResult:
+    correct, feedback = sanskrit_declension.grade_exercise(
+        submitted=input.submitted,
+        expected=input.expected,
+    )
+    return SanskritGradeResult(
+        correct=correct,
+        expected=input.expected,
+        submitted=input.submitted,
+        feedback=feedback,
+    )
+
+
+def _tahot_word_to_gql(w: tahot_svc.TahotWord) -> TahotWordGQL:
+    return TahotWordGQL(
+        ref=w.ref,
+        book=w.book,
+        chapter=w.chapter,
+        verse=w.verse,
+        token=w.token,
+        text_type=w.text_type,
+        hebrew=w.hebrew,
+        transliteration=w.transliteration,
+        translation=w.translation,
+        dstrongs=w.dstrongs,
+        grammar=w.grammar,
+        root_strongs=w.root_strongs,
+        expanded=w.expanded,
+    )
+
+
+def resolve_tahot_books() -> list[TahotBookInfo]:
+    return [TahotBookInfo(**b) for b in tahot_svc.get_books()]
+
+
+def resolve_tahot_chapter_verses(book: str) -> list[TahotChapterInfo]:
+    counts = tahot_svc.get_chapter_verse_counts(book)
+    return [
+        TahotChapterInfo(chapter=ch, verse_count=vc)
+        for ch, vc in sorted(counts.items())
+    ]
+
+
+def resolve_tahot_verse(book: str, chapter: int, verse: int) -> list[TahotWordGQL]:
+    words = tahot_svc.get_verse(book, chapter, verse)
+    return [_tahot_word_to_gql(w) for w in words]
+
+
+def resolve_tahot_chapter(book: str, chapter: int) -> list[TahotWordGQL]:
+    verses = tahot_svc.get_chapter(book, chapter)
+    words = []
+    for v in sorted(verses.keys()):
+        for w in verses[v]:
+            words.append(_tahot_word_to_gql(w))
+    return words
+
+
+def resolve_tahot_search(query: str, limit: int = 50) -> list[TahotWordGQL]:
+    words = tahot_svc.search_words(query, limit)
+    return [_tahot_word_to_gql(w) for w in words]
+
+
+# ── Generic interlinear resolvers ─────────────────────────────────────────────
+
+_EXPANDED_RE = re.compile(r'\{([^={}]+)=([^={}]+)=([^}]+)\}')
+
+
+def _parse_expanded(expanded: str) -> tuple[str, str, str]:
+    """Extract (lemma_id, lemma, definition) from an expanded Strong's tag.
+
+    The expanded column contains entries like '{H7225G=רֵאשִׁית=beginning}'.
+    We return the first root match (curly-braced entry with three parts).
+    """
+    m = _EXPANDED_RE.search(expanded)
+    if m:
+        return m.group(1), m.group(2), m.group(3)
+    return "", "", ""
+
+
+def _tahot_word_to_interlinear(w: tahot_svc.TahotWord) -> InterlinearWord:
+    lemma_id, lemma, lemma_def = _parse_expanded(w.expanded)
+    return InterlinearWord(
+        ref=w.ref,
+        position=w.token,
+        text_type=w.text_type,
+        native=w.hebrew,
+        transliteration=w.transliteration,
+        gloss=w.translation,
+        morphology=w.grammar,
+        lemma_id=lemma_id or w.root_strongs,
+        lemma=lemma,
+        lemma_definition=lemma_def,
+    )
+
+
+def resolve_interlinear_passage(
+    source: str,
+    book: str,
+    start_chapter: int,
+    start_verse: int,
+    end_chapter: int | None,
+    end_verse: int | None,
+) -> list[InterlinearVerse]:
+    """Return an interlinear passage for a range of verses.
+
+    Currently supports source="TAHOT" (Hebrew OT).  Additional corpora can be
+    wired up here as they are added.
+
+    If end_chapter/end_verse are omitted the range extends to the end of
+    start_chapter.
+    """
+    source_upper = source.upper()
+
+    if source_upper == "TAHOT":
+        if end_chapter is None:
+            end_chapter = start_chapter
+        if end_verse is None:
+            counts = tahot_svc.get_chapter_verse_counts(book)
+            end_verse = counts.get(end_chapter, start_verse)
+
+        verse_map = tahot_svc.get_range(book, start_chapter, start_verse, end_chapter, end_verse)
+        return [
+            InterlinearVerse(
+                book=book,
+                chapter=ch,
+                verse=v,
+                words=[_tahot_word_to_interlinear(w) for w in words],
+            )
+            for (ch, v), words in sorted(verse_map.items())
+        ]
+
+    return []
+
+
+def _db_user_to_gql(db_user: models.User) -> User:
+    return User(
+        id=db_user.id,
+        email=db_user.email,
+        username=db_user.username,
+        display_name=db_user.display_name,
+        created_at=db_user.created_at,
+    )
+
+
+async def resolve_me(info: strawberry.Info) -> User | None:
+    user_id = info.context.get("current_user_id")
+    if user_id is None:
+        return None
+    session: AsyncSession = info.context["db"]
+    result = await session.execute(select(models.User).where(models.User.id == user_id))
+    db_user = result.scalar_one_or_none()
+    return _db_user_to_gql(db_user) if db_user else None
+
+
+async def mutate_login(info: strawberry.Info, input: LoginInput) -> AuthPayload | None:
+    session: AsyncSession = info.context["db"]
+    result = await session.execute(
+        select(models.User).where(models.User.username == input.username)
+    )
+    db_user = result.scalar_one_or_none()
+    if db_user is None or not verify_password(input.password, db_user.password_hash):
+        return None
+    token = create_access_token(db_user.id)
+    return AuthPayload(token=token, user=_db_user_to_gql(db_user))
+
+
+# ── Vulgate interlinear resolvers ─────────────────────────────────────────────
+
+def _vulgate_token_to_gql(t: vulgate_svc.VulgateToken) -> VulgateTokenGQL:
+    return VulgateTokenGQL(
+        ref=t.ref,
+        book=t.book,
+        chapter=t.chapter,
+        verse=t.verse,
+        token=t.token,
+        form=t.form,
+        lemma=t.lemma,
+        pos=t.pos,
+        morphology=t.morphology,
+        relation=t.relation,
+    )
+
+
+def resolve_vulgate_books() -> list[VulgateBookInfo]:
+    return [
+        VulgateBookInfo(abbrev=b["abbrev"], name=b["name"], chapters=b["chapters"])
+        for b in vulgate_svc.get_books()
+    ]
+
+
+def resolve_vulgate_chapter_verses(book: str) -> list[VulgateChapterInfo]:
+    counts = vulgate_svc.get_chapter_verse_counts(book)
+    return [
+        VulgateChapterInfo(chapter=ch, verse_count=vc)
+        for ch, vc in sorted(counts.items())
+    ]
+
+
+def resolve_vulgate_verse(book: str, chapter: int, verse: int) -> list[VulgateTokenGQL]:
+    tokens = vulgate_svc.get_verse(book, chapter, verse)
+    return [_vulgate_token_to_gql(t) for t in tokens]
+
+
+def resolve_vulgate_chapter(book: str, chapter: int) -> list[VulgateTokenGQL]:
+    verses = vulgate_svc.get_chapter(book, chapter)
+    tokens = []
+    for v in sorted(verses.keys()):
+        for t in verses[v]:
+            tokens.append(_vulgate_token_to_gql(t))
+    return tokens
+
+
+def resolve_vulgate_search(query: str, limit: int = 50) -> list[VulgateTokenGQL]:
+    tokens = vulgate_svc.search(query, limit)
+    return [_vulgate_token_to_gql(t) for t in tokens]
+
+
+def resolve_vulgate_chapter_translations(book: str, chapter: int) -> list[VulgateVerseTranslation]:
+    verses = drc_svc.get_chapter(book, chapter)
+    return [VulgateVerseTranslation(verse=v, text=text) for v, text in sorted(verses.items())]
+
+
+# ── TBESH / TBESG lexicon ──────────────────────────────────────────────────────
+
+def resolve_strongs_entry(strongs_id: str) -> StrongsEntryGQL | None:
+    entry = tbesh_svc.get_entry(strongs_id)
+    if not entry:
+        return None
+    return StrongsEntryGQL(
+        strongs_id=entry.strongs_id,
+        e_strongs_id=entry.e_strongs_id,
+        native=entry.native,
+        transliteration=entry.transliteration,
+        morph=entry.morph,
+        gloss=entry.gloss,
+        meaning=entry.meaning,
     )
