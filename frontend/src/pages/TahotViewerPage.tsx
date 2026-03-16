@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH } from '@/graphql/operations'
 import { hebrewToLambdin } from '@/utils/hebrewTranslit'
 import { SpeakButton } from '@/components/SpeakButton'
+import { CommentaryFlow, CommentaryFlowItem } from '@/components/CommentaryFlow'
 
 interface TahotBookInfo {
   abbrev: string
@@ -84,6 +85,26 @@ const BOOK_NAMES: Record<string, string> = {
 
 const CANTILLATION_RE = /[\u0591-\u05AF\u05BD]/g
 const VOWELS_RE = /[\u05B0-\u05BB\u05BC\u05C1\u05C2\u05C7]/g
+
+// Mechon Mamre cantorial recordings — https://mechon-mamre.org/p/pt/ptmp3prq.htm
+// Maps TAHOT book abbreviation → Mechon Mamre book code.
+const MECHON_MAMRE_CODES: Record<string, string> = {
+  Gen: 't01', Exo: 't02', Lev: 't03', Num: 't04', Deu: 't05',
+  Jos: 't06', Jdg: 't07', '1Sa': 't08a', '2Sa': 't08b',
+  '1Ki': 't09a', '2Ki': 't09b',
+  '1Ch': 't25a', '2Ch': 't25b', Ezr: 't35a', Neh: 't35b',
+  Est: 't33', Job: 't27', Psa: 't26', Pro: 't28', Ecc: 't31',
+  Sng: 't30', Isa: 't10', Jer: 't11', Lam: 't32', Ezk: 't12',
+  Dan: 't34', Hos: 't13', Jol: 't14', Amo: 't15', Oba: 't16',
+  Jon: 't17', Mic: 't18', Nah: 't19', Hab: 't20', Zep: 't21',
+  Hag: 't22', Zec: 't23', Mal: 't24',
+}
+
+function getMechonMamreUrl(book: string, chapter: number): string | null {
+  const code = MECHON_MAMRE_CODES[book]
+  if (!code) return null
+  return `https://mechon-mamre.org/mp3/${code}${String(chapter).padStart(2, '0')}.mp3`
+}
 
 // TAHOT abbreviation → filename in /data/hebrew/rashi/ (no .json)
 // Chronicles intentionally absent — Rashi did not comment on them.
@@ -363,54 +384,6 @@ function VerseDisplay({
   )
 }
 
-// ── Rashi flow layout ─────────────────────────────────────────────────────────
-// Walk all text nodes in el, binary-searching within any node that straddles
-// maxHeight (measured relative to el's top via getBoundingClientRect, which is
-// scroll-safe because we subtract el's own top).  Returns a Range whose start
-// is the word boundary just past maxHeight, or null if everything fits.
-function findSplitRange(el: HTMLElement, maxHeight: number): Range | null {
-  const elTop = el.getBoundingClientRect().top
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
-
-  const probe = document.createRange()
-
-  while (walker.nextNode()) {
-    const node = walker.currentNode as Text
-    const len = node.textContent?.length ?? 0
-    if (len === 0) continue
-
-    // Check if the END of this text node is still above the split line.
-    // Use a non-collapsed range (last char) so getBoundingClientRect() works.
-    probe.setStart(node, len - 1)
-    probe.setEnd(node, len)
-    const endY = probe.getBoundingClientRect().bottom - elTop
-    if (endY < maxHeight) continue   // node is entirely above — keep going
-
-    // This node straddles maxHeight.  Binary-search for the first character
-    // whose rendered top is >= maxHeight.
-    let lo = 0, hi = len
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1
-      probe.setStart(node, mid)
-      probe.setEnd(node, Math.min(mid + 1, len))  // non-collapsed
-      const midY = probe.getBoundingClientRect().top - elTop
-      if (midY < maxHeight) lo = mid + 1
-      else hi = mid
-    }
-
-    const text = node.textContent ?? ''
-
-    // Walk back to the previous word boundary so we don't cut mid-word.
-    let offset = lo
-    while (offset > 0 && text[offset - 1] !== ' ') offset--
-    if (offset === 0) offset = lo   // no space found — split at char boundary
-
-    const split = document.createRange()
-    split.setStart(node, offset)
-    return split
-  }
-  return null   // all content fits
-}
 
 interface RashiFlowProps {
   verses: InterlinearVerse[]
@@ -430,158 +403,46 @@ function RashiFlowLayout({
   verses, rashiData, rashiLoading, selectedChapter, selectedBook,
   showBreaks, showTranslit, showTranslation, showCantillation, showVowels, showVariants,
 }: RashiFlowProps) {
-  const verseColRef     = useRef<HTMLDivElement>(null)
-  const rashiMeasureRef = useRef<HTMLDivElement>(null)
-  const [verseColHeight, setVerseColHeight] = useState(0)
-  const [split, setSplit] = useState<{ before: string; after: string } | null>(null)
-
-  // Build one HTML string from all available Rashi paragraphs.
-  const fullHtml = useMemo(() => {
-    if (!rashiData) return ''
-    return verses.flatMap((v) => {
-      const text = rashiData[String(selectedChapter)]?.[String(v.verse)]
-      if (!text) return []
-      return [
-        `<p class="mb-3"><span style="font-size:10px;font-weight:700;color:#d97706;` +
-        `margin-left:2px;vertical-align:super;line-height:1">${v.verse}</span>${text}</p>`,
-      ]
-    }).join('')
-  }, [verses, rashiData, selectedChapter])
-
-  // Recompute the split whenever the verse column height or Rashi HTML changes.
-  const computeSplit = useCallback(() => {
-    const el = rashiMeasureRef.current
-    if (!el || verseColHeight <= 0 || !fullHtml) return
-
-    const totalHeight = el.getBoundingClientRect().height
-    if (totalHeight <= verseColHeight) {
-      setSplit({ before: fullHtml, after: '' })
-      return
-    }
-
-    const splitRange = findSplitRange(el, verseColHeight)
-    if (!splitRange) {
-      setSplit({ before: fullHtml, after: '' })
-      return
-    }
-
-    const beforeRange = document.createRange()
-    beforeRange.selectNodeContents(el)
-    beforeRange.setEnd(splitRange.startContainer, splitRange.startOffset)
-
-    const afterRange = document.createRange()
-    afterRange.selectNodeContents(el)
-    afterRange.setStart(splitRange.startContainer, splitRange.startOffset)
-
-    const tmp = document.createElement('div')
-    tmp.appendChild(beforeRange.cloneContents())
-    const before = tmp.innerHTML
-    tmp.innerHTML = ''
-    tmp.appendChild(afterRange.cloneContents())
-    const after = tmp.innerHTML
-
-    setSplit({ before, after })
-  }, [verseColHeight, fullHtml])
-
-  // Observe verse column height.
-  useEffect(() => {
-    const el = verseColRef.current
-    if (!el) return
-    const ro = new ResizeObserver(([e]) => setVerseColHeight(e.contentRect.height))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  // Observe measurement div width (fires on window resize → invalidate split).
-  useEffect(() => {
-    const el = rashiMeasureRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setSplit(null))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [fullHtml])   // re-register when html changes (new chapter/book)
-
-  // Recompute after layout whenever split is invalidated.
-  useEffect(() => {
-    if (split !== null) return
-    const id = requestAnimationFrame(computeSplit)
-    return () => cancelAnimationFrame(id)
-  }, [split, computeSplit])
-
-  // Invalidate split when content or verse height changes.
-  useEffect(() => { setSplit(null) }, [fullHtml, verseColHeight])
-
-  const rashiLabel = (
-    <div className="text-xs font-semibold text-amber-700 tracking-wide mb-2">רש״י</div>
-  )
-
   return (
-    <>
-      <div className="grid gap-7" style={{ gridTemplateColumns: '56fr 44fr', alignItems: 'start' }}>
-        {/* Left: all verses */}
-        <div ref={verseColRef} className="space-y-1 min-w-0">
-          {verses.map((v) => (
-            <VerseDisplay
-              key={v.verse}
-              verse={v.verse}
-              words={v.words}
-              showBreaks={showBreaks}
-              showTranslit={showTranslit}
-              showTranslation={showTranslation}
-              showCantillation={showCantillation}
-              showVowels={showVowels}
-              showVariants={showVariants}
-            />
-          ))}
-        </div>
-
-        {/* Right: Rashi */}
-        <div className="relative min-w-0 font-rashi text-sm leading-relaxed" dir="rtl">
-          {rashiLabel}
-          {rashiLoading && <div className="text-xs text-gray-400">Loading…</div>}
-          {!rashiLoading && !TAHOT_TO_RASHI_FILE[selectedBook] && (
-            <div className="text-xs text-gray-400">No Rashi on this book.</div>
-          )}
-          {!rashiLoading && TAHOT_TO_RASHI_FILE[selectedBook] && !rashiData && (
-            <div className="text-xs text-red-400">Could not load — run fetch_rashi.py first.</div>
-          )}
-          {fullHtml && (
-            <>
-              {/* Measurement div: always rendered at right-column width.
-                  Before split is ready it IS the visible content (one frame).
-                  Once split is computed it moves to position:absolute/visibility:hidden
-                  so it stays in the DOM for the ResizeObserver to watch width changes. */}
-              <div
-                ref={rashiMeasureRef}
-                className="text-gray-800"
-                style={
-                  split
-                    ? { position: 'absolute', top: 0, left: 0, right: 0, visibility: 'hidden', pointerEvents: 'none' }
-                    : undefined
-                }
-                dangerouslySetInnerHTML={{ __html: fullHtml }}
+    <CommentaryFlow>
+      {verses.map((v) => {
+        const rashi = rashiData?.[String(selectedChapter)]?.[String(v.verse)]
+        return (
+          <CommentaryFlowItem
+            key={v.verse}
+            primary={
+              <VerseDisplay
+                verse={v.verse}
+                words={v.words}
+                showBreaks={showBreaks}
+                showTranslit={showTranslit}
+                showTranslation={showTranslation}
+                showCantillation={showCantillation}
+                showVowels={showVowels}
+                showVariants={showVariants}
               />
-              {/* Once split is computed, show only the beside-verse portion */}
-              {split && (
-                <div
-                  className="text-gray-800"
-                  dangerouslySetInnerHTML={{ __html: split.before }}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Overflow: the part of Rashi that extends below the verse column, full width */}
-      {split?.after && (
-        <div
-          className="font-rashi text-sm leading-relaxed text-gray-800 mt-6 pt-4 border-t border-amber-100"
-          dir="rtl"
-          dangerouslySetInnerHTML={{ __html: split.after }}
-        />
-      )}
-    </>
+            }
+            commentary={
+              <>
+                {v.verse === 1 && rashiLoading && (
+                  <div className="text-xs text-gray-400">Loading…</div>
+                )}
+                {v.verse === 1 && !rashiLoading && !TAHOT_TO_RASHI_FILE[selectedBook] && (
+                  <div className="text-xs text-gray-400">No Rashi on this book.</div>
+                )}
+                {v.verse === 1 && !rashiLoading && TAHOT_TO_RASHI_FILE[selectedBook] && !rashiData && (
+                  <div className="text-xs text-red-400">Could not load — run fetch_rashi.py first.</div>
+                )}
+                {rashi && <div dangerouslySetInnerHTML={{ __html: rashi }} />}
+              </>
+            }
+            commentaryDir="rtl"
+            commentaryClassName="font-rashi text-sm leading-relaxed text-gray-800"
+            commentaryPaddingTop="1.25rem"
+          />
+        )
+      })}
+    </CommentaryFlow>
   )
 }
 
@@ -603,6 +464,31 @@ export function TahotViewerPage() {
   const [rashiLayout, setRashiLayout] = useState<'flow' | 'side'>('flow')
   const [rashiData, setRashiData] = useState<Record<string, Record<string, string>> | null>(null)
   const [rashiLoading, setRashiLoading] = useState(false)
+  const [mmIsPlaying, setMmIsPlaying] = useState(false)
+  const mmAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const stopMmAudio = useCallback(() => {
+    mmAudioRef.current?.pause()
+    mmAudioRef.current = null
+    setMmIsPlaying(false)
+  }, [])
+
+  const handleMechonMamreToggle = useCallback(() => {
+    if (mmIsPlaying) { stopMmAudio(); return }
+    const url = getMechonMamreUrl(selectedBook, selectedChapter)
+    if (!url) return
+    const audio = new Audio(url)
+    mmAudioRef.current = audio
+    audio.onended = () => { mmAudioRef.current = null; setMmIsPlaying(false) }
+    audio.onerror = () => { mmAudioRef.current = null; setMmIsPlaying(false) }
+    audio.play().catch(() => { mmAudioRef.current = null; setMmIsPlaying(false) })
+    setMmIsPlaying(true)
+  }, [mmIsPlaying, selectedBook, selectedChapter, stopMmAudio])
+
+  // Stop Mechon Mamre audio when chapter or book changes
+  useEffect(() => { stopMmAudio() }, [selectedBook, selectedChapter]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => stopMmAudio(), []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const searchInputRef = useRef<HTMLInputElement>(null)
   const initialVerseRef = useRef<number | null>(Number(searchParams.get('v')) || null)
   const lastVerseRef = useRef<number | null>(null)
@@ -817,6 +703,30 @@ export function TahotViewerPage() {
               <span className="text-xs text-gray-400">
                 {currentChapterInfo.verseCount} verses
               </span>
+            )}
+
+            {getMechonMamreUrl(selectedBook, selectedChapter) && (
+              <button
+                onClick={handleMechonMamreToggle}
+                className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border transition-colors ${
+                  mmIsPlaying
+                    ? 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700'
+                }`}
+                title={mmIsPlaying ? 'Stop cantorial reading' : 'Play cantorial reading (Mechon Mamre)'}
+              >
+                {mmIsPlaying ? (
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="4" height="12" />
+                    <rect x="14" y="6" width="4" height="12" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                )}
+                cantorial
+              </button>
             )}
 
             <div className="ml-auto flex gap-1.5">
