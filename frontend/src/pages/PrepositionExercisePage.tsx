@@ -30,7 +30,7 @@ export function PrepositionExercisePage() {
   } | null>(null)
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [direction, setDirection] = useState<ExerciseDirection>('HEBREW_TO_ENGLISH')
-  const [maxLesson, setMaxLesson] = useState(1)
+  const [maxLesson, setMaxLesson] = useState(5)
 
   const { data, loading, refetch } = useQuery(GET_PREPOSITION_EXERCISES, {
     variables: {
@@ -161,6 +161,8 @@ export function PrepositionExercisePage() {
             <option value={1}>Lesson 1 only</option>
             <option value={2}>Lessons 1-2</option>
             <option value={3}>Lessons 1-3</option>
+            <option value={4}>Lessons 1-4</option>
+            <option value={5}>Lessons 1-5</option>
           </select>
         </div>
         <div className="flex items-end">
