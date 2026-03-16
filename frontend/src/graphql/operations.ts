@@ -1,5 +1,30 @@
 import { gql } from '@apollo/client'
 
+export const LOGIN = gql`
+  mutation Login($input: LoginInput!) {
+    login(input: $input) {
+      token
+      user {
+        id
+        username
+        email
+        displayName
+      }
+    }
+  }
+`
+
+export const ME = gql`
+  query Me {
+    me {
+      id
+      username
+      email
+      displayName
+    }
+  }
+`
+
 export const GET_DECKS = gql`
   query GetDecks($language: LanguageCode) {
     decks(language: $language) {
@@ -186,6 +211,7 @@ export const SYNTHESIZE_SPEECH = gql`
     synthesizeSpeech(text: $text, language: $language) {
       available
       audioBase64
+      mimeType
       text
       language
     }
@@ -341,6 +367,256 @@ export const GRADE_RELATIVE_CLAUSE_EXERCISE = gql`
       expected
       submitted
       feedback
+    }
+  }
+`
+
+
+export const GET_LATIN_DECLENSION_EXERCISES = gql`
+  query GetLatinDeclensionExercises($count: Int, $maxLesson: Int, $variant: LatinVariant) {
+    latinDeclensionExercises(count: $count, maxLesson: $maxLesson, variant: $variant) {
+      id
+      dictForm
+      definition
+      case
+      number
+      prompt
+      answer
+      lesson
+      variant
+    }
+  }
+`
+
+export const GRADE_LATIN_DECLENSION_EXERCISE = gql`
+  mutation GradeLatinDeclensionExercise($input: GradeLatinExerciseInput!) {
+    gradeLatinDeclensionExercise(input: $input) {
+      correct
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const GET_LATIN_CONJUGATION_EXERCISES = gql`
+  query GetLatinConjugationExercises($count: Int, $maxLesson: Int, $variant: LatinVariant) {
+    latinConjugationExercises(count: $count, maxLesson: $maxLesson, variant: $variant) {
+      id
+      dictForm
+      definition
+      person
+      number
+      prompt
+      answer
+      lesson
+      variant
+    }
+  }
+`
+
+export const GRADE_LATIN_CONJUGATION_EXERCISE = gql`
+  mutation GradeLatinConjugationExercise($input: GradeLatinExerciseInput!) {
+    gradeLatinConjugationExercise(input: $input) {
+      correct
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const TAHOT_BOOKS = gql`
+  query TahotBooks {
+    tahotBooks {
+      abbrev
+      chapters
+    }
+  }
+`
+
+export const TAHOT_CHAPTER_VERSES = gql`
+  query TahotChapterVerses($book: String!) {
+    tahotChapterVerses(book: $book) {
+      chapter
+      verseCount
+    }
+  }
+`
+
+export const TAHOT_VERSE = gql`
+  query TahotVerse($book: String!, $chapter: Int!, $verse: Int!) {
+    tahotVerse(book: $book, chapter: $chapter, verse: $verse) {
+      ref
+      book
+      chapter
+      verse
+      token
+      textType
+      hebrew
+      transliteration
+      translation
+      dstrongs
+      grammar
+      rootStrongs
+      expanded
+    }
+  }
+`
+
+export const TAHOT_CHAPTER = gql`
+  query TahotChapter($book: String!, $chapter: Int!) {
+    tahotChapter(book: $book, chapter: $chapter) {
+      ref
+      verse
+      token
+      textType
+      hebrew
+      transliteration
+      translation
+      dstrongs
+      grammar
+      rootStrongs
+      expanded
+    }
+  }
+`
+
+export const TAHOT_SEARCH = gql`
+  query TahotSearch($query: String!, $limit: Int) {
+    tahotSearch(query: $query, limit: $limit) {
+      ref
+      book
+      chapter
+      verse
+      token
+      textType
+      hebrew
+      transliteration
+      translation
+      dstrongs
+      grammar
+      rootStrongs
+    }
+  }
+`
+
+export const INTERLINEAR_PASSAGE = gql`
+  query InterlinearPassage(
+    $source: String!
+    $book: String!
+    $startChapter: Int!
+    $startVerse: Int!
+    $endChapter: Int
+    $endVerse: Int
+  ) {
+    interlinearPassage(
+      source: $source
+      book: $book
+      startChapter: $startChapter
+      startVerse: $startVerse
+      endChapter: $endChapter
+      endVerse: $endVerse
+    ) {
+      book
+      chapter
+      verse
+      words {
+        ref
+        position
+        textType
+        native
+        transliteration
+        gloss
+        morphology
+        lemmaId
+        lemma
+        lemmaDefinition
+      }
+    }
+  }
+`
+
+export const GET_GREEK_DECLENSION_EXERCISES = gql`
+  query GetGreekDeclensionExercises($count: Int, $maxLesson: Int, $variant: GreekVariant) {
+    greekDeclensionExercises(count: $count, maxLesson: $maxLesson, variant: $variant) {
+      id
+      dictForm
+      definition
+      case
+      number
+      prompt
+      answer
+      lesson
+      variant
+    }
+  }
+`
+
+export const GET_GREEK_CONJUGATION_EXERCISES = gql`
+  query GetGreekConjugationExercises($count: Int, $maxLesson: Int, $variant: GreekVariant) {
+    greekConjugationExercises(count: $count, maxLesson: $maxLesson, variant: $variant) {
+      id
+      dictForm
+      definition
+      person
+      number
+      prompt
+      answer
+      lesson
+      variant
+    }
+  }
+`
+
+export const GRADE_GREEK_EXERCISE = gql`
+  mutation GradeGreekExercise($input: GradeGreekExerciseInput!) {
+    gradeGreekExercise(input: $input) {
+      correct
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const GET_SANSKRIT_DECLENSION_EXERCISES = gql`
+  query GetSanskritDeclensionExercises($count: Int, $maxLesson: Int) {
+    sanskritDeclensionExercises(count: $count, maxLesson: $maxLesson) {
+      id
+      dictForm
+      devanagari
+      definition
+      case
+      number
+      prompt
+      answer
+      lesson
+    }
+  }
+`
+
+export const GRADE_SANSKRIT_EXERCISE = gql`
+  mutation GradeSanskritExercise($input: GradeSanskritExerciseInput!) {
+    gradeSanskritExercise(input: $input) {
+      correct
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const STRONGS_ENTRY = gql`
+  query StrongsEntry($strongsId: String!) {
+    strongsEntry(strongsId: $strongsId) {
+      strongsId
+      eStrongsId
+      native
+      transliteration
+      morph
+      gloss
+      meaning
     }
   }
 `
