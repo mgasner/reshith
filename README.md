@@ -18,13 +18,21 @@ A language learning application for acquiring reading/translation ability in cla
 
 ## Quick Start
 
-The easiest way to run Reshith is with the helper script:
+### 1. Install dependencies
 
 ```bash
-./run.sh
+make dev_install
 ```
 
-This starts both the frontend and backend with hot-reloading. Once running:
+This will install [uv](https://github.com/astral-sh/uv) and [nvm](https://github.com/nvm-sh/nvm) if not already present, then use them to install the correct Node version (defined in `.nvmrc`), frontend npm packages, and backend Python dependencies (including dev tools).
+
+### 2. Run the dev servers
+
+```bash
+make dev
+```
+
+Starts both the frontend and backend with hot-reloading:
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000
@@ -32,25 +40,15 @@ This starts both the frontend and backend with hot-reloading. Once running:
 
 Press `Ctrl+C` to stop both servers.
 
-### Other Commands
+## Make Commands
 
-```bash
-./run.sh backend   # Start only the backend
-./run.sh frontend  # Start only the frontend
-./run.sh test      # Run all tests and linting
-./run.sh help      # Show all available commands
-```
-
-## Prerequisites
-
-Before running, ensure you have:
-
-- **[uv](https://github.com/astral-sh/uv)** - Python package manager
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
-
-- **[Node.js](https://nodejs.org/)** (v18+) - For the frontend
+| Command | Description |
+|---|---|
+| `make dev` | Start frontend + backend with hot-reloading |
+| `make dev_install` | Install all frontend and backend dependencies |
+| `make backend` | Start only the backend |
+| `make frontend` | Start only the frontend |
+| `make test` | Run all tests and linting |
 
 ## Manual Setup
 
@@ -60,7 +58,7 @@ If you prefer to run services separately:
 
 ```bash
 cd backend
-uv sync                                    # Install dependencies
+uv sync --extra dev                        # Install dependencies (inc. dev tools)
 uv run alembic upgrade head                # Run database migrations
 uv run uvicorn reshith.main:app --reload   # Start the server
 ```
@@ -69,8 +67,9 @@ uv run uvicorn reshith.main:app --reload   # Start the server
 
 ```bash
 cd frontend
-npm install      # Install dependencies
-npm run dev      # Start the dev server
+nvm use        # Activate correct Node version
+npm install    # Install dependencies
+npm run dev    # Start the dev server
 ```
 
 ### Running Tests
@@ -102,6 +101,8 @@ reshith/
 │   └── public/
 ├── data/              # Language data
 │   └── hebrew/        # Hebrew vocabulary by lesson
+├── .nvmrc             # Pinned Node.js version (for nvm)
+├── Makefile           # Dev workflow commands
 └── run.sh             # Development helper script
 ```
 
