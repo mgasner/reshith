@@ -243,3 +243,104 @@ export const GET_SENTENCE_EXERCISES = gql`
     }
   }
 `
+
+export const GET_TRANSLATION_EXERCISES = gql`
+  query GetTranslationExercises($count: Int!, $maxLesson: Int!, $patterns: [TranslationPattern!]) {
+    translationExercises(count: $count, maxLesson: $maxLesson, patterns: $patterns) {
+      id
+      pattern
+      english
+      hebrewAnswer
+      transliterationAnswer
+      components
+    }
+  }
+`
+
+export const GRADE_TRANSLATION_EXERCISE = gql`
+  mutation GradeTranslationExercise($input: GradeTranslationInput!) {
+    gradeTranslationExercise(input: $input) {
+      correct
+      score
+      expected
+      submitted
+      feedback
+      transliteration
+    }
+  }
+`
+
+export const GET_VERBAL_EXERCISES = gql`
+  query GetVerbalExercises($count: Int!, $maxLesson: Int!, $patterns: [VerbalPattern!]) {
+    verbalExercises(count: $count, maxLesson: $maxLesson, patterns: $patterns) {
+      id
+      pattern
+      hebrew
+      transliteration
+      englishAnswer
+      components
+    }
+  }
+`
+
+export const GRADE_VERBAL_EXERCISE = gql`
+  mutation GradeVerbalExercise($input: GradeVerbalInput!) {
+    gradeVerbalExercise(input: $input) {
+      correct
+      score
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const GET_COMPARATIVE_EXERCISES = gql`
+  query GetComparativeExercises($count: Int!, $maxLesson: Int!) {
+    comparativeExercises(count: $count, maxLesson: $maxLesson) {
+      id
+      pattern
+      hebrew
+      transliteration
+      englishAnswer
+      components
+    }
+  }
+`
+
+export const GRADE_COMPARATIVE_EXERCISE = gql`
+  mutation GradeComparativeExercise($input: GradeComparativeInput!) {
+    gradeComparativeExercise(input: $input) {
+      correct
+      score
+      expected
+      submitted
+      feedback
+    }
+  }
+`
+
+export const GET_RELATIVE_CLAUSE_EXERCISES = gql`
+  query GetRelativeClauseExercises($count: Int!, $maxLesson: Int!) {
+    relativeClauseExercises(count: $count, maxLesson: $maxLesson) {
+      id
+      pattern
+      hebrew
+      transliteration
+      englishAnswer
+      components
+    }
+  }
+`
+
+export const GRADE_RELATIVE_CLAUSE_EXERCISE = gql`
+  mutation GradeRelativeClauseExercise($input: GradeRelativeClauseInput!) {
+    gradeRelativeClauseExercise(input: $input) {
+      correct
+      score
+      expected
+      submitted
+      feedback
+    }
+  }
+`

@@ -61,7 +61,7 @@ export function Layout() {
                 Vowels
               </Link>
               <Link
-                to="/exercises/prepositions"
+                to="/exercises"
                 className="text-sm font-medium text-gray-500 hover:text-gray-900"
               >
                 Exercises

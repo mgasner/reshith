@@ -28,6 +28,7 @@ const FACE_LABELS: Record<CardFace, string> = {
 export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
   const [currentFaceIndex, setCurrentFaceIndex] = useState(0)
   const [revealedFaces, setRevealedFaces] = useState<Set<CardFace>>(new Set(['letter']))
+  const [handwriting, setHandwriting] = useState(false)
 
   const currentFace = FACE_ORDER[currentFaceIndex]
   const allRevealed = revealedFaces.size === FACE_ORDER.length
@@ -50,9 +51,9 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
       case 'letter':
         return (
           <div className="text-center">
-            <p className="text-8xl font-hebrew rtl">{card.letter}</p>
+            <p className={`text-8xl rtl ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`}>{card.letter}</p>
             {card.finalForm && (
-              <p className="text-4xl font-hebrew rtl text-gray-500 mt-4">
+              <p className={`text-4xl rtl text-gray-500 mt-4 ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`}>
                 final: {card.finalForm}
               </p>
             )}
@@ -70,32 +71,47 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer relative"
         onClick={handleNext}
       >
-        <div className="flex justify-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
-          {FACE_ORDER.map((face, index) => (
-            <button
-              key={face}
-              onClick={() => {
-                setCurrentFaceIndex(index)
-                setRevealedFaces((prev) => new Set([...prev, face]))
-              }}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                currentFace === face
-                  ? 'bg-blue-600 text-white'
-                  : revealedFaces.has(face)
-                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-              }`}
-            >
-              {FACE_LABELS[face]}
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); setHandwriting((v) => !v) }}
+          className={`absolute top-3 right-3 p-1.5 rounded transition-colors ${
+            handwriting ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-gray-600'
+          }`}
+          title={handwriting ? 'Switch to print' : 'Switch to handwriting'}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
 
         <div className="flex-1 flex flex-col justify-center items-center">
           {renderFaceContent(currentFace)}
+        </div>
+
+        <div className="flex items-center justify-between mt-4" onClick={(e) => e.stopPropagation()}>
+          <SpeakButton text={card.letter} size="sm" />
+          <div className="flex gap-1">
+            {FACE_ORDER.map((face, index) => (
+              <button
+                key={face}
+                onClick={() => {
+                  setCurrentFaceIndex(index)
+                  setRevealedFaces((prev) => new Set([...prev, face]))
+                }}
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+                  currentFace === face
+                    ? 'bg-blue-600 text-white'
+                    : revealedFaces.has(face)
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                }`}
+              >
+                {FACE_LABELS[face]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

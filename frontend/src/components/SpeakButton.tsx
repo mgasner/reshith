@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useMutation } from '@apollo/client'
 import { SYNTHESIZE_SPEECH } from '@/graphql/operations'
 
@@ -17,12 +17,17 @@ export function SpeakButton({
 }: SpeakButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [synthesizeSpeech] = useMutation(SYNTHESIZE_SPEECH)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const speakWithWebSpeechAPI = useCallback((textToSpeak: string) => {
     if (!('speechSynthesis' in window)) {
       console.warn('Web Speech API not supported')
+      setIsPlaying(false)
       return
     }
+
+    // Cancel any stuck synthesis queue before speaking
+    speechSynthesis.cancel()
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak)
     utterance.lang = language
@@ -55,12 +60,16 @@ export function SpeakButton({
       if (data?.available && data.audioBase64) {
         const audioData = `data:audio/mp3;base64,${data.audioBase64}`
         const audio = new Audio(audioData)
+        audioRef.current = audio
         audio.onended = () => setIsPlaying(false)
         audio.onerror = () => {
           console.warn('Audio playback failed, falling back to Web Speech API')
           speakWithWebSpeechAPI(text)
         }
-        audio.play()
+        audio.play().catch(() => {
+          console.warn('Audio play() rejected, falling back to Web Speech API')
+          speakWithWebSpeechAPI(text)
+        })
       } else {
         speakWithWebSpeechAPI(text)
       }

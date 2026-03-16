@@ -34,25 +34,6 @@ export function FlashCard({
         className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleFlip}
       >
-        <div className="flex justify-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setIsFlipped(false)}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
-              !isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Front
-          </button>
-          <button
-            onClick={() => setIsFlipped(true)}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
-              isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Back
-          </button>
-        </div>
-
         <div className="flex-1 flex flex-col justify-center">
           {!isFlipped ? (
             <div className={`text-center ${isRtl ? 'rtl hebrew-text' : ''}`}>
@@ -67,6 +48,25 @@ export function FlashCard({
               {notes && <p className="text-sm text-gray-600 mt-4">{notes}</p>}
             </div>
           )}
+        </div>
+
+        <div className="flex justify-end gap-1 mt-4" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setIsFlipped(false)}
+            className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+              !isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Front
+          </button>
+          <button
+            onClick={() => setIsFlipped(true)}
+            className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+              isFlipped ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Back
+          </button>
         </div>
       </div>
 

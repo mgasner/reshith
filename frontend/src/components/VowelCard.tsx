@@ -45,14 +45,7 @@ export function VowelCard({ card, onReview }: VowelCardProps) {
   const renderFaceContent = (face: CardFace) => {
     switch (face) {
       case 'example':
-        return (
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3">
-              <p className="text-8xl font-hebrew rtl">{card.hebrewExample}</p>
-              <SpeakButton text={card.hebrewExample} size="lg" />
-            </div>
-          </div>
-        )
+        return <p className="text-8xl font-hebrew rtl">{card.hebrewExample}</p>
       case 'name':
         return <p className="text-3xl">{card.name}</p>
       case 'transliteration':
@@ -66,29 +59,32 @@ export function VowelCard({ card, onReview }: VowelCardProps) {
         className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleNext}
       >
-        <div className="flex justify-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
-          {FACE_ORDER.map((face, index) => (
-            <button
-              key={face}
-              onClick={() => {
-                setCurrentFaceIndex(index)
-                setRevealedFaces((prev) => new Set([...prev, face]))
-              }}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                currentFace === face
-                  ? 'bg-blue-600 text-white'
-                  : revealedFaces.has(face)
-                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-              }`}
-            >
-              {FACE_LABELS[face]}
-            </button>
-          ))}
-        </div>
-
         <div className="flex-1 flex flex-col justify-center items-center">
           {renderFaceContent(currentFace)}
+        </div>
+
+        <div className="flex items-center justify-between mt-4" onClick={(e) => e.stopPropagation()}>
+          <SpeakButton text={card.hebrewExample} size="sm" />
+          <div className="flex gap-1">
+            {FACE_ORDER.map((face, index) => (
+              <button
+                key={face}
+                onClick={() => {
+                  setCurrentFaceIndex(index)
+                  setRevealedFaces((prev) => new Set([...prev, face]))
+                }}
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+                  currentFace === face
+                    ? 'bg-blue-600 text-white'
+                    : revealedFaces.has(face)
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                }`}
+              >
+                {FACE_LABELS[face]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -15,6 +15,16 @@
   text-align: right;
 }
 
+/* Hebrew handwriting font (Guttman Yad — standard Israeli educational script).
+   Falls back to Karantina (Google Fonts) if not present.
+   To use Guttman Yad: place GuttmanYad.ttf in public/fonts/ (see public/fonts/README.md) */
+@font-face {
+  font-family: 'Guttman Yad';
+  src: url('/fonts/GuttmanYad.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .hebrew-text {
   font-family: 'SBL Hebrew', 'Ezra SIL', serif;
   font-size: 1.5rem;
