@@ -13,7 +13,9 @@ from reshith.db.base import Base
 class LanguageCode(str, enum.Enum):
     BIBLICAL_HEBREW = "hbo"
     LATIN = "lat"
+    ECCLESIASTICAL_LATIN = "ecl"
     ANCIENT_GREEK = "grc"
+    NT_GREEK = "gnt"
     SANSKRIT = "san"
     PALI = "pli"
     BUDDHIST_HYBRID_SANSKRIT = "bhs"
@@ -26,7 +28,9 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(100))
+    password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     decks: Mapped[list["Deck"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
