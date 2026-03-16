@@ -35,6 +35,7 @@ import { SanskritHomePage } from '@/pages/SanskritHomePage'
 import { SanskritLessonPage } from '@/pages/SanskritLessonPage'
 import { SanskritExercisesPage } from '@/pages/SanskritExercisesPage'
 import { SanskritDeclensionExercisePage } from '@/pages/SanskritDeclensionExercisePage'
+import { LanmanReaderPage } from '@/pages/LanmanReaderPage'
 import { EcclesiasticalLatinHomePage } from '@/pages/EcclesiasticalLatinHomePage'
 import { EcclesiasticalLatinLessonPage } from '@/pages/EcclesiasticalLatinLessonPage'
 import { EcclesiasticalLatinExercisesPage } from '@/pages/EcclesiasticalLatinExercisesPage'
@@ -89,6 +90,7 @@ function App() {
         {/* Sanskrit */}
         <Route path="sanskrit" element={<SanskritHomePage />} />
         <Route path="sanskrit/lesson/:lessonId?" element={<SanskritLessonPage />} />
+        <Route path="sanskrit/lanman" element={<LanmanReaderPage />} />
 
         {/* Greek exercises */}
         <Route path="exercises/greek" element={<GreekExercisesPage />} />

@@ -30,6 +30,12 @@ export function SanskritHomePage() {
             >
               Grammar Exercises
             </Link>
+            <Link
+              to="/sanskrit/lanman"
+              className="inline-block px-6 py-3 border border-amber-600 text-amber-700 rounded-lg hover:bg-amber-50"
+            >
+              Lanman's Reader
+            </Link>
           </div>
         </div>
 
