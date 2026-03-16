@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     google_cloud_api_key: str = ""
     google_tts_voice: str = "he-IL-Wavenet-A"
 
+    # HuggingFace token — required to download gated models (e.g. indic-parler-tts).
+    # Set via HF_TOKEN in .env or environment.
+    hf_token: str = ""
+
     cors_origins: list[str] = ["http://localhost:5173"]
 
     jwt_secret: str = "dev-secret-change-in-production"

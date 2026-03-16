@@ -557,8 +557,8 @@ async def mutate_synthesize_speech(
     If Google Cloud TTS is not available, returns available=False so the
     frontend can fall back to the Web Speech API.
     """
-    # Latin always routes to MMS-TTS regardless of Google TTS availability
-    if language != "la" and not tts.is_available():
+    # Latin and Sanskrit route to local models regardless of Google TTS availability
+    if language not in ("la", "sa") and not tts.is_available():
         return SpeechSynthesisResult(
             available=False,
             audio_base64=None,

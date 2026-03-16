@@ -19,6 +19,18 @@ _google_client = None
 _mms_model = None
 _mms_tokenizer = None
 
+# Indic Parler-TTS (AI4Bharat) for Sanskrit — loaded lazily on first use
+_parler_model = None
+_parler_tokenizer = None
+_parler_desc_tokenizer = None
+
+# Voice description for Sanskrit synthesis.
+# "Aryan" is the recommended speaker for Sanskrit in indic-parler-tts.
+_SANSKRIT_VOICE_DESCRIPTION = (
+    "Aryan speaks at a moderate pace with a clear, natural voice. "
+    "The recording is of very high quality, with no background noise."
+)
+
 
 def init_tts() -> bool:
     """Initialize TTS service. Returns True if Google Cloud TTS is available."""
@@ -115,6 +127,66 @@ def _synthesize_latin_mms(text: str) -> bytes | None:
         return None
 
 
+def _synthesize_sanskrit_parler(text: str) -> bytes | None:
+    """Synthesize Sanskrit text using AI4Bharat Indic Parler-TTS.
+
+    Returns raw WAV bytes, or None on failure.
+    Loads the model lazily on first call (~1 GB download on first run).
+    """
+    global _parler_model, _parler_tokenizer, _parler_desc_tokenizer
+
+    try:
+        import io
+
+        import soundfile as sf
+        import torch
+        from parler_tts import ParlerTTSForConditionalGeneration
+        from transformers import AutoTokenizer
+
+        if _parler_model is None:
+            from reshith.core.config import get_settings
+            token = get_settings().hf_token or None
+            logger.info(
+                "Loading ai4bharat/indic-parler-tts model "
+                "(first run may download ~1 GB)…"
+            )
+            _parler_model = ParlerTTSForConditionalGeneration.from_pretrained(
+                "ai4bharat/indic-parler-tts", token=token
+            )
+            _parler_tokenizer = AutoTokenizer.from_pretrained(
+                "ai4bharat/indic-parler-tts", token=token
+            )
+            _parler_desc_tokenizer = AutoTokenizer.from_pretrained(
+                _parler_model.config.text_encoder._name_or_path,  # type: ignore[attr-defined]
+                token=token,
+            )
+            logger.info("Indic Parler-TTS model loaded.")
+
+        input_ids = _parler_desc_tokenizer(
+            _SANSKRIT_VOICE_DESCRIPTION, return_tensors="pt"
+        ).input_ids
+        prompt_input_ids = _parler_tokenizer(
+            text, return_tensors="pt"
+        ).input_ids
+
+        with torch.no_grad():
+            generation = _parler_model.generate(
+                input_ids=input_ids,
+                prompt_input_ids=prompt_input_ids,
+            )
+
+        audio = generation.cpu().numpy().squeeze()
+        sampling_rate: int = _parler_model.config.sampling_rate  # type: ignore[attr-defined]
+
+        buf = io.BytesIO()
+        sf.write(buf, audio, sampling_rate, format="WAV")
+        return buf.getvalue()
+
+    except Exception as e:
+        logger.error(f"Indic Parler-TTS Sanskrit synthesis failed: {e}")
+        return None
+
+
 async def synthesize_speech(text: str, language: str = "he-IL") -> tuple[str, str] | None:
     """Synthesize speech for the given text.
 
@@ -135,6 +207,19 @@ async def synthesize_speech(text: str, language: str = "he-IL") -> tuple[str, st
             return base64.b64encode(cache_path.read_bytes()).decode("utf-8"), "audio/wav"
         # Run blocking inference in a thread so we don't stall the event loop
         wav_bytes = await asyncio.to_thread(_synthesize_latin_mms, text)
+        if wav_bytes is None:
+            return None
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_bytes(wav_bytes)
+        return base64.b64encode(wav_bytes).decode("utf-8"), "audio/wav"
+
+    # Sanskrit: use Indic Parler-TTS regardless of Google TTS availability
+    if language == "sa":
+        cache_path = _get_cache_path(text, language).with_suffix(".wav")
+        if cache_path.exists():
+            logger.debug(f"Parler-TTS cache hit for: {text[:20]}...")
+            return base64.b64encode(cache_path.read_bytes()).decode("utf-8"), "audio/wav"
+        wav_bytes = await asyncio.to_thread(_synthesize_sanskrit_parler, text)
         if wav_bytes is None:
             return None
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
