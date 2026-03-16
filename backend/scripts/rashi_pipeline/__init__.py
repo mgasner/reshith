@@ -1,0 +1,1 @@
+"""Rashi morphological enrichment pipeline."""
