@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { gql } from '@apollo/client'
-import { SpeakButton } from '@/components/SpeakButton'
 import { SYNTHESIZE_SPEECH } from '@/graphql/operations'
 
 // ── GraphQL ──────────────────────────────────────────────────────────────────
@@ -147,24 +146,19 @@ function decodeMorphology(morph: string): string[] {
 
 // ── Word card ─────────────────────────────────────────────────────────────────
 
-function WordCard({ token, isHighlighted }: { token: VulgateToken; isHighlighted?: boolean }) {
+function WordCard({ token }: { token: VulgateToken }) {
   const [expanded, setExpanded] = useState(false)
   const morphParts = decodeMorphology(token.morphology)
   const posName = POS_NAMES[token.pos] ?? token.pos
 
   return (
     <span
-      className={`inline-block m-1 cursor-pointer select-none${isHighlighted ? ' rounded-md bg-amber-100 ring-2 ring-amber-400' : ''}`}
+      className="inline-block m-1 cursor-pointer select-none"
       onClick={() => setExpanded((e) => !e)}
     >
       {expanded ? (
         <span className="inline-flex flex-col items-start bg-stone-100 border border-stone-300 rounded-lg px-3 py-2 text-sm shadow-sm min-w-[120px]">
-          <span className="flex items-center gap-1.5">
-            <span className="font-serif text-lg text-stone-900">{token.form}</span>
-            <span onClick={(e) => e.stopPropagation()}>
-              <SpeakButton text={token.form} language="la" size="sm" />
-            </span>
-          </span>
+          <span className="font-serif text-lg text-stone-900">{token.form}</span>
           <span className="text-stone-600 text-xs mt-0.5">
             {token.lemma} · {posName}
           </span>
@@ -199,53 +193,44 @@ function VerseDisplay({
   translation?: string
   showTranslation: boolean
 }) {
-  const [playingIdx, setPlayingIdx] = useState<number | null>(null)
-  const isPlayingRef = useRef(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const [synthesizeSpeech] = useMutation(SYNTHESIZE_SPEECH)
 
   useEffect(() => {
     return () => {
-      isPlayingRef.current = false
+      audioRef.current?.pause()
     }
   }, [])
 
   const handlePlayVerse = useCallback(async () => {
-    if (isPlayingRef.current) {
-      isPlayingRef.current = false
-      setPlayingIdx(null)
+    if (isPlaying) {
+      audioRef.current?.pause()
+      audioRef.current = null
+      setIsPlaying(false)
       return
     }
 
-    isPlayingRef.current = true
+    setIsPlaying(true)
+    const verseText = tokens.map((t) => t.form).join(' ')
 
-    // Pre-fetch all word audio in parallel (cached after first run)
-    const results = await Promise.all(
-      tokens.map((t) =>
-        synthesizeSpeech({ variables: { text: t.form, language: 'la' } })
-          .then((r) => r.data?.synthesizeSpeech ?? null)
-          .catch(() => null),
-      ),
-    )
-
-    // Play sequentially, highlighting each word
-    for (let i = 0; i < tokens.length; i++) {
-      if (!isPlayingRef.current) break
-      setPlayingIdx(i)
-      const data = results[i]
+    try {
+      const result = await synthesizeSpeech({ variables: { text: verseText, language: 'la' } })
+      const data = result.data?.synthesizeSpeech
       if (data?.available && data.audioBase64) {
         const mimeType = data.mimeType ?? 'audio/wav'
-        await new Promise<void>((resolve) => {
-          const audio = new Audio(`data:${mimeType};base64,${data.audioBase64}`)
-          audio.onended = resolve
-          audio.onerror = resolve
-          audio.play().catch(resolve)
-        })
+        const audio = new Audio(`data:${mimeType};base64,${data.audioBase64}`)
+        audioRef.current = audio
+        audio.onended = () => { audioRef.current = null; setIsPlaying(false) }
+        audio.onerror = () => { audioRef.current = null; setIsPlaying(false) }
+        audio.play().catch(() => setIsPlaying(false))
+      } else {
+        setIsPlaying(false)
       }
+    } catch {
+      setIsPlaying(false)
     }
-
-    isPlayingRef.current = false
-    setPlayingIdx(null)
-  }, [tokens, synthesizeSpeech])
+  }, [tokens, isPlaying, synthesizeSpeech])
 
   return (
     <div id={`verse-${verse}`} className="mb-4">
@@ -253,11 +238,11 @@ function VerseDisplay({
       <button
         onClick={handlePlayVerse}
         className={`inline-flex items-center justify-center w-5 h-5 rounded-full mr-1 transition-colors
-          ${playingIdx !== null ? 'bg-amber-200 text-amber-700 hover:bg-amber-300' : 'bg-stone-100 text-stone-400 hover:bg-stone-200'}`}
-        title={playingIdx !== null ? 'Stop' : 'Speak verse'}
-        aria-label={playingIdx !== null ? 'Stop verse playback' : 'Speak verse'}
+          ${isPlaying ? 'bg-amber-200 text-amber-700 hover:bg-amber-300' : 'bg-stone-100 text-stone-400 hover:bg-stone-200'}`}
+        title={isPlaying ? 'Stop' : 'Speak verse'}
+        aria-label={isPlaying ? 'Stop verse playback' : 'Speak verse'}
       >
-        {playingIdx !== null ? (
+        {isPlaying ? (
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="6" width="4" height="12" />
             <rect x="14" y="6" width="4" height="12" />
@@ -269,8 +254,8 @@ function VerseDisplay({
         )}
       </button>
       <span className="inline flex-wrap">
-        {tokens.map((tok, i) => (
-          <WordCard key={tok.ref} token={tok} isHighlighted={playingIdx === i} />
+        {tokens.map((tok) => (
+          <WordCard key={tok.ref} token={tok} />
         ))}
       </span>
       {showTranslation && translation && (
