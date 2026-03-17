@@ -1,0 +1,4221 @@
+{
+  "meta": {
+    "book": "psa",
+    "chapter": 82,
+    "verse_count": 6,
+    "processed_at": "2026-03-17T20:26:41.228198+00:00"
+  },
+  "verses": {
+    "1": {
+      "tokens": [
+        {
+          "surface": "אֱלֹהִים",
+          "normalized": "אלהים",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֱלֹהִים",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אלֹהִים",
+              "lemma": "אֱלֹהִים",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "אֶלְהֵם",
+              "lemma": "להי",
+              "morph_id": "2366870735618048"
+            },
+            {
+              "vocalized": "אַ|לֵּהִים",
+              "lemma": "לֵהֶה",
+              "morph_id": "1109459008"
+            }
+          ]
+        },
+        {
+          "surface": "נִצָּב",
+          "normalized": "נצב",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "יצב",
+          "morphology": {
+            "raw_code": "4503625953771520"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "נִצַּב",
+              "lemma": "יצב",
+              "morph_id": "4503608639684608"
+            },
+            {
+              "vocalized": "נֻצַּב",
+              "lemma": "יצב",
+              "morph_id": "9007233789394944"
+            }
+          ]
+        },
+        {
+          "surface": "בַּעֲדַת",
+          "normalized": "בעדת",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "עֵדָה",
+          "morphology": {
+            "raw_code": "2168848448"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בְּ|עֻדַּת",
+              "lemma": "עֻדָּה",
+              "morph_id": "2168848448"
+            },
+            {
+              "vocalized": "בְּ|עֵדַת",
+              "lemma": "עֵדָה",
+              "morph_id": "2168848448"
+            },
+            {
+              "vocalized": "בַּ|עֲדָת",
+              "lemma": "עדה",
+              "morph_id": "2251808828096576"
+            }
+          ]
+        },
+        {
+          "surface": "אֵל",
+          "normalized": "אל",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֶל",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַל",
+              "lemma": "אַל",
+              "morph_id": "327680"
+            },
+            {
+              "vocalized": "אֵל",
+              "lemma": "אֵל",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אָל",
+              "lemma": "אלל",
+              "morph_id": "2254007849254912"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "לִרְאוֹת",
+          "normalized": "לראות",
+          "language": "hebrew",
+          "lemma": "ראי",
+          "morphology": {
+            "raw_code": "2251851354144768"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לִ|רְאוֹת",
+              "lemma": "רָאָה",
+              "morph_id": "2185625664"
+            },
+            {
+              "vocalized": "לִרְאֹת",
+              "lemma": "ראה",
+              "morph_id": "2251851354144768"
+            },
+            {
+              "vocalized": "לִ|רְאֹת",
+              "lemma": "ראה",
+              "morph_id": "2251859944079424"
+            }
+          ]
+        },
+        {
+          "surface": "אִם",
+          "normalized": "אם",
+          "language": "hebrew",
+          "lemma": "אִם",
+          "morphology": {
+            "raw_code": "196608"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֵם",
+              "lemma": "אֵם",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אֻם",
+              "lemma": "אֻם",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אֶם",
+              "lemma": "אֵם",
+              "morph_id": "2168848384"
+            }
+          ]
+        },
+        {
+          "surface": "אֱמֶת",
+          "normalized": "אמת",
+          "language": "hebrew",
+          "lemma": "אֱמֶת",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַמַּת",
+              "lemma": "אַמָּה",
+              "morph_id": "2168848384"
+            },
+            {
+              "vocalized": "אַ|מַּת",
+              "lemma": "מְתֵי",
+              "morph_id": "2166751296"
+            },
+            {
+              "vocalized": "אַ|מֵּת",
+              "lemma": "מֵת",
+              "morph_id": "1092681792"
+            }
+          ]
+        },
+        {
+          "surface": "יִשְׁפֹּטוּ",
+          "normalized": "ישפטו",
+          "language": "hebrew",
+          "lemma": "שׁפט",
+          "morphology": {
+            "raw_code": "2251834612580352"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יִשְׁפֹּטוּ",
+              "lemma": "שׁפט",
+              "morph_id": "2251834612580352"
+            },
+            {
+              "vocalized": "יֻשְׁפְּטוּ",
+              "lemma": "שׁפט",
+              "morph_id": "9007234053636096"
+            },
+            {
+              "vocalized": "יִשָּׁפְטוּ",
+              "lemma": "שׁפט",
+              "morph_id": "4503634426265600"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וְאַתֶּם",
+          "normalized": "ואתם",
+          "language": "hebrew",
+          "lemma": "אֲנִי",
+          "morphology": {
+            "raw_code": "304676866"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְאַ|תָּם",
+              "lemma": "תָּם",
+              "morph_id": "1093009474"
+            },
+            {
+              "vocalized": "וְאַ|תַּם",
+              "lemma": "תָּם",
+              "morph_id": "2166751298"
+            },
+            {
+              "vocalized": "וְ|אִתָּם",
+              "lemma": "אֵת",
+              "morph_id": "114968777588738"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "הַדַּיָּנִים",
+          "normalized": "הדינים",
+          "language": "hebrew",
+          "lemma": "דַּיָּן",
+          "morphology": {
+            "raw_code": "1109786628"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|דִּינִים",
+              "lemma": "דִּין",
+              "morph_id": "1109786628"
+            },
+            {
+              "vocalized": "הֲדִינִים",
+              "lemma": "דין",
+              "morph_id": "6870479085043712"
+            },
+            {
+              "vocalized": "הֲדִינֵם",
+              "lemma": "דין",
+              "morph_id": "6870479082946560"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "עַד",
+          "normalized": "עד",
+          "language": "aramaic",
+          "is_biblical_quote": true,
+          "lemma": "עַד",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "aramaic",
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "עֵד",
+              "lemma": "עֵד",
+              "morph_id": "2166751232"
+            },
+            {
+              "vocalized": "עד",
+              "lemma": "עד",
+              "morph_id": "458752"
+            },
+            {
+              "vocalized": "עֹד",
+              "lemma": "עוֹד",
+              "morph_id": "2166751232"
+            }
+          ]
+        },
+        {
+          "surface": "מָתַי",
+          "normalized": "מתי",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "מָתַי",
+          "morphology": {
+            "raw_code": "983040"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מַתִּי",
+              "lemma": "מַתִּי",
+              "morph_id": "19529728"
+            },
+            {
+              "vocalized": "מֵתֵי",
+              "lemma": "מֵת",
+              "morph_id": "2183528448"
+            },
+            {
+              "vocalized": "מְתֵי",
+              "lemma": "מְתֵי",
+              "morph_id": "2183528448"
+            }
+          ]
+        },
+        {
+          "surface": "תִּשְׁפְּטוּ",
+          "normalized": "תשפטו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "שׁפט",
+          "morphology": {
+            "raw_code": "2251834478362624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תֻּשְׁפְּטוּ",
+              "lemma": "שׁפט",
+              "morph_id": "9007233919418368"
+            },
+            {
+              "vocalized": "תִּשָּׁפְטוּ",
+              "lemma": "שׁפט",
+              "morph_id": "4503634292047872"
+            },
+            {
+              "vocalized": "תִּשְׁפְּטוֹ",
+              "lemma": "שׁפט",
+              "morph_id": "2362472819130368"
+            }
+          ]
+        },
+        {
+          "surface": "עָוֶל",
+          "normalized": "עול",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "מצא",
+          "morphology": {
+            "raw_code": "2251808708558848"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מְצָאתָם",
+              "lemma": "מצא",
+              "morph_id": "2366845095837696"
+            },
+            {
+              "vocalized": "מְצָאָתַם",
+              "lemma": "מצא",
+              "morph_id": "2366845232152576"
+            },
+            {
+              "vocalized": "מִ|צֵּאתָם",
+              "lemma": "יצא",
+              "morph_id": "2366896348135488"
+            }
+          ]
+        },
+        {
+          "surface": "?",
+          "normalized": "?",
+          "language": "punctuation"
+        },
+        {
+          "surface": "!",
+          "normalized": "!",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true,
+      "has_aramaic": true
+    },
+    "3": {
+      "tokens": [
+        {
+          "surface": "הַצְדִּיקוּ",
+          "normalized": "הצדיקו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "צדק",
+          "morphology": {
+            "raw_code": "6755442695667712"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הִצְדִּיקוּ",
+              "lemma": "צדק",
+              "morph_id": "6755408474341376"
+            },
+            {
+              "vocalized": "הֶצְדֵּקוֹ",
+              "lemma": "הֶצְדֵּק",
+              "morph_id": "110570731077632"
+            },
+            {
+              "vocalized": "הִצְדִּיקוֹ",
+              "lemma": "צדק",
+              "morph_id": "6866046810914816"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "אִם",
+          "normalized": "אם",
+          "language": "hebrew",
+          "lemma": "אִם",
+          "morphology": {
+            "raw_code": "196608"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֵם",
+              "lemma": "אֵם",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אֻם",
+              "lemma": "אֻם",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אֶם",
+              "lemma": "אֵם",
+              "morph_id": "2168848384"
+            }
+          ]
+        },
+        {
+          "surface": "זַכַּאי",
+          "normalized": "זכאי",
+          "language": "hebrew",
+          "lemma": "זַכַּאי",
+          "morphology": {
+            "raw_code": "1092681728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "זְכַאי",
+              "lemma": "זכי",
+              "morph_id": "2254007580819456"
+            },
+            {
+              "vocalized": "זַכָּאִי",
+              "lemma": "זַכַּאי",
+              "morph_id": "41301498527744"
+            },
+            {
+              "vocalized": "זַכְּאִי",
+              "lemma": "זַכַּאי",
+              "morph_id": "42401010155520"
+            }
+          ]
+        },
+        {
+          "surface": "הוּא",
+          "normalized": "הוא",
+          "language": "aramaic",
+          "lemma": "הוּא",
+          "morphology": {
+            "raw_code": "422117376"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "aramaic",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הִוא",
+              "lemma": "הִיא",
+              "morph_id": "424214528"
+            },
+            {
+              "vocalized": "הֱוֵא",
+              "lemma": "הֱוֵא",
+              "morph_id": "1093009408"
+            },
+            {
+              "vocalized": "הֲוָא",
+              "lemma": "הוה",
+              "morph_id": "2251808825999360"
+            }
+          ]
+        },
+        {
+          "surface": "בְּדִינוֹ",
+          "normalized": "בדינו",
+          "language": "hebrew",
+          "lemma": "דִּין",
+          "morphology": {
+            "raw_code": "110570731077696"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בַּדֵּינוּ",
+              "lemma": "בַּד",
+              "morph_id": "45699561816064"
+            },
+            {
+              "vocalized": "בָּדִינוּ",
+              "lemma": "בדי",
+              "morph_id": "2251808578535424"
+            },
+            {
+              "vocalized": "בֻּדִּינוּ",
+              "lemma": "בדי",
+              "morph_id": "13510807646961664"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "אַל",
+          "normalized": "אל",
+          "language": "hebrew",
+          "lemma": "אֶל",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַל",
+              "lemma": "אַל",
+              "morph_id": "327680"
+            },
+            {
+              "vocalized": "אֵל",
+              "lemma": "אֵל",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "אָל",
+              "lemma": "אלל",
+              "morph_id": "2254007849254912"
+            }
+          ]
+        },
+        {
+          "surface": "תַּהַפְּכוּ",
+          "normalized": "תהפכו",
+          "language": "hebrew",
+          "lemma": "הפך",
+          "morphology": {
+            "raw_code": "4503634292047872"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תְּהַפְּכוּ",
+              "lemma": "הפך",
+              "morph_id": "11259033733103616"
+            },
+            {
+              "vocalized": "תַּהַפְכוּ",
+              "lemma": "הפך",
+              "morph_id": "2251834478362624"
+            },
+            {
+              "vocalized": "תִּהְפְּכוּ",
+              "lemma": "הפך",
+              "morph_id": "2254033501618176"
+            }
+          ]
+        },
+        {
+          "surface": "דִינוֹ",
+          "normalized": "דינו",
+          "language": "hebrew",
+          "lemma": "דִּין",
+          "morphology": {
+            "raw_code": "110570731077632"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "דִּינוּ",
+              "lemma": "דין",
+              "morph_id": "2254007866032128"
+            },
+            {
+              "vocalized": "דַּיֵּנוּ",
+              "lemma": "דַּי",
+              "morph_id": "45767171637248"
+            },
+            {
+              "vocalized": "דַּיָּנוֹ",
+              "lemma": "דַּיָּן",
+              "morph_id": "110570731077632"
+            }
+          ]
+        },
+        {
+          "surface": "לְטוֹבָה",
+          "normalized": "לטובה",
+          "language": "hebrew",
+          "lemma": "בַּקָּשָׁה",
+          "morphology": {
+            "raw_code": "2168848384"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בְּ|קֶשֶׁת",
+              "lemma": "קֶשֶׁת",
+              "morph_id": "2168848448"
+            },
+            {
+              "vocalized": "בַּ|קֶּשֶׁת",
+              "lemma": "קֶשֶׁת",
+              "morph_id": "1095106628"
+            },
+            {
+              "vocalized": "בִּקַּשְׁתָּ",
+              "lemma": "בקשׁ",
+              "morph_id": "11259007946522624"
+            }
+          ]
+        },
+        {
+          "surface": "בִּשְׁבִיל",
+          "normalized": "בשביל",
+          "language": "hebrew",
+          "lemma": "בִּשְׁבִיל",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בִּ|שְׁבִיל",
+              "lemma": "שְׁבִיל",
+              "morph_id": "2166751296"
+            },
+            {
+              "vocalized": "בַּ|שְּׁבִיל",
+              "lemma": "שְׁבִיל",
+              "morph_id": "1093009476"
+            },
+            {
+              "vocalized": "בְּשֶׁ|בִּיל",
+              "lemma": "בִּיל",
+              "morph_id": "655680"
+            }
+          ]
+        },
+        {
+          "surface": "לָשֵׂאת",
+          "normalized": "לשאת",
+          "language": "hebrew",
+          "lemma": "נשׂא",
+          "morphology": {
+            "raw_code": "2251851354144768"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לִ|שְׂאֵת",
+              "lemma": "שְׂאֵת",
+              "morph_id": "1095106624"
+            },
+            {
+              "vocalized": "לַ|שְּׂאֵת",
+              "lemma": "שְׂאֵת",
+              "morph_id": "1095106628"
+            },
+            {
+              "vocalized": "לְשֶׁ|אַתְּ",
+              "lemma": "אַן",
+              "morph_id": "2199023845632"
+            }
+          ]
+        },
+        {
+          "surface": "פְּנֵי",
+          "normalized": "פני",
+          "language": "hebrew",
+          "lemma": "פָּן",
+          "morphology": {
+            "raw_code": "2183528448"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "פָּנַי",
+              "lemma": "פָּן",
+              "morph_id": "41301515304960"
+            },
+            {
+              "vocalized": "פָּנָי",
+              "lemma": "פָּנֶה",
+              "morph_id": "69829263360"
+            },
+            {
+              "vocalized": "פְּנָי",
+              "lemma": "פָּנֶה",
+              "morph_id": "69829263360"
+            }
+          ]
+        },
+        {
+          "surface": "רְשָׁעִים",
+          "normalized": "רשעים",
+          "language": "hebrew",
+          "lemma": "רֶשַׁע",
+          "morphology": {
+            "raw_code": "1109786624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "רְשָׁעֵם",
+              "lemma": "רשׁע",
+              "morph_id": "2366879455576064"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true,
+      "has_aramaic": true
+    },
+    "5": {
+      "tokens": [
+        {
+          "surface": "לֹא",
+          "normalized": "לא",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "לֹא",
+          "morphology": {
+            "raw_code": "327680"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לָא",
+              "lemma": "לָא",
+              "morph_id": "327680"
+            },
+            {
+              "vocalized": "לא",
+              "lemma": "לא",
+              "morph_id": "458752"
+            }
+          ]
+        },
+        {
+          "surface": "יָדְעוּ",
+          "normalized": "ידעו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "ידע",
+          "morphology": {
+            "raw_code": "2251808846970880"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יֵדְעוּ",
+              "lemma": "ידע",
+              "morph_id": "2251808846970880"
+            },
+            {
+              "vocalized": "יְדָעוֹ",
+              "lemma": "ידע",
+              "morph_id": "2362447183544320"
+            },
+            {
+              "vocalized": "יָדָעוּ",
+              "lemma": "ידע",
+              "morph_id": "2251808846970880"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "הַדַּיָּנִין",
+          "normalized": "הדינין",
+          "language": "hebrew",
+          "lemma": "שָׂדֶה",
+          "morphology": {
+            "raw_code": "2183528448"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שָׂדוֹת",
+              "lemma": "שָׂדֶה",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "שֶׁ|דּוּת",
+              "lemma": "דּוּת",
+              "morph_id": "2166751488"
+            },
+            {
+              "vocalized": "שָׂדֹת",
+              "lemma": "שָׂדֶה",
+              "morph_id": "1109786624"
+            }
+          ]
+        },
+        {
+          "surface": "הַמְעַוְּתִים",
+          "normalized": "המעותים",
+          "language": "hebrew",
+          "lemma": "מְעַוֵּת",
+          "morphology": {
+            "raw_code": "11259000716394500"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|מְעֻוָּתִים",
+              "lemma": "מְעֻוָּת",
+              "morph_id": "1111883780"
+            }
+          ]
+        },
+        {
+          "surface": "אֶת",
+          "normalized": "את",
+          "language": "hebrew",
+          "lemma": "אֵת",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֶת",
+              "lemma": "אֶת",
+              "morph_id": "262144"
+            },
+            {
+              "vocalized": "אַתְּ",
+              "lemma": "אַן",
+              "morph_id": "2199023845376"
+            },
+            {
+              "vocalized": "אָתְּ",
+              "lemma": "אַתְּ",
+              "morph_id": "289996800"
+            }
+          ]
+        },
+        {
+          "surface": "הַדִּין",
+          "normalized": "הדין",
+          "language": "hebrew",
+          "lemma": "דֵּין",
+          "morphology": {
+            "raw_code": "2199025025024"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הָדֵן",
+              "lemma": "דין",
+              "morph_id": "6755442678890496"
+            },
+            {
+              "vocalized": "הַ|דִּין",
+              "lemma": "דִּין",
+              "morph_id": "1093009412"
+            },
+            {
+              "vocalized": "הַדִּין",
+              "lemma": "הדי",
+              "morph_id": "11261206852337664"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וְלֹא",
+          "normalized": "ולא",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "לֹא",
+          "morphology": {
+            "raw_code": "327682"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְ|לָא",
+              "lemma": "לָא",
+              "morph_id": "327682"
+            },
+            {
+              "vocalized": "וָ|לֹא",
+              "lemma": "לֹא",
+              "morph_id": "327682"
+            },
+            {
+              "vocalized": "וָ|לָא",
+              "lemma": "לָא",
+              "morph_id": "327682"
+            }
+          ]
+        },
+        {
+          "surface": "יָבִינוּ",
+          "normalized": "יבינו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "בין",
+          "morphology": {
+            "raw_code": "2251834612580352"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יְבַיְּנוּ",
+              "lemma": "בין",
+              "morph_id": "11259033867321344"
+            },
+            {
+              "vocalized": "יְבִינוֹ",
+              "lemma": "בין",
+              "morph_id": "2362472953348096"
+            },
+            {
+              "vocalized": "יְבַיְּנוֹ",
+              "lemma": "בין",
+              "morph_id": "11369672208089088"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "אֶת",
+          "normalized": "את",
+          "language": "hebrew",
+          "lemma": "אֵת",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֶת",
+              "lemma": "אֶת",
+              "morph_id": "262144"
+            },
+            {
+              "vocalized": "אַתְּ",
+              "lemma": "אַן",
+              "morph_id": "2199023845376"
+            },
+            {
+              "vocalized": "אָתְּ",
+              "lemma": "אַתְּ",
+              "morph_id": "289996800"
+            }
+          ]
+        },
+        {
+          "surface": "אֲשֶׁר",
+          "normalized": "אשר",
+          "language": "hebrew",
+          "lemma": "בֵּן",
+          "morphology": {
+            "raw_code": "2183528512"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מִבְּנֵי",
+              "lemma": "מִבְּנֵי",
+              "morph_id": "4505800147599360"
+            },
+            {
+              "vocalized": "מִבְנֵי",
+              "lemma": "מִבְנֶה",
+              "morph_id": "2183528448"
+            },
+            {
+              "vocalized": "מִ|בָּנַי",
+              "lemma": "בַּר",
+              "morph_id": "41301515305024"
+            }
+          ]
+        },
+        {
+          "surface": "בִּשְׁבִיל",
+          "normalized": "בשביל",
+          "language": "hebrew",
+          "lemma": "בִּשְׁבִיל",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בִּ|שְׁבִיל",
+              "lemma": "שְׁבִיל",
+              "morph_id": "2166751296"
+            },
+            {
+              "vocalized": "בַּ|שְּׁבִיל",
+              "lemma": "שְׁבִיל",
+              "morph_id": "1093009476"
+            },
+            {
+              "vocalized": "בְּשֶׁ|בִּיל",
+              "lemma": "בִּיל",
+              "morph_id": "655680"
+            }
+          ]
+        },
+        {
+          "surface": "הֶעָוֹן",
+          "normalized": "העון",
+          "language": "hebrew",
+          "morphology": {
+            "raw_code": "1093009412"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הֶעֱוָן",
+              "lemma": "עוי",
+              "morph_id": "6870994613239808"
+            },
+            {
+              "vocalized": "הֶעְוָן",
+              "lemma": "עוי",
+              "morph_id": "6870994613239808"
+            },
+            {
+              "vocalized": "הַעֲוֵן",
+              "lemma": "עוי",
+              "morph_id": "6871028838760448"
+            }
+          ]
+        },
+        {
+          "surface": "הַזֶּה",
+          "normalized": "הזה",
+          "language": "hebrew",
+          "lemma": "גַּיְא",
+          "morphology": {
+            "raw_code": "1093009412"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|גֶּיא",
+              "lemma": "גַּיְא",
+              "morph_id": "1097203716"
+            },
+            {
+              "vocalized": "הָגַיָּא",
+              "lemma": "הָגְתָא",
+              "morph_id": "2200135139328"
+            },
+            {
+              "vocalized": "הַגְיָא",
+              "lemma": "הֲגֵי",
+              "morph_id": "2254000336011264"
+            }
+          ]
+        },
+        {
+          "surface": "יִתְהַלְּכוּ",
+          "normalized": "יתהלכו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אִיתָמָר",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אִתְּמַר",
+              "lemma": "אמר",
+              "morph_id": "4505807662940160"
+            },
+            {
+              "vocalized": "אִתָּמֵר",
+              "lemma": "תמר",
+              "morph_id": "4503634145247232"
+            },
+            {
+              "vocalized": "אִתָּמַר",
+              "lemma": "מור",
+              "morph_id": "9009407290310656"
+            }
+          ]
+        },
+        {
+          "surface": "בַּחֲשֵׁכָה",
+          "normalized": "בחשכה",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "חֲשֵׁכָה",
+          "morphology": {
+            "raw_code": "1095106624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בַּ|חֲשֵׁכָהּ",
+              "lemma": "חָשֵׁךְ",
+              "morph_id": "111120486563904"
+            },
+            {
+              "vocalized": "בְּ|חָשְׁכָה",
+              "lemma": "חָשֵׁךְ",
+              "morph_id": "2200118034496"
+            },
+            {
+              "vocalized": "בֶּ|חָשְׁכָה",
+              "lemma": "חָשֵׁךְ",
+              "morph_id": "2200118034500"
+            }
+          ]
+        },
+        {
+          "surface": "(",
+          "normalized": "(",
+          "language": "punctuation"
+        },
+        {
+          "surface": "עַל",
+          "normalized": "על",
+          "language": "hebrew",
+          "lemma": "תמה",
+          "morphology": {
+            "raw_code": "2251834461585408"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תתמה",
+              "lemma": "תתמה",
+              "morph_id": "458752"
+            },
+            {
+              "vocalized": "תֻּתְמַהּ",
+              "lemma": "תמה",
+              "morph_id": "9007233902641152"
+            },
+            {
+              "vocalized": "תִּתְּמָהּ",
+              "lemma": "תמם",
+              "morph_id": "2363022574944256"
+            }
+          ]
+        },
+        {
+          "surface": "דֶּרֶךְ",
+          "normalized": "דרך",
+          "language": "hebrew",
+          "lemma": "דֶּרֶךְ",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "דָּרַךְ",
+              "lemma": "דרך",
+              "morph_id": "2251808825999360"
+            },
+            {
+              "vocalized": "דָּרֶךְ",
+              "lemma": "דֶּרֶךְ",
+              "morph_id": "1097203712"
+            },
+            {
+              "vocalized": "דְּ|רַךְ",
+              "lemma": "רַךְ",
+              "morph_id": "1092681792"
+            }
+          ]
+        },
+        {
+          "surface": "״כִּי",
+          "normalized": "״כי",
+          "language": "abbreviation",
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "abbreviation"
+          ],
+          "abbreviation_expansion": "כי — biblical chapter/verse number"
+        },
+        {
+          "surface": "הַשֹּׁחַד",
+          "normalized": "השחד",
+          "language": "hebrew",
+          "lemma": "שֹׁחַד",
+          "morphology": {
+            "raw_code": "1093009412"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַשְׁחֵד",
+              "lemma": "שׁחד",
+              "morph_id": "6755442678890496"
+            },
+            {
+              "vocalized": "הֲ|שֹׁחַד",
+              "lemma": "שֹׁחַד",
+              "morph_id": "1093009424"
+            },
+            {
+              "vocalized": "הֲ|שָׁחַד",
+              "lemma": "שׁחד",
+              "morph_id": "2251808825999376"
+            }
+          ]
+        },
+        {
+          "surface": "יְעַוֵּר",
+          "normalized": "יעור",
+          "language": "hebrew",
+          "lemma": "עור",
+          "morphology": {
+            "raw_code": "4503634409488384"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יְעַוֵּר",
+              "lemma": "עור",
+              "morph_id": "11259033850544128"
+            },
+            {
+              "vocalized": "יָעוּר",
+              "lemma": "עור",
+              "morph_id": "2251834595803136"
+            },
+            {
+              "vocalized": "יְעֻוַּר",
+              "lemma": "עור",
+              "morph_id": "13510833664229376"
+            }
+          ]
+        },
+        {
+          "surface": "וְגוֹ׳״",
+          "normalized": "וגו׳״",
+          "language": "hebrew",
+          "lemma": "גּוֹ",
+          "morphology": {
+            "raw_code": "2199023386626"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְגוֹ'",
+              "lemma": "גּוֹמֵר",
+              "morph_id": "196608"
+            },
+            {
+              "vocalized": "וְגו'",
+              "lemma": "וְגו'",
+              "morph_id": "1093009408"
+            },
+            {
+              "vocalized": "וְ|גֵו'",
+              "lemma": "גֵּו",
+              "morph_id": "1093009410"
+            }
+          ]
+        },
+        {
+          "surface": "(",
+          "normalized": "(",
+          "language": "punctuation"
+        },
+        {
+          "surface": "שמות",
+          "normalized": "שמות",
+          "language": "hebrew",
+          "lemma": "שֵׁם",
+          "morphology": {
+            "raw_code": "1109786624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שֵׁמֹת",
+              "lemma": "שֵׁם",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "שְׁמוֹת",
+              "lemma": "שֵׁם",
+              "morph_id": "2183528448"
+            },
+            {
+              "vocalized": "שַׁמּוֹת",
+              "lemma": "שַׁמָּה",
+              "morph_id": "1111883776"
+            }
+          ]
+        },
+        {
+          "surface": "כג:ח",
+          "normalized": "כג:ח",
+          "language": "hebrew",
+          "lemma": "כג",
+          "morphology": {
+            "raw_code": "458752"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": ")",
+          "normalized": ")",
+          "language": "punctuation"
+        },
+        {
+          "surface": ")",
+          "normalized": ")",
+          "language": "punctuation"
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וְ",
+          "normalized": "ו",
+          "language": "hebrew",
+          "lemma": "ו",
+          "morphology": {
+            "raw_code": "458752"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "יִמּוֹטוּ",
+          "normalized": "ימוטו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "מוט",
+          "morphology": {
+            "raw_code": "4503634426265600"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יָמוּטוּ",
+              "lemma": "מוט",
+              "morph_id": "2251834612580352"
+            },
+            {
+              "vocalized": "יְמוּטוֹ",
+              "lemma": "מוט",
+              "morph_id": "2362472953348096"
+            }
+          ]
+        },
+        {
+          "surface": "עַל",
+          "normalized": "על",
+          "language": "hebrew",
+          "lemma": "תמה",
+          "morphology": {
+            "raw_code": "2251834461585408"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תתמה",
+              "lemma": "תתמה",
+              "morph_id": "458752"
+            },
+            {
+              "vocalized": "תֻּתְמַהּ",
+              "lemma": "תמה",
+              "morph_id": "9007233902641152"
+            },
+            {
+              "vocalized": "תִּתְּמָהּ",
+              "lemma": "תמם",
+              "morph_id": "2363022574944256"
+            }
+          ]
+        },
+        {
+          "surface": "כָּךְ",
+          "normalized": "כך",
+          "language": "hebrew",
+          "lemma": "כָּךְ",
+          "morphology": {
+            "raw_code": "131072"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "מוֹסְדֵי",
+          "normalized": "מוסדי",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "מוֹסָד",
+          "morphology": {
+            "raw_code": "2183528448"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מֹסְדֵי",
+              "lemma": "מוֹסָד",
+              "morph_id": "2183528448"
+            },
+            {
+              "vocalized": "מוֹסָדִי",
+              "lemma": "מוֹסָד",
+              "morph_id": "41301498527744"
+            },
+            {
+              "vocalized": "מוּסְדֵי",
+              "lemma": "מוּסָד",
+              "morph_id": "2183200768"
+            }
+          ]
+        },
+        {
+          "surface": "אָרֶץ",
+          "normalized": "ארץ",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֶרֶץ",
+          "morphology": {
+            "raw_code": "2168848384"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אָרֶץ",
+              "lemma": "אֶרֶץ",
+              "morph_id": "1097203712"
+            },
+            {
+              "vocalized": "אַ|רָץ",
+              "lemma": "רָץ",
+              "morph_id": "2166751296"
+            },
+            {
+              "vocalized": "אָרֻץ",
+              "lemma": "רוץ",
+              "morph_id": "2251834331561984"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true,
+      "has_abbreviation": true
+    },
+    "6": {
+      "tokens": [
+        {
+          "surface": "אֱלֹהִים",
+          "normalized": "אלהים",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֱלֹהִים",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אלֹהִים",
+              "lemma": "אֱלֹהִים",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "אֶלְהֵם",
+              "lemma": "להי",
+              "morph_id": "2366870735618048"
+            },
+            {
+              "vocalized": "אַ|לֵּהִים",
+              "lemma": "לֵהֶה",
+              "morph_id": "1109459008"
+            }
+          ]
+        },
+        {
+          "surface": "אַתֶּם",
+          "normalized": "אתם",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֲנִי",
+          "morphology": {
+            "raw_code": "304676864"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אִתָּם",
+              "lemma": "אֵת",
+              "morph_id": "114968777588736"
+            },
+            {
+              "vocalized": "אֹתָם",
+              "lemma": "אֵת",
+              "morph_id": "114967685103616"
+            },
+            {
+              "vocalized": "אַ|תָּם",
+              "lemma": "תָּם",
+              "morph_id": "1092681792"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "מַלְאָכִים",
+          "normalized": "מלאכים",
+          "language": "hebrew",
+          "lemma": "מַלְאָךְ",
+          "morphology": {
+            "raw_code": "1109786624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מְלָאכִים",
+              "lemma": "מֶלֶךְ",
+              "morph_id": "1109786624"
+            }
+          ]
+        },
+        {
+          "surface": ";",
+          "normalized": ";",
+          "language": "punctuation"
+        },
+        {
+          "surface": "כְּשֶׁנָּתַתִּי",
+          "normalized": "כשנתתי",
+          "language": "hebrew",
+          "lemma": "נתן",
+          "morphology": {
+            "raw_code": "2251808561758720"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כְּשֶׁ|נִּתַּתִּי",
+              "lemma": "נתן",
+              "morph_id": "4503608375443968"
+            },
+            {
+              "vocalized": "כְּשֶׁ|נָּתָתִּי",
+              "lemma": "נתן",
+              "morph_id": "2251808561758720"
+            },
+            {
+              "vocalized": "כְּשֶׁ|נְּתַתֵּי",
+              "lemma": "תתי",
+              "morph_id": "11261232873800192"
+            }
+          ]
+        },
+        {
+          "surface": "לָכֶם",
+          "normalized": "לכם",
+          "language": "hebrew",
+          "lemma": "לְ",
+          "morphology": {
+            "raw_code": "79852032491520"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לְכֹם",
+              "lemma": "לְ",
+              "morph_id": "79783313014784"
+            },
+            {
+              "vocalized": "לִכָּם",
+              "lemma": "לכי",
+              "morph_id": "11374044484796416"
+            },
+            {
+              "vocalized": "לְכֵם",
+              "lemma": "הלך",
+              "morph_id": "2366879455576064"
+            }
+          ]
+        },
+        {
+          "surface": "אֶת",
+          "normalized": "את",
+          "language": "hebrew",
+          "lemma": "אֵת",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֶת",
+              "lemma": "אֶת",
+              "morph_id": "262144"
+            },
+            {
+              "vocalized": "אַתְּ",
+              "lemma": "אַן",
+              "morph_id": "2199023845376"
+            },
+            {
+              "vocalized": "אָתְּ",
+              "lemma": "אַתְּ",
+              "morph_id": "289996800"
+            }
+          ]
+        },
+        {
+          "surface": "הַתּוֹרָה",
+          "normalized": "התורה",
+          "language": "hebrew",
+          "lemma": "תּוֹרָה",
+          "morphology": {
+            "raw_code": "1095106564"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הֲ|תוֹרָה",
+              "lemma": "תּוֹרָה",
+              "morph_id": "1095106576"
+            },
+            {
+              "vocalized": "הֲ|תוֹרָהּ",
+              "lemma": "תּוֹר",
+              "morph_id": "111120486891536"
+            },
+            {
+              "vocalized": "הֲ|תוֹרַהּ",
+              "lemma": "תּוֹרָא",
+              "morph_id": "113319510147088"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "נְתַתִּיהָ",
+          "normalized": "נתתיה",
+          "language": "hebrew",
+          "lemma": "נתן",
+          "morphology": {
+            "raw_code": "2362996675117056"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "נְתָתֵהּ",
+              "lemma": "נתי",
+              "morph_id": "2364646208897024"
+            },
+            {
+              "vocalized": "נַתְתֵהּ",
+              "lemma": "נתי",
+              "morph_id": "2364646208897024"
+            },
+            {
+              "vocalized": "נְתַתְּיַהּ",
+              "lemma": "תתי",
+              "morph_id": "11372420987158528"
+            }
+          ]
+        },
+        {
+          "surface": "לָכֶם",
+          "normalized": "לכם",
+          "language": "hebrew",
+          "lemma": "לְ",
+          "morphology": {
+            "raw_code": "79852032491520"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לְכֹם",
+              "lemma": "לְ",
+              "morph_id": "79783313014784"
+            },
+            {
+              "vocalized": "לִכָּם",
+              "lemma": "לכי",
+              "morph_id": "11374044484796416"
+            },
+            {
+              "vocalized": "לְכֵם",
+              "lemma": "הלך",
+              "morph_id": "2366879455576064"
+            }
+          ]
+        },
+        {
+          "surface": "עַל",
+          "normalized": "על",
+          "language": "hebrew",
+          "lemma": "תמה",
+          "morphology": {
+            "raw_code": "2251834461585408"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תתמה",
+              "lemma": "תתמה",
+              "morph_id": "458752"
+            },
+            {
+              "vocalized": "תֻּתְמַהּ",
+              "lemma": "תמה",
+              "morph_id": "9007233902641152"
+            },
+            {
+              "vocalized": "תִּתְּמָהּ",
+              "lemma": "תמם",
+              "morph_id": "2363022574944256"
+            }
+          ]
+        },
+        {
+          "surface": "מְנָת",
+          "normalized": "מנת",
+          "language": "hebrew",
+          "lemma": "מְנָת",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מְנַת",
+              "lemma": "מְנָת",
+              "morph_id": "2168848384"
+            },
+            {
+              "vocalized": "מָנַת",
+              "lemma": "מָנָה",
+              "morph_id": "2168848384"
+            }
+          ]
+        },
+        {
+          "surface": "שֶׁאֵין",
+          "normalized": "שאין",
+          "language": "hebrew",
+          "lemma": "בְּרֵאשִׁית",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בְּ|רֵאשִׁית",
+              "lemma": "רֵאשִׁית",
+              "morph_id": "2168848448"
+            },
+            {
+              "vocalized": "בָּ|רֵאשִׁית",
+              "lemma": "רֵאשִׁית",
+              "morph_id": "1095106628"
+            },
+            {
+              "vocalized": "בְּ|רָאשִׁית",
+              "lemma": "רָאשִׁי",
+              "morph_id": "1094778944"
+            }
+          ]
+        },
+        {
+          "surface": "מַלְאַךְ",
+          "normalized": "מלאך",
+          "language": "hebrew",
+          "lemma": "מַלְאָךְ",
+          "morphology": {
+            "raw_code": "1093009408"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מַלְאֲךָ",
+              "lemma": "מַלְאֶה",
+              "morph_id": "75386358661120"
+            },
+            {
+              "vocalized": "מַלְאַךְ",
+              "lemma": "מַלְאָךְ",
+              "morph_id": "2166751232"
+            },
+            {
+              "vocalized": "מְלָאֲךָ",
+              "lemma": "מְלַאי",
+              "morph_id": "75386358988800"
+            }
+          ]
+        },
+        {
+          "surface": "הַמָּוֶת",
+          "normalized": "המות",
+          "language": "hebrew",
+          "lemma": "מָוֶת",
+          "morphology": {
+            "raw_code": "1093009412"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|מּוֹת",
+              "lemma": "מוֹת",
+              "morph_id": "1093009412"
+            },
+            {
+              "vocalized": "הַמּוֹת",
+              "lemma": "הַם",
+              "morph_id": "2251801463750656"
+            },
+            {
+              "vocalized": "הָמוֹת",
+              "lemma": "הָם",
+              "morph_id": "2251801463750656"
+            }
+          ]
+        },
+        {
+          "surface": "שׁוֹלֵט",
+          "normalized": "שולט",
+          "language": "hebrew",
+          "lemma": "שׁלט",
+          "morphology": {
+            "raw_code": "2251826140086272"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שֻׁלַּט",
+              "lemma": "שׁלט",
+              "morph_id": "13510807894425600"
+            },
+            {
+              "vocalized": "שֻׁלֵּט",
+              "lemma": "שׁלט",
+              "morph_id": "13510859012505600"
+            }
+          ]
+        },
+        {
+          "surface": "עוֹד",
+          "normalized": "עוד",
+          "language": "hebrew",
+          "lemma": "יֵשׁ",
+          "morphology": {
+            "raw_code": "1310722"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְ|יֶשׁ",
+              "lemma": "יֵשׁ",
+              "morph_id": "1097203714"
+            },
+            {
+              "vocalized": "וָ|יֵשׁ",
+              "lemma": "יֵשׁ",
+              "morph_id": "1310722"
+            },
+            {
+              "vocalized": "וָ|יֶשׁ",
+              "lemma": "יֵשׁ",
+              "morph_id": "1097203714"
+            }
+          ]
+        },
+        {
+          "surface": "בָּכֶם",
+          "normalized": "בכם",
+          "language": "hebrew",
+          "lemma": "בְּ",
+          "morphology": {
+            "raw_code": "79852032491520"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בָּכָם",
+              "lemma": "בכי",
+              "morph_id": "2366845230055424"
+            },
+            {
+              "vocalized": "בִּכָּם",
+              "lemma": "בכי",
+              "morph_id": "11374044484796416"
+            },
+            {
+              "vocalized": "בְּכֵם",
+              "lemma": "בכי",
+              "morph_id": "2366879455576064"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true
+    },
+    "7": {
+      "tokens": [
+        {
+          "surface": "אָכֵן",
+          "normalized": "אכן",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אָכֵן",
+          "morphology": {
+            "raw_code": "131072"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַ|כַּן",
+              "lemma": "כְּעַן",
+              "morph_id": "2199023386688"
+            },
+            {
+              "vocalized": "אַ|כֵּן",
+              "lemma": "כֵּן",
+              "morph_id": "1092681792"
+            },
+            {
+              "vocalized": "אִכֵּן",
+              "lemma": "אכן",
+              "morph_id": "11259008080740352"
+            }
+          ]
+        },
+        {
+          "surface": "כְּאָדָם",
+          "normalized": "כאדם",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אָדָם",
+          "morphology": {
+            "raw_code": "1093009472"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כָּ|אָדָם",
+              "lemma": "אָדָם",
+              "morph_id": "1093009476"
+            },
+            {
+              "vocalized": "כְּ|אָדֹם",
+              "lemma": "אֲדֻמִּים",
+              "morph_id": "1093009472"
+            },
+            {
+              "vocalized": "כָּ|אָדֹם",
+              "lemma": "אֲדֻמִּים",
+              "morph_id": "1093009476"
+            }
+          ]
+        },
+        {
+          "surface": "תְּמוּתוּן",
+          "normalized": "תמותון",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אכל",
+          "morphology": {
+            "raw_code": "2251808708558848"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֲכָלָתַם",
+              "lemma": "אכל",
+              "morph_id": "2366845232152576"
+            },
+            {
+              "vocalized": "אֻכַּלְתֶּם",
+              "lemma": "אכל",
+              "morph_id": "13510807776985088"
+            },
+            {
+              "vocalized": "אִכַּלְתֶּם",
+              "lemma": "אכל",
+              "morph_id": "11259007963299840"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "אָכֵן",
+          "normalized": "אכן",
+          "language": "hebrew",
+          "lemma": "אָכֵן",
+          "morphology": {
+            "raw_code": "131072"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַ|כַּן",
+              "lemma": "כְּעַן",
+              "morph_id": "2199023386688"
+            },
+            {
+              "vocalized": "אַ|כֵּן",
+              "lemma": "כֵּן",
+              "morph_id": "1092681792"
+            },
+            {
+              "vocalized": "אִכֵּן",
+              "lemma": "אכן",
+              "morph_id": "11259008080740352"
+            }
+          ]
+        },
+        {
+          "surface": "כְּאָדָם",
+          "normalized": "כאדם",
+          "language": "hebrew",
+          "lemma": "אָדָם",
+          "morphology": {
+            "raw_code": "1093009472"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כָּ|אָדָם",
+              "lemma": "אָדָם",
+              "morph_id": "1093009476"
+            },
+            {
+              "vocalized": "כְּ|אָדֹם",
+              "lemma": "אֲדֻמִּים",
+              "morph_id": "1093009472"
+            },
+            {
+              "vocalized": "כָּ|אָדֹם",
+              "lemma": "אֲדֻמִּים",
+              "morph_id": "1093009476"
+            }
+          ]
+        },
+        {
+          "surface": "הָרִאשׁוֹן",
+          "normalized": "הראשון",
+          "language": "hebrew",
+          "lemma": "רִאשׁוֹן",
+          "morphology": {
+            "raw_code": "1093074948"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הָ|רִאשֹׁן",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1092681732"
+            },
+            {
+              "vocalized": "הֲ|רִאשׁוֹן",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1092681744"
+            },
+            {
+              "vocalized": "הֲ|רִאשֹׁן",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1092681744"
+            }
+          ]
+        },
+        {
+          "surface": "תְּמוּתוּן",
+          "normalized": "תמותון",
+          "language": "hebrew",
+          "lemma": "אכל",
+          "morphology": {
+            "raw_code": "2251808708558848"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֲכָלָתַם",
+              "lemma": "אכל",
+              "morph_id": "2366845232152576"
+            },
+            {
+              "vocalized": "אֻכַּלְתֶּם",
+              "lemma": "אכל",
+              "morph_id": "13510807776985088"
+            },
+            {
+              "vocalized": "אִכַּלְתֶּם",
+              "lemma": "אכל",
+              "morph_id": "11259007963299840"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "אַחֲרֵי",
+          "normalized": "אחרי",
+          "language": "hebrew",
+          "lemma": "אַחֲרֵי",
+          "morphology": {
+            "raw_code": "524288"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַחֲרַי",
+              "lemma": "אַחֲרֵי",
+              "morph_id": "41369125519360"
+            },
+            {
+              "vocalized": "אָחֳרִי",
+              "lemma": "אָחֳרִי",
+              "morph_id": "1094778880"
+            },
+            {
+              "vocalized": "אַחֲרָי",
+              "lemma": "אַחַר",
+              "morph_id": "69829263360"
+            }
+          ]
+        },
+        {
+          "surface": "שֶׁחִבַּלְתֶּם",
+          "normalized": "שחבלתם",
+          "language": "hebrew",
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "unrecognized",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "מַעֲשֵׂיכֶם",
+          "normalized": "מעשיכם",
+          "language": "hebrew",
+          "lemma": "מַשְׂטֵמָה",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מִ|שִּׂטְמָה",
+              "lemma": "שִׂטְמָה",
+              "morph_id": "1095106624"
+            },
+            {
+              "vocalized": "מִשֶּׁ|טָּמָה",
+              "lemma": "טָם",
+              "morph_id": "2251801446973952"
+            },
+            {
+              "vocalized": "מִשֶּׁ|טַּמָּה",
+              "lemma": "טמם",
+              "morph_id": "2254007851352576"
+            }
+          ]
+        },
+        {
+          "surface": "כְּמוֹהוּ",
+          "normalized": "כמוהו",
+          "language": "hebrew",
+          "lemma": "כְּמוֹ",
+          "morphology": {
+            "raw_code": "110638358069248"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כָּמֹהוּ",
+              "lemma": "כְּמוֹ",
+              "morph_id": "110569638592512"
+            },
+            {
+              "vocalized": "כְּמוּהוֹ",
+              "lemma": "כָּמוּהַּ",
+              "morph_id": "110570730749952"
+            },
+            {
+              "vocalized": "כַּמּוּהוּ",
+              "lemma": "כמי",
+              "morph_id": "11369680680583168"
+            }
+          ]
+        },
+        {
+          "surface": "(",
+          "normalized": "(",
+          "language": "punctuation"
+        },
+        {
+          "surface": "עבודה",
+          "normalized": "עבודה",
+          "language": "hebrew",
+          "lemma": "עֲבוֹדָה",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "עֲבֹדָה",
+              "lemma": "עֲבֹדָה",
+              "morph_id": "1095106560"
+            },
+            {
+              "vocalized": "עֲבוּדָה",
+              "lemma": "עָבוּד",
+              "morph_id": "1094778880"
+            },
+            {
+              "vocalized": "עֲבֻדָּה",
+              "lemma": "עֲבֻדָּה",
+              "morph_id": "1095106560"
+            }
+          ]
+        },
+        {
+          "surface": "זרה",
+          "normalized": "זרה",
+          "language": "hebrew",
+          "lemma": "זָר",
+          "morphology": {
+            "raw_code": "1094778880"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "זָרָהּ",
+              "lemma": "זָר",
+              "morph_id": "111120486891520"
+            },
+            {
+              "vocalized": "זְרֵה",
+              "lemma": "זרי",
+              "morph_id": "2251843051520000"
+            },
+            {
+              "vocalized": "זַרָה",
+              "lemma": "זור",
+              "morph_id": "2254007851352064"
+            }
+          ]
+        },
+        {
+          "surface": "ה,א",
+          "normalized": "ה,א",
+          "language": "hebrew",
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "unrecognized",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": ";",
+          "normalized": ";",
+          "language": "punctuation"
+        },
+        {
+          "surface": "מכילתא",
+          "normalized": "מכילתא",
+          "language": "hebrew",
+          "lemma": "מְכִילְתָּא",
+          "morphology": {
+            "raw_code": "2200118362112"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מִ|כִּלְּתָא",
+              "lemma": "כִּלְּתָא",
+              "morph_id": "2200118362176"
+            }
+          ]
+        },
+        {
+          "surface": "יתרו",
+          "normalized": "יתרו",
+          "language": "hebrew",
+          "lemma": "יִתְרוֹ",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יִתְּרוֹ",
+              "lemma": "יתר",
+              "morph_id": "11369646438285312"
+            },
+            {
+              "vocalized": "יַתְרוּ",
+              "lemma": "תרי",
+              "morph_id": "6755434239950848"
+            },
+            {
+              "vocalized": "יְתַרוּ",
+              "lemma": "יתר",
+              "morph_id": "2254007866032128"
+            }
+          ]
+        },
+        {
+          "surface": "בחדש",
+          "normalized": "בחדש",
+          "language": "hebrew",
+          "lemma": "חֹדֶשׁ",
+          "morphology": {
+            "raw_code": "1093009476"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בְּ|חֹדֶשׁ",
+              "lemma": "חֹדֶשׁ",
+              "morph_id": "1093009472"
+            },
+            {
+              "vocalized": "בְּ|חָדָשׁ",
+              "lemma": "חָדָשׁ",
+              "morph_id": "1092681792"
+            },
+            {
+              "vocalized": "בֶּ|חָדָשׁ",
+              "lemma": "חָדָשׁ",
+              "morph_id": "1092681796"
+            }
+          ]
+        },
+        {
+          "surface": "ט",
+          "normalized": "ט",
+          "language": "hebrew",
+          "lemma": "ט",
+          "morphology": {
+            "raw_code": "458752"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": ")",
+          "normalized": ")",
+          "language": "punctuation"
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וּכְאַחַד",
+          "normalized": "וכאחד",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "unrecognized",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "הַשָּׂרִים",
+          "normalized": "השרים",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "שַׂר",
+          "morphology": {
+            "raw_code": "1109786628"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|שָּׁרִים",
+              "lemma": "שָׁר",
+              "morph_id": "2251801461653508"
+            },
+            {
+              "vocalized": "הַשְׁרִים",
+              "lemma": "שׁרי",
+              "morph_id": "6870479085043712"
+            },
+            {
+              "vocalized": "הַשְׁרֵם",
+              "lemma": "שׁרי",
+              "morph_id": "6870479082946560"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "הָרִאשׁוֹנִים",
+          "normalized": "הראשונים",
+          "language": "hebrew",
+          "lemma": "רִאשׁוֹן",
+          "morphology": {
+            "raw_code": "1109852164"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הָ|רִאשֹׁנִים",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1109458948"
+            },
+            {
+              "vocalized": "הֲ|רִאשׁוֹנִים",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1109458960"
+            },
+            {
+              "vocalized": "הֲ|רִאשֹׁנִים",
+              "lemma": "רִאשׁוֹן",
+              "morph_id": "1109458960"
+            }
+          ]
+        },
+        {
+          "surface": "שֶׁמֵּתוּ",
+          "normalized": "שמתו",
+          "language": "hebrew",
+          "lemma": "מות",
+          "morphology": {
+            "raw_code": "2251808846971136"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שֶׁ|מֵּתוֹ",
+              "lemma": "מֵת",
+              "morph_id": "2362439802421504"
+            },
+            {
+              "vocalized": "שִׁמְּתוּ",
+              "lemma": "שׁמת",
+              "morph_id": "11259008101711872"
+            },
+            {
+              "vocalized": "שֻׁמְּתוּ",
+              "lemma": "שׁמת",
+              "morph_id": "13510807915397120"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "כֵּן",
+          "normalized": "כן",
+          "language": "hebrew",
+          "lemma": "כֵּן",
+          "morphology": {
+            "raw_code": "131072"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כַּן",
+              "lemma": "כְּעַן",
+              "morph_id": "2199023386624"
+            },
+            {
+              "vocalized": "כֶּן",
+              "lemma": "כֵּן",
+              "morph_id": "131072"
+            }
+          ]
+        },
+        {
+          "surface": "תִּפֹּלוּ",
+          "normalized": "תפלו",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "נפל",
+          "morphology": {
+            "raw_code": "2251834478362624"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תִּפְלוּ",
+              "lemma": "פלי",
+              "morph_id": "2251834478362624"
+            },
+            {
+              "vocalized": "תִּפֹּלוּ",
+              "lemma": "נפל",
+              "morph_id": "2251834478362624"
+            },
+            {
+              "vocalized": "תְּפַלּוּ",
+              "lemma": "פלי",
+              "morph_id": "11259033733103616"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וּמִדְרַשׁ",
+          "normalized": "ומדרש",
+          "language": "hebrew",
+          "lemma": "מִדְרָשׁ",
+          "morphology": {
+            "raw_code": "2166751234"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וּמִ|דְּרַשׁ",
+              "lemma": "דְּרָשׁ",
+              "morph_id": "2166751298"
+            },
+            {
+              "vocalized": "וּמִדְּ|רַשׁ",
+              "lemma": "רָשׁ",
+              "morph_id": "2166423618"
+            },
+            {
+              "vocalized": "וּ|מִדְרָשׁ",
+              "lemma": "מִדְרָשׁ",
+              "morph_id": "1093009410"
+            }
+          ]
+        },
+        {
+          "surface": "אַגָּדָה",
+          "normalized": "אגדה",
+          "language": "hebrew",
+          "lemma": "אַגָּדָה",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אַ|גָּדָה",
+              "lemma": "גָּדָה",
+              "morph_id": "1095106624"
+            },
+            {
+              "vocalized": "אַ|גָּדָהּ",
+              "lemma": "גָּד",
+              "morph_id": "111120486891584"
+            },
+            {
+              "vocalized": "אֲגֻדָּה",
+              "lemma": "אֲגֻדָּה",
+              "morph_id": "1095106560"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        },
+        {
+          "surface": "כְּאַחַד",
+          "normalized": "כאחד",
+          "language": "hebrew",
+          "lemma": "אֶחָד",
+          "morphology": {
+            "raw_code": "2167537728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כְּ|אֶחָד",
+              "lemma": "אֶחָד",
+              "morph_id": "1093075008"
+            },
+            {
+              "vocalized": "כְּאֶחָד",
+              "lemma": "כְּאֶחָד",
+              "morph_id": "131072"
+            },
+            {
+              "vocalized": "כָּ|אֶחָד",
+              "lemma": "אֶחָד",
+              "morph_id": "1097203780"
+            }
+          ]
+        },
+        {
+          "surface": "הַשָּׂרִים",
+          "normalized": "השרים",
+          "language": "hebrew",
+          "lemma": "שַׂר",
+          "morphology": {
+            "raw_code": "1109786628"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|שָּׁרִים",
+              "lemma": "שָׁר",
+              "morph_id": "2251801461653508"
+            },
+            {
+              "vocalized": "הַשְׁרִים",
+              "lemma": "שׁרי",
+              "morph_id": "6870479085043712"
+            },
+            {
+              "vocalized": "הַשְׁרֵם",
+              "lemma": "שׁרי",
+              "morph_id": "6870479082946560"
+            }
+          ]
+        },
+        {
+          "surface": "שֶׁל",
+          "normalized": "של",
+          "language": "hebrew",
+          "lemma": "סה",
+          "morphology": {
+            "raw_code": "458752"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "מַעְלָה",
+          "normalized": "מעלה",
+          "language": "hebrew",
+          "lemma": "מַעֲלֶה",
+          "morphology": {
+            "raw_code": "1093009408"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "מַעְלֶה",
+              "lemma": "מַעְלֶה",
+              "morph_id": "6755401072246784"
+            },
+            {
+              "vocalized": "מַעֲלָה",
+              "lemma": "מַעֲלָה",
+              "morph_id": "1095106560"
+            },
+            {
+              "vocalized": "מַעְלָה",
+              "lemma": "מַעְלָה",
+              "morph_id": "131072"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "שֶׁנֶּאֱמַר",
+          "normalized": "שנאמר",
+          "language": "hebrew",
+          "lemma": "אמר",
+          "morphology": {
+            "raw_code": "4503608639684864"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שֶׁ|נֶּאְמַר",
+              "lemma": "אמר",
+              "morph_id": "4503608639684864"
+            },
+            {
+              "vocalized": "שֶׁ|נֹּאמַר",
+              "lemma": "אמר",
+              "morph_id": "2251834348339456"
+            },
+            {
+              "vocalized": "שֶׁ|נֶּאֱמָר",
+              "lemma": "נֶאֱמָר",
+              "morph_id": "4503601258561792"
+            }
+          ]
+        },
+        {
+          "surface": "(",
+          "normalized": "(",
+          "language": "punctuation"
+        },
+        {
+          "surface": "ישעיהו",
+          "normalized": "ישעיהו",
+          "language": "hebrew",
+          "lemma": "יְשַׁעְיָהוּ",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "יְשַׁעֵהוּ",
+              "lemma": "שׁעע",
+              "morph_id": "6866072580718592"
+            },
+            {
+              "vocalized": "יַשְׁעֵהוּ",
+              "lemma": "שׁעי",
+              "morph_id": "6866072580718592"
+            },
+            {
+              "vocalized": "יִשְׁעֵהוּ",
+              "lemma": "שׁעי",
+              "morph_id": "2362472953348096"
+            }
+          ]
+        },
+        {
+          "surface": "כד:כא",
+          "normalized": "כד:כא",
+          "language": "hebrew",
+          "lemma": "כד",
+          "morphology": {
+            "raw_code": "458752"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "כַּד",
+              "lemma": "כַּד",
+              "morph_id": "2199023452160"
+            },
+            {
+              "vocalized": "כֹּד",
+              "lemma": "כֹּד",
+              "morph_id": "1093009408"
+            }
+          ]
+        },
+        {
+          "surface": ")",
+          "normalized": ")",
+          "language": "punctuation"
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        },
+        {
+          "surface": "״יִפְקֹד",
+          "normalized": "״יפקד",
+          "language": "abbreviation",
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "abbreviation"
+          ],
+          "abbreviation_expansion": "יפקד — biblical chapter/verse number"
+        },
+        {
+          "surface": "ה׳",
+          "normalized": "ה׳",
+          "language": "abbreviation",
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "abbreviation"
+          ],
+          "abbreviation_expansion": "ה — biblical chapter/verse number"
+        },
+        {
+          "surface": "עַל",
+          "normalized": "על",
+          "language": "hebrew",
+          "lemma": "תמה",
+          "morphology": {
+            "raw_code": "2251834461585408"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "תתמה",
+              "lemma": "תתמה",
+              "morph_id": "458752"
+            },
+            {
+              "vocalized": "תֻּתְמַהּ",
+              "lemma": "תמה",
+              "morph_id": "9007233902641152"
+            },
+            {
+              "vocalized": "תִּתְּמָהּ",
+              "lemma": "תמם",
+              "morph_id": "2363022574944256"
+            }
+          ]
+        },
+        {
+          "surface": "צְבָא",
+          "normalized": "צבא",
+          "language": "hebrew",
+          "lemma": "צָבָא",
+          "morphology": {
+            "raw_code": "1093009408"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "צְבָא",
+              "lemma": "צָבָא",
+              "morph_id": "2166751232"
+            },
+            {
+              "vocalized": "צַבָּא",
+              "lemma": "צַבָּעָא",
+              "morph_id": "2200116264960"
+            },
+            {
+              "vocalized": "צִבָא",
+              "lemma": "צִיבָא",
+              "morph_id": "19529728"
+            }
+          ]
+        },
+        {
+          "surface": "הַמָּרוֹם",
+          "normalized": "המרום",
+          "language": "hebrew",
+          "lemma": "מָרוֹם",
+          "morphology": {
+            "raw_code": "1093009412"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַמְּרוּם",
+              "lemma": "המר",
+              "morph_id": "11374078727094272"
+            },
+            {
+              "vocalized": "הֲמֵרוּם",
+              "lemma": "מרר",
+              "morph_id": "6870479099723776"
+            },
+            {
+              "vocalized": "הַמְרוּם",
+              "lemma": "מרי",
+              "morph_id": "6870479099723776"
+            }
+          ]
+        },
+        {
+          "surface": "בַּמָּרוֹם״",
+          "normalized": "במרום״",
+          "language": "abbreviation",
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "abbreviation",
+            "unknown_expansion"
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true,
+      "has_abbreviation": true
+    },
+    "8": {
+      "tokens": [
+        {
+          "surface": "קוּמָה",
+          "normalized": "קומה",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "קוֹמָה",
+          "morphology": {
+            "raw_code": "1095106560"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "קֹמָה",
+              "lemma": "קוֹמָה",
+              "morph_id": "1095106560"
+            },
+            {
+              "vocalized": "קוֹמָהּ",
+              "lemma": "קוֹם",
+              "morph_id": "111120486891520"
+            },
+            {
+              "vocalized": "קוּמָה",
+              "lemma": "קום",
+              "morph_id": "2251843051520000"
+            }
+          ]
+        },
+        {
+          "surface": "אֱלֹהִים",
+          "normalized": "אלהים",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֱלֹהִים",
+          "morphology": {
+            "raw_code": "19529728"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אלֹהִים",
+              "lemma": "אֱלֹהִים",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "אֶלְהֵם",
+              "lemma": "להי",
+              "morph_id": "2366870735618048"
+            },
+            {
+              "vocalized": "אַ|לֵּהִים",
+              "lemma": "לֵהֶה",
+              "morph_id": "1109459008"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "אָסָף",
+          "normalized": "אסף",
+          "language": "hebrew",
+          "lemma": "אסף",
+          "morphology": {
+            "raw_code": "2251843051520000"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֲסֹף",
+              "lemma": "אָסֹף",
+              "morph_id": "2166751232"
+            },
+            {
+              "vocalized": "אָסַף",
+              "lemma": "אסף",
+              "morph_id": "2251808825999360"
+            },
+            {
+              "vocalized": "אָסָף",
+              "lemma": "אָסָף",
+              "morph_id": "19529728"
+            }
+          ]
+        },
+        {
+          "surface": "הִתְחִיל",
+          "normalized": "התחיל",
+          "language": "hebrew",
+          "lemma": "תחל",
+          "morphology": {
+            "raw_code": "6755408453369856"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַתְחֵל",
+              "lemma": "תחל",
+              "morph_id": "6755442678890496"
+            },
+            {
+              "vocalized": "הִתְחַיֵּל",
+              "lemma": "חיל",
+              "morph_id": "15762607708110848"
+            },
+            {
+              "vocalized": "הֶתְחֵל",
+              "lemma": "הֶתְחֵל",
+              "morph_id": "1093009408"
+            }
+          ]
+        },
+        {
+          "surface": "לְהִתְפַּלֵּל",
+          "normalized": "להתפלל",
+          "language": "hebrew",
+          "lemma": "פלל",
+          "morphology": {
+            "raw_code": "15762650236256256"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לְ|הִתְפַּלֵּל",
+              "lemma": "פלל",
+              "morph_id": "15762607708110912"
+            }
+          ]
+        },
+        {
+          "surface": "שֶׁיָּקוּם",
+          "normalized": "שיקום",
+          "language": "hebrew",
+          "lemma": "קום",
+          "morphology": {
+            "raw_code": "2251834595803392"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שֶׁ|יָּקֻם",
+              "lemma": "קום",
+              "morph_id": "2251834595803392"
+            },
+            {
+              "vocalized": "שֶׁ|יְּקוּם",
+              "lemma": "קום",
+              "morph_id": "2251834595803392"
+            },
+            {
+              "vocalized": "שִׁקּוּם",
+              "lemma": "שִׁקּוּם",
+              "morph_id": "1093009408"
+            }
+          ]
+        },
+        {
+          "surface": "וְיַכְרִית",
+          "normalized": "ויכרית",
+          "language": "hebrew",
+          "lemma": "כרת",
+          "morphology": {
+            "raw_code": "6755434223173634"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְ|יַכְרֵת",
+              "lemma": "כרת",
+              "morph_id": "6755434223173634"
+            },
+            {
+              "vocalized": "וְ|יִכָּרֵת",
+              "lemma": "כרת",
+              "morph_id": "4503634409488386"
+            },
+            {
+              "vocalized": "וַ|יַּכְרֵת",
+              "lemma": "כרת",
+              "morph_id": "6755408453369858"
+            }
+          ]
+        },
+        {
+          "surface": "אוֹתָם",
+          "normalized": "אותם",
+          "language": "hebrew",
+          "lemma": "אֶת",
+          "morphology": {
+            "raw_code": "3258056704"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אֹתָם",
+              "lemma": "אֵת",
+              "morph_id": "114967685103616"
+            },
+            {
+              "vocalized": "אַוָּתָם",
+              "lemma": "אַוָּה",
+              "morph_id": "114968779685888"
+            }
+          ]
+        },
+        {
+          "surface": "הַדַּיָּנִין",
+          "normalized": "הדינין",
+          "language": "hebrew",
+          "lemma": "שָׂדֶה",
+          "morphology": {
+            "raw_code": "2183528448"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "שָׂדוֹת",
+              "lemma": "שָׂדֶה",
+              "morph_id": "1109786624"
+            },
+            {
+              "vocalized": "שֶׁ|דּוּת",
+              "lemma": "דּוּת",
+              "morph_id": "2166751488"
+            },
+            {
+              "vocalized": "שָׂדֹת",
+              "lemma": "שָׂדֶה",
+              "morph_id": "1109786624"
+            }
+          ]
+        },
+        {
+          "surface": "הַמְקֻלְקָלִין",
+          "normalized": "המקלקלין",
+          "language": "hebrew",
+          "lemma": "מְקֻלְקָל",
+          "morphology": {
+            "raw_code": "13510800530079748"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|מְקַלְקְלִין",
+              "lemma": "מְקַלְקֵל",
+              "morph_id": "11259000716394500"
+            }
+          ]
+        },
+        {
+          "surface": "מִיִּשְׂרָאֵל",
+          "normalized": "מישראל",
+          "language": "hebrew",
+          "lemma": "יִשְׂרָאֵל",
+          "morphology": {
+            "raw_code": "655424"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        },
+        {
+          "surface": "כִּי",
+          "normalized": "כי",
+          "language": "aramaic",
+          "is_biblical_quote": true,
+          "lemma": "כִּי",
+          "morphology": {
+            "raw_code": "196608"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "aramaic",
+            "no_dictionary"
+          ]
+        },
+        {
+          "surface": "אַתָּה",
+          "normalized": "אתה",
+          "language": "hebrew",
+          "is_biblical_quote": true,
+          "lemma": "אֲנִי",
+          "morphology": {
+            "raw_code": "287899648"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "אָתָּה",
+              "lemma": "אַתָּה",
+              "morph_id": "287899648"
+            },
+            {
+              "vocalized": "אִתָּהּ",
+              "lemma": "אֵת",
+              "morph_id": "111120486891520"
+            },
+            {
+              "vocalized": "אֹתָהּ",
+              "lemma": "אֵת",
+              "morph_id": "111119394406400"
+            }
+          ]
+        },
+        {
+          "surface": ".",
+          "normalized": ".",
+          "language": "punctuation",
+          "is_biblical_quote": true
+        },
+        {
+          "surface": "הוּא",
+          "normalized": "הוא",
+          "language": "aramaic",
+          "lemma": "הוּא",
+          "morphology": {
+            "raw_code": "422117376"
+          },
+          "confidence": 1.0,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "aramaic",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הִוא",
+              "lemma": "הִיא",
+              "morph_id": "424214528"
+            },
+            {
+              "vocalized": "הֱוֵא",
+              "lemma": "הֱוֵא",
+              "morph_id": "1093009408"
+            },
+            {
+              "vocalized": "הֲוָא",
+              "lemma": "הוה",
+              "morph_id": "2251808825999360"
+            }
+          ]
+        },
+        {
+          "surface": "הַנּוֹחֵל",
+          "normalized": "הנוחל",
+          "language": "hebrew",
+          "lemma": "נוֹחֵל",
+          "morphology": {
+            "raw_code": "2251801444876292"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַ|נּוֹחָל",
+              "lemma": "נוֹחָל",
+              "morph_id": "4503601258561540"
+            },
+            {
+              "vocalized": "הֲ|נוֹחֵל",
+              "lemma": "נוֹחֵל",
+              "morph_id": "2251801444876304"
+            },
+            {
+              "vocalized": "הֲ|נוֹחָל",
+              "lemma": "נוֹחָל",
+              "morph_id": "4503601258561552"
+            }
+          ]
+        },
+        {
+          "surface": "הַגּוֹיִם",
+          "normalized": "הגוים",
+          "language": "hebrew",
+          "lemma": "גּוֹי",
+          "morphology": {
+            "raw_code": "1109786628"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "הַגּוֹיִם",
+              "lemma": "חֲרֹשֶׁת־הַגּוֹיִם",
+              "morph_id": "655360"
+            },
+            {
+              "vocalized": "הִגּוּיָם",
+              "lemma": "הִגּוּי",
+              "morph_id": "114968777588736"
+            },
+            {
+              "vocalized": "הֲגוּיָם",
+              "lemma": "הָגוּי",
+              "morph_id": "114968777261056"
+            }
+          ]
+        },
+        {
+          "surface": ",",
+          "normalized": ",",
+          "language": "punctuation"
+        },
+        {
+          "surface": "וְהַכֹּל",
+          "normalized": "והכל",
+          "language": "hebrew",
+          "lemma": "כֹּל",
+          "morphology": {
+            "raw_code": "1074921474"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "וְהַ|כֹּל",
+              "lemma": "כֹּל",
+              "morph_id": "1093009414"
+            },
+            {
+              "vocalized": "וְ|הָכֵל",
+              "lemma": "כול",
+              "morph_id": "6755442678890498"
+            }
+          ]
+        },
+        {
+          "surface": "בְּיָדְךָ",
+          "normalized": "בידך",
+          "language": "hebrew",
+          "lemma": "יָד",
+          "morphology": {
+            "raw_code": "75386361086016"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "בְּיָדְךָ",
+              "lemma": "יַד",
+              "morph_id": "75453985980416"
+            },
+            {
+              "vocalized": "בְּ|יָדֶךָ",
+              "lemma": "יָד",
+              "morph_id": "75386363183168"
+            },
+            {
+              "vocalized": "בִּ|ידָךְ",
+              "lemma": "יַד",
+              "morph_id": "75386361086016"
+            }
+          ]
+        },
+        {
+          "surface": "לִשְׁפּוֹט",
+          "normalized": "לשפוט",
+          "language": "hebrew",
+          "lemma": "שׁפט",
+          "morphology": {
+            "raw_code": "2251851354144768"
+          },
+          "confidence": 0.3,
+          "uncertain": true,
+          "uncertainty_reasons": [
+            "low_confidence",
+            "multiple_analyses",
+            "no_dictionary"
+          ],
+          "alternatives": [
+            {
+              "vocalized": "לִשְׁפּוֹט",
+              "lemma": "שׁפט",
+              "morph_id": "2251851354144768"
+            },
+            {
+              "vocalized": "לִ|שְׁפוֹט",
+              "lemma": "שְׁפוֹט",
+              "morph_id": "1093009472"
+            },
+            {
+              "vocalized": "לִ|שְׁפֹט",
+              "lemma": "שׁפט",
+              "morph_id": "2251862091563072"
+            }
+          ]
+        },
+        {
+          "surface": ":",
+          "normalized": ":",
+          "language": "punctuation"
+        }
+      ],
+      "has_uncertain": true,
+      "has_aramaic": true
+    }
+  }
+}
