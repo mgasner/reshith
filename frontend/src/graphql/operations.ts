@@ -501,6 +501,15 @@ export const TAHOT_SEARCH = gql`
   }
 `
 
+export const TAHOT_CHAPTER_TRANSLATIONS = gql`
+  query TahotChapterTranslations($book: String!, $chapter: Int!) {
+    tahotChapterTranslations(book: $book, chapter: $chapter) {
+      verse
+      text
+    }
+  }
+`
+
 export const INTERLINEAR_PASSAGE = gql`
   query InterlinearPassage(
     $source: String!

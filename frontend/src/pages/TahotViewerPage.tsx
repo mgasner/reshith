@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
-import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH } from '@/graphql/operations'
+import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH, TAHOT_CHAPTER_TRANSLATIONS } from '@/graphql/operations'
 import { hebrewToLambdin } from '@/utils/hebrewTranslit'
 import { SpeakButton } from '@/components/SpeakButton'
 import { CommentaryFlow, CommentaryFlowItem } from '@/components/CommentaryFlow'
@@ -164,7 +164,7 @@ function WordCard({
     <div
       className={`inline-block cursor-pointer select-none text-center px-1 transition-colors
         ${showDetail
-          ? 'rounded-lg border border-blue-400 bg-blue-50 shadow-md p-2'
+          ? 'rounded-lg border border-blue-400 bg-blue-50 shadow-md p-2 max-w-xs'
           : 'hover:opacity-70'
         }`}
       onClick={handleClick}
@@ -397,11 +397,13 @@ interface RashiFlowProps {
   showCantillation: boolean
   showVowels: boolean
   showVariants: boolean
+  translationMap: Record<number, string>
 }
 
 function RashiFlowLayout({
   verses, rashiData, rashiLoading, selectedChapter, selectedBook,
   showBreaks, showTranslit, showTranslation, showCantillation, showVowels, showVariants,
+  translationMap,
 }: RashiFlowProps) {
   return (
     <CommentaryFlow>
@@ -411,16 +413,23 @@ function RashiFlowLayout({
           <CommentaryFlowItem
             key={v.verse}
             primary={
-              <VerseDisplay
-                verse={v.verse}
-                words={v.words}
-                showBreaks={showBreaks}
-                showTranslit={showTranslit}
-                showTranslation={showTranslation}
-                showCantillation={showCantillation}
-                showVowels={showVowels}
-                showVariants={showVariants}
-              />
+              <>
+                <VerseDisplay
+                  verse={v.verse}
+                  words={v.words}
+                  showBreaks={showBreaks}
+                  showTranslit={showTranslit}
+                  showTranslation={showTranslation}
+                  showCantillation={showCantillation}
+                  showVowels={showVowels}
+                  showVariants={showVariants}
+                />
+                {translationMap[v.verse] && (
+                  <p className="text-sm text-gray-600 italic mt-1 leading-snug">
+                    {translationMap[v.verse]}
+                  </p>
+                )}
+              </>
             }
             commentary={
               <>
@@ -460,6 +469,7 @@ export function TahotViewerPage() {
   const [showVariants, setShowVariants] = useState(false)
   const [showCantillation, setShowCantillation] = useState(true)
   const [showVowels, setShowVowels] = useState(true)
+  const [showJps, setShowJps] = useState(false)
   const [showRashi, setShowRashi] = useState(false)
   const [rashiLayout, setRashiLayout] = useState<'flow' | 'side'>('flow')
   const [rashiData, setRashiData] = useState<Record<string, Record<string, string>> | null>(null)
@@ -532,6 +542,7 @@ export function TahotViewerPage() {
   const [fetchPassage, { data: passageData, loading: chapterLoading }] = useLazyQuery(INTERLINEAR_PASSAGE)
 
   const [fetchSearch, { data: searchData, loading: searchLoading }] = useLazyQuery(TAHOT_SEARCH)
+  const [fetchTranslations, { data: translationData }] = useLazyQuery(TAHOT_CHAPTER_TRANSLATIONS)
 
   // Fetch chapter when selection changes; keep book+ch in URL
   useEffect(() => {
@@ -607,6 +618,12 @@ export function TahotViewerPage() {
     return () => observer.disconnect()
   }, [mode, chapterLoading, passageData])  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Fetch JPS translation when toggled on or chapter changes
+  useEffect(() => {
+    if (!showJps) return
+    fetchTranslations({ variables: { book: selectedBook, chapter: selectedChapter } })
+  }, [showJps, selectedBook, selectedChapter, fetchTranslations])
+
   // Fetch Rashi commentary when toggled on or book changes
   useEffect(() => {
     if (!showRashi) return
@@ -626,6 +643,11 @@ export function TahotViewerPage() {
     books.find((b) => b.abbrev === selectedBook)?.chapters ?? 1
 
   const searchResults: TahotWord[] = searchData?.tahotSearch ?? []
+  const translationMap: Record<number, string> = Object.fromEntries(
+    (translationData?.tahotChapterTranslations ?? []).map(
+      (t: { verse: number; text: string }) => [t.verse, t.text]
+    )
+  )
 
   return (
     <div className={`px-4 mx-auto ${showRashi && rashiLayout === 'side' ? 'max-w-[1400px]' : 'max-w-5xl'}`}>
@@ -633,6 +655,7 @@ export function TahotViewerPage() {
         <h1 className="text-2xl font-bold text-gray-900">TAHOT Viewer</h1>
         <p className="text-sm text-gray-500 mt-1">
           Translators Amalgamated Hebrew OT — STEPBible.org CC BY 4.0
+          {showJps && <> · JPS 1917 translation (public domain)</>}
         </p>
       </div>
 
@@ -808,6 +831,17 @@ export function TahotViewerPage() {
                 K/Q
               </button>
               <button
+                onClick={() => setShowJps((v) => !v)}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+                  showJps
+                    ? 'border-blue-400 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                }`}
+                title="Toggle JPS 1917 translation"
+              >
+                JPS
+              </button>
+              <button
                 onClick={() => setShowRashi((v) => !v)}
                 className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
                   showRashi
@@ -919,17 +953,23 @@ export function TahotViewerPage() {
           {!chapterLoading && !showRashi && (
             <div>
               {verses.map((v) => (
-                <VerseDisplay
-                  key={v.verse}
-                  verse={v.verse}
-                  words={v.words}
-                  showBreaks={showBreaks}
-                  showTranslit={showTranslit}
-                  showTranslation={showTranslation}
-                  showCantillation={showCantillation}
-                  showVowels={showVowels}
-                  showVariants={showVariants}
-                />
+                <div key={v.verse}>
+                  <VerseDisplay
+                    verse={v.verse}
+                    words={v.words}
+                    showBreaks={showBreaks}
+                    showTranslit={showTranslit}
+                    showTranslation={showTranslation}
+                    showCantillation={showCantillation}
+                    showVowels={showVowels}
+                    showVariants={showVariants}
+                  />
+                  {showJps && translationMap[v.verse] && (
+                    <p className="text-sm text-gray-600 italic mt-1 mb-3 leading-snug">
+                      {translationMap[v.verse]}
+                    </p>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -947,6 +987,7 @@ export function TahotViewerPage() {
               showCantillation={showCantillation}
               showVowels={showVowels}
               showVariants={showVariants}
+              translationMap={translationMap}
             />
           )}
 
@@ -966,6 +1007,11 @@ export function TahotViewerPage() {
                       showVowels={showVowels}
                       showVariants={showVariants}
                     />
+                    {translationMap[v.verse] && (
+                      <p className="text-sm text-gray-600 italic mt-1 leading-snug">
+                        {translationMap[v.verse]}
+                      </p>
+                    )}
                   </div>
                   <div className="w-80 xl:w-96 flex-shrink-0 pt-5">
                     {rashiLoading && <div className="text-xs text-gray-400">Loading…</div>}
