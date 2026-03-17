@@ -490,6 +490,12 @@ class TahotChapterInfo:
     verse_count: int
 
 
+@strawberry.type
+class TahotVerseTranslation:
+    verse: int
+    text: str
+
+
 # ── Vulgate interlinear types ─────────────────────────────────────────────────
 
 @strawberry.type
@@ -521,6 +527,43 @@ class VulgateChapterInfo:
 
 @strawberry.type
 class VulgateVerseTranslation:
+    verse: int
+    text: str
+
+
+# ── Greek interlinear types (GNT + LXX) ──────────────────────────────────────
+
+@strawberry.type
+class GreekToken:
+    ref: str
+    book: str
+    chapter: int
+    verse: int
+    token: int
+    text_type: str
+    greek: str
+    transliteration: str
+    translation: str
+    dstrongs: str
+    grammar: str
+    expanded: str
+
+
+@strawberry.type
+class GreekBookInfo:
+    abbrev: str
+    name: str
+    chapters: int
+
+
+@strawberry.type
+class GreekChapterInfo:
+    chapter: int
+    verse_count: int
+
+
+@strawberry.type
+class GreekVerseTranslation:
     verse: int
     text: str
 

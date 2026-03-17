@@ -20,7 +20,12 @@ from reshith.api.types import (
     VulgateBookInfo,
     VulgateChapterInfo,
     VulgateToken as VulgateTokenGQL,
+    TahotVerseTranslation,
     VulgateVerseTranslation,
+    GreekToken as GreekTokenGQL,
+    GreekBookInfo,
+    GreekChapterInfo,
+    GreekVerseTranslation,
     Card,
     CardWithSRS,
     ComparativeExercise,
@@ -90,7 +95,12 @@ from reshith.exercises.sanskrit import declension as sanskrit_declension
 from reshith.services import tahot as tahot_svc
 from reshith.services import tbesh as tbesh_svc
 from reshith.services import drc as drc_svc
+from reshith.services import jps as jps_svc
 from reshith.services import vulgate as vulgate_svc
+from reshith.services import gnt as gnt_svc
+from reshith.services import lxx as lxx_svc
+from reshith.services import kjv as kjv_svc
+from reshith.services import brenton as brenton_svc
 from reshith.services import llm, srs, tts
 from reshith.services.auth import create_access_token, verify_password
 
@@ -1345,9 +1355,104 @@ def resolve_vulgate_search(query: str, limit: int = 50) -> list[VulgateTokenGQL]
     return [_vulgate_token_to_gql(t) for t in tokens]
 
 
+def resolve_tahot_chapter_translations(book: str, chapter: int) -> list[TahotVerseTranslation]:
+    verses = jps_svc.get_chapter(book, chapter)
+    return [TahotVerseTranslation(verse=v, text=text) for v, text in sorted(verses.items())]
+
+
 def resolve_vulgate_chapter_translations(book: str, chapter: int) -> list[VulgateVerseTranslation]:
     verses = drc_svc.get_chapter(book, chapter)
     return [VulgateVerseTranslation(verse=v, text=text) for v, text in sorted(verses.items())]
+
+
+# ── GNT interlinear resolvers ─────────────────────────────────────────────────
+
+def _greek_word_to_gql_gnt(w: gnt_svc.GNTWord) -> GreekTokenGQL:
+    return GreekTokenGQL(
+        ref=w.ref, book=w.book, chapter=w.chapter, verse=w.verse,
+        token=w.token, text_type=w.text_type, greek=w.greek,
+        transliteration=w.transliteration, translation=w.translation,
+        dstrongs=w.dstrongs, grammar=w.grammar, expanded=w.expanded,
+    )
+
+
+def resolve_gnt_books() -> list[GreekBookInfo]:
+    return [
+        GreekBookInfo(abbrev=b["abbrev"], name=b["name"], chapters=b["chapters"])
+        for b in gnt_svc.get_books()
+    ]
+
+
+def resolve_gnt_chapter_verses(book: str) -> list[GreekChapterInfo]:
+    counts = gnt_svc.get_chapter_verse_counts(book)
+    return [GreekChapterInfo(chapter=ch, verse_count=vc) for ch, vc in sorted(counts.items())]
+
+
+def resolve_gnt_verse(book: str, chapter: int, verse: int) -> list[GreekTokenGQL]:
+    return [_greek_word_to_gql_gnt(w) for w in gnt_svc.get_verse(book, chapter, verse)]
+
+
+def resolve_gnt_chapter(book: str, chapter: int) -> list[GreekTokenGQL]:
+    verses = gnt_svc.get_chapter(book, chapter)
+    tokens = []
+    for v in sorted(verses.keys()):
+        for w in verses[v]:
+            tokens.append(_greek_word_to_gql_gnt(w))
+    return tokens
+
+
+def resolve_gnt_search(query: str, limit: int = 50) -> list[GreekTokenGQL]:
+    return [_greek_word_to_gql_gnt(w) for w in gnt_svc.search(query, limit)]
+
+
+def resolve_gnt_chapter_translations(book: str, chapter: int) -> list[GreekVerseTranslation]:
+    verses = kjv_svc.get_chapter(book, chapter)
+    return [GreekVerseTranslation(verse=v, text=text) for v, text in sorted(verses.items())]
+
+
+# ── LXX interlinear resolvers ─────────────────────────────────────────────────
+
+def _greek_word_to_gql_lxx(w: lxx_svc.LXXWord) -> GreekTokenGQL:
+    return GreekTokenGQL(
+        ref=w.ref, book=w.book, chapter=w.chapter, verse=w.verse,
+        token=w.token, text_type=w.text_type, greek=w.greek,
+        transliteration=w.transliteration, translation=w.translation,
+        dstrongs=w.dstrongs, grammar=w.grammar, expanded=w.expanded,
+    )
+
+
+def resolve_lxx_books() -> list[GreekBookInfo]:
+    return [
+        GreekBookInfo(abbrev=b["abbrev"], name=b["name"], chapters=b["chapters"])
+        for b in lxx_svc.get_books()
+    ]
+
+
+def resolve_lxx_chapter_verses(book: str) -> list[GreekChapterInfo]:
+    counts = lxx_svc.get_chapter_verse_counts(book)
+    return [GreekChapterInfo(chapter=ch, verse_count=vc) for ch, vc in sorted(counts.items())]
+
+
+def resolve_lxx_verse(book: str, chapter: int, verse: int) -> list[GreekTokenGQL]:
+    return [_greek_word_to_gql_lxx(w) for w in lxx_svc.get_verse(book, chapter, verse)]
+
+
+def resolve_lxx_chapter(book: str, chapter: int) -> list[GreekTokenGQL]:
+    verses = lxx_svc.get_chapter(book, chapter)
+    tokens = []
+    for v in sorted(verses.keys()):
+        for w in verses[v]:
+            tokens.append(_greek_word_to_gql_lxx(w))
+    return tokens
+
+
+def resolve_lxx_search(query: str, limit: int = 50) -> list[GreekTokenGQL]:
+    return [_greek_word_to_gql_lxx(w) for w in lxx_svc.search(query, limit)]
+
+
+def resolve_lxx_chapter_translations(book: str, chapter: int) -> list[GreekVerseTranslation]:
+    verses = brenton_svc.get_chapter(book, chapter)
+    return [GreekVerseTranslation(verse=v, text=text) for v, text in sorted(verses.items())]
 
 
 # ── TBESH / TBESG lexicon ──────────────────────────────────────────────────────

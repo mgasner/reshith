@@ -9,6 +9,7 @@ from reshith.api.resolvers import (
     resolve_interlinear_passage,
     resolve_tahot_books,
     resolve_tahot_chapter,
+    resolve_tahot_chapter_translations,
     resolve_tahot_chapter_verses,
     resolve_tahot_search,
     resolve_tahot_verse,
@@ -18,6 +19,18 @@ from reshith.api.resolvers import (
     resolve_vulgate_chapter_verses,
     resolve_vulgate_search,
     resolve_vulgate_verse,
+    resolve_gnt_books,
+    resolve_gnt_chapter,
+    resolve_gnt_chapter_translations,
+    resolve_gnt_chapter_verses,
+    resolve_gnt_search,
+    resolve_gnt_verse,
+    resolve_lxx_books,
+    resolve_lxx_chapter,
+    resolve_lxx_chapter_translations,
+    resolve_lxx_chapter_verses,
+    resolve_lxx_search,
+    resolve_lxx_verse,
     mutate_create_card,
     mutate_create_deck,
     mutate_login,
@@ -62,11 +75,16 @@ from reshith.api.types import (
     StrongsEntry,
     TahotBookInfo,
     TahotChapterInfo,
+    TahotVerseTranslation,
     TahotWord as TahotWordGQL,
     VulgateBookInfo,
     VulgateChapterInfo,
     VulgateToken as VulgateTokenGQL,
     VulgateVerseTranslation,
+    GreekToken as GreekTokenGQL,
+    GreekBookInfo,
+    GreekChapterInfo,
+    GreekVerseTranslation,
     Card,
     CardWithSRS,
     ComparativeExercise,
@@ -327,6 +345,11 @@ class Query:
         return resolve_tahot_search(query, limit)
 
     @strawberry.field
+    def tahot_chapter_translations(self, book: str, chapter: int) -> list[TahotVerseTranslation]:
+        """JPS 1917 translation for a chapter (public domain Jewish translation)."""
+        return resolve_tahot_chapter_translations(book, chapter)
+
+    @strawberry.field
     def strongs_entry(self, strongs_id: str) -> StrongsEntry | None:
         """Look up a TBESH (Hebrew) or TBESG (Greek) lexicon entry by Extended Strong's ID."""
         return resolve_strongs_entry(strongs_id)
@@ -354,6 +377,58 @@ class Query:
     @strawberry.field
     def vulgate_chapter_translations(self, book: str, chapter: int) -> list[VulgateVerseTranslation]:
         return resolve_vulgate_chapter_translations(book, chapter)
+
+    # ── GNT ──────────────────────────────────────────────────────────────────
+
+    @strawberry.field
+    def gnt_books(self) -> list[GreekBookInfo]:
+        return resolve_gnt_books()
+
+    @strawberry.field
+    def gnt_chapter_verses(self, book: str) -> list[GreekChapterInfo]:
+        return resolve_gnt_chapter_verses(book)
+
+    @strawberry.field
+    def gnt_verse(self, book: str, chapter: int, verse: int) -> list[GreekTokenGQL]:
+        return resolve_gnt_verse(book, chapter, verse)
+
+    @strawberry.field
+    def gnt_chapter(self, book: str, chapter: int) -> list[GreekTokenGQL]:
+        return resolve_gnt_chapter(book, chapter)
+
+    @strawberry.field
+    def gnt_search(self, query: str, limit: int = 50) -> list[GreekTokenGQL]:
+        return resolve_gnt_search(query, limit)
+
+    @strawberry.field
+    def gnt_chapter_translations(self, book: str, chapter: int) -> list[GreekVerseTranslation]:
+        return resolve_gnt_chapter_translations(book, chapter)
+
+    # ── LXX ──────────────────────────────────────────────────────────────────
+
+    @strawberry.field
+    def lxx_books(self) -> list[GreekBookInfo]:
+        return resolve_lxx_books()
+
+    @strawberry.field
+    def lxx_chapter_verses(self, book: str) -> list[GreekChapterInfo]:
+        return resolve_lxx_chapter_verses(book)
+
+    @strawberry.field
+    def lxx_verse(self, book: str, chapter: int, verse: int) -> list[GreekTokenGQL]:
+        return resolve_lxx_verse(book, chapter, verse)
+
+    @strawberry.field
+    def lxx_chapter(self, book: str, chapter: int) -> list[GreekTokenGQL]:
+        return resolve_lxx_chapter(book, chapter)
+
+    @strawberry.field
+    def lxx_search(self, query: str, limit: int = 50) -> list[GreekTokenGQL]:
+        return resolve_lxx_search(query, limit)
+
+    @strawberry.field
+    def lxx_chapter_translations(self, book: str, chapter: int) -> list[GreekVerseTranslation]:
+        return resolve_lxx_chapter_translations(book, chapter)
 
 
 @strawberry.type
