@@ -157,7 +157,7 @@ function WordCard({ token }: { token: VulgateToken }) {
       onClick={() => setExpanded((e) => !e)}
     >
       {expanded ? (
-        <span className="inline-flex flex-col items-start bg-stone-100 border border-stone-300 rounded-lg px-3 py-2 text-sm shadow-sm min-w-[120px]">
+        <span className="inline-flex flex-col items-start bg-stone-100 border border-stone-300 rounded-lg px-3 py-2 text-sm shadow-sm min-w-[120px] max-w-xs">
           <span className="font-serif text-lg text-stone-900">{token.form}</span>
           <span className="text-stone-600 text-xs mt-0.5">
             {token.lemma} · {posName}
