@@ -44,6 +44,8 @@ import { EcclesiasticalLatinExercisesPage } from '@/pages/EcclesiasticalLatinExe
 import { EcclesiasticalLatinDeclensionExercisePage } from '@/pages/EcclesiasticalLatinDeclensionExercisePage'
 import { EcclesiasticalLatinConjugationExercisePage } from '@/pages/EcclesiasticalLatinConjugationExercisePage'
 import { VulgateViewerPage } from '@/pages/VulgateViewerPage'
+import { GNTViewerPage } from '@/pages/GNTViewerPage'
+import { LXXViewerPage } from '@/pages/LXXViewerPage'
 
 function App() {
   return (
@@ -88,6 +90,8 @@ function App() {
         {/* NT Greek */}
         <Route path="nt-greek" element={<NTGreekHomePage />} />
         <Route path="nt-greek/lesson/:lessonId?" element={<NTGreekLessonPage />} />
+        <Route path="nt-greek/gnt" element={<GNTViewerPage />} />
+        <Route path="nt-greek/lxx" element={<LXXViewerPage />} />
 
         {/* Sanskrit */}
         <Route path="sanskrit" element={<SanskritHomePage />} />
