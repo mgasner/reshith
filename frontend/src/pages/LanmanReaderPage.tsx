@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -48,6 +48,13 @@ interface DcsData {
   note: string
   sentences: Sentence[]
 }
+
+interface LexiconEntry {
+  hw: string
+  gloss: string
+}
+
+type Lexicon = Record<string, LexiconEntry>
 
 // ── DCS file mapping ───────────────────────────────────────────────────────────
 // Maps selection numbers to their DCS JSON filename (stem)
@@ -203,13 +210,14 @@ function morphGloss(feats: Record<string, string>): string {
 // ── Word card ─────────────────────────────────────────────────────────────────
 
 function WordCard({
-  word, displayMode, scriptMode, active, onClick,
+  word, displayMode, scriptMode, active, onClick, lexEntry,
 }: {
   word: Word
   displayMode: DisplayMode
   scriptMode: ScriptMode
   active: boolean
   onClick: () => void
+  lexEntry?: LexiconEntry
 }) {
   const surface = displayMode === 'padapatha' ? word.unsandhied : word.form
   const display = scriptMode === 'devanagari' ? iastToDevanagari(surface) : surface
@@ -256,6 +264,11 @@ function WordCard({
             {morphGloss(word.feats)}
           </span>
         )}
+        {lexEntry && (
+          <span className="text-amber-800 text-xs mt-1 leading-snug border-t border-amber-200 pt-1">
+            {lexEntry.gloss}
+          </span>
+        )}
       </span>
     )
   }
@@ -289,13 +302,14 @@ function WordCard({
 // ── Sentence display ──────────────────────────────────────────────────────────
 
 function SentenceDisplay({
-  sentence, displayMode, scriptMode, activeWord, onWordClick,
+  sentence, displayMode, scriptMode, activeWord, onWordClick, lexicon,
 }: {
   sentence: Sentence
   displayMode: DisplayMode
   scriptMode: ScriptMode
   activeWord: number | null
   onWordClick: (wordIdx: number) => void
+  lexicon: Lexicon
 }) {
   // Build a map from word index to sandhi group it belongs to
   const wordToGroup = new Map<number, SandhiGroup>()
@@ -338,6 +352,7 @@ function SentenceDisplay({
           scriptMode={scriptMode}
           active={activeWord === wi}
           onClick={() => onWordClick(wi)}
+          lexEntry={w.lemma ? lexicon[w.lemma] : undefined}
         />
       )
       rendered.add(wi)
@@ -385,6 +400,17 @@ function groupBySource(selections: OcrSelection[]) {
 
 export function LanmanReaderPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+
+  // MW lexicon (loaded once)
+  const lexiconRef = useRef<Lexicon>({})
+  const [lexiconReady, setLexiconReady] = useState(false)
+
+  useEffect(() => {
+    fetch('/data/sanskrit/lanman_lexicon.json')
+      .then(r => r.json())
+      .then((d: Lexicon) => { lexiconRef.current = d; setLexiconReady(true) })
+      .catch(() => setLexiconReady(true))  // fail silently — lexicon is optional
+  }, [])
 
   // OCR index
   const [ocrData, setOcrData] = useState<OcrData | null>(null)
@@ -627,6 +653,7 @@ export function LanmanReaderPage() {
                       scriptMode={scriptMode}
                       activeWord={activeWord?.sentIdx === si ? activeWord.wordIdx : null}
                       onWordClick={(wi) => handleWordClick(si, wi)}
+                      lexicon={lexiconReady ? lexiconRef.current : {}}
                     />
                   ))}
                 </div>
