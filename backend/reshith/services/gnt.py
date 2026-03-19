@@ -13,23 +13,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parents[3] / "data" / "nt_greek"
-TANTT_FILE = DATA_DIR / "TANTT.txt"
+TAGNT_FILE = DATA_DIR / "TAGNT.txt"
 
 GNT_BOOK_ORDER = [
-    "Mat", "Mrk", "Lke", "Jhn", "Act",
-    "Rom", "1Co", "2Co", "Gal", "Eph", "Phl", "Col",
+    "Mat", "Mrk", "Luk", "Jhn", "Act",
+    "Rom", "1Co", "2Co", "Gal", "Eph", "Php", "Col",
     "1Th", "2Th", "1Ti", "2Ti", "Tit", "Phm",
-    "Hbr", "Jas", "1Pe", "2Pe", "1Jn", "2Jn", "3Jn", "Jde", "Rev",
+    "Heb", "Jas", "1Pe", "2Pe", "1Jn", "2Jn", "3Jn", "Jud", "Rev",
 ]
 
 GNT_BOOK_NAMES: dict[str, str] = {
-    "Mat": "Matthew", "Mrk": "Mark", "Lke": "Luke", "Jhn": "John",
+    "Mat": "Matthew", "Mrk": "Mark", "Luk": "Luke", "Jhn": "John",
     "Act": "Acts", "Rom": "Romans", "1Co": "1 Corinthians", "2Co": "2 Corinthians",
-    "Gal": "Galatians", "Eph": "Ephesians", "Phl": "Philippians", "Col": "Colossians",
+    "Gal": "Galatians", "Eph": "Ephesians", "Php": "Philippians", "Col": "Colossians",
     "1Th": "1 Thessalonians", "2Th": "2 Thessalonians", "1Ti": "1 Timothy",
-    "2Ti": "2 Timothy", "Tit": "Titus", "Phm": "Philemon", "Hbr": "Hebrews",
+    "2Ti": "2 Timothy", "Tit": "Titus", "Phm": "Philemon", "Heb": "Hebrews",
     "Jas": "James", "1Pe": "1 Peter", "2Pe": "2 Peter", "1Jn": "1 John",
-    "2Jn": "2 John", "3Jn": "3 John", "Jde": "Jude", "Rev": "Revelation",
+    "2Jn": "2 John", "3Jn": "3 John", "Jud": "Jude", "Rev": "Revelation",
 }
 
 _BOOK_ORDER_MAP: dict[str, int] = {b: i for i, b in enumerate(GNT_BOOK_ORDER)}
@@ -68,26 +68,19 @@ _INDEX: GNTIndex | None = None
 def _parse_file() -> GNTIndex:
     idx = GNTIndex()
 
-    if not TANTT_FILE.exists():
+    if not TAGNT_FILE.exists():
         idx.loaded = True
         return idx
 
-    past_header = False
-    with open(TANTT_FILE, encoding="utf-8", errors="replace") as f:
+    with open(TAGNT_FILE, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip("\n")
 
             if not line or line.startswith("\t") or line.startswith("#"):
                 continue
-            # STEPBible header ends with a line starting with "Eng"
-            if line.startswith("Eng"):
-                past_header = True
-                continue
-            if not past_header:
-                continue
 
             parts = line.split("\t")
-            if len(parts) < 6:
+            if len(parts) < 4:
                 continue
 
             ref = parts[0].strip()
@@ -101,6 +94,31 @@ def _parse_file() -> GNTIndex:
             token = int(m.group(4))
             text_type = m.group(5)
 
+            # TAGNT column layout:
+            # [0] ref          e.g. "Mat.1.1#01=NKO"
+            # [1] greek+trans  e.g. "Βίβλος (Biblos)"
+            # [2] gloss        e.g. "[The] book"
+            # [3] dStrongs=grammar  e.g. "G0976=N-NSF"
+            # [4] lemma=gloss  e.g. "βίβλος=book"
+            greek_raw = parts[1].strip() if len(parts) > 1 else ""
+            paren_idx = greek_raw.find(" (")
+            if paren_idx >= 0:
+                greek = greek_raw[:paren_idx]
+                transliteration = greek_raw[paren_idx + 2:].rstrip(")")
+            else:
+                greek = greek_raw
+                transliteration = ""
+
+            translation = parts[2].strip() if len(parts) > 2 else ""
+
+            ds_gram = parts[3].strip() if len(parts) > 3 else ""
+            if "=" in ds_gram:
+                dstrongs, grammar = ds_gram.split("=", 1)
+            else:
+                dstrongs, grammar = ds_gram, ""
+
+            expanded = parts[4].strip() if len(parts) > 4 else ""
+
             word = GNTWord(
                 ref=ref,
                 book=book,
@@ -108,12 +126,12 @@ def _parse_file() -> GNTIndex:
                 verse=verse,
                 token=token,
                 text_type=text_type,
-                greek=parts[1].strip() if len(parts) > 1 else "",
-                transliteration=parts[2].strip() if len(parts) > 2 else "",
-                translation=parts[3].strip() if len(parts) > 3 else "",
-                dstrongs=parts[4].strip() if len(parts) > 4 else "",
-                grammar=parts[5].strip() if len(parts) > 5 else "",
-                expanded=parts[8].strip() if len(parts) > 8 else "",
+                greek=greek,
+                transliteration=transliteration,
+                translation=translation,
+                dstrongs=dstrongs,
+                grammar=grammar,
+                expanded=expanded,
             )
 
             if book not in idx.data:

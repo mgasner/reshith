@@ -1,16 +1,18 @@
-"""Fetch STEPBible TANTT (Greek NT) and KJV NT translation data.
+"""Fetch STEPBible TAGNT (Greek NT) and KJV NT translation data.
 
 Data sources (CC BY 4.0 / public domain):
-  TANTT — https://github.com/tyndale/STEPBible-Data
-  KJV   — https://github.com/scrollmapper/bible_databases
+  TAGNT  — https://github.com/STEPBible/STEPBible-Data
+           (repo moved from tyndale/ to STEPBible/ org; TANTT split into 2 TAGNT files)
+  KJV    — https://github.com/scrollmapper/bible_databases
 
 Outputs:
-  data/nt_greek/TANTT.txt     — STEPBible Translators Amalgamated NT
+  data/nt_greek/TAGNT.txt     — STEPBible Translators Amalgamated Greek NT
+                                 (Mat-Jhn and Act-Rev concatenated)
   data/nt_greek/kjv_nt.json   — KJV NT translation (book→chapter→verse→text)
 
 Usage:
   cd data/nt_greek
-  python prepare_gnt.py
+  python3 prepare_gnt.py
 """
 
 import json
@@ -20,44 +22,47 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
-TANTT_URL = (
-    "https://raw.githubusercontent.com/tyndale/STEPBible-Data/master/"
-    "Translators%20Amalgamated%20NT%20-%20STEPBible.org%20CC%20BY.txt"
-)
+_RAW = "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/Translators%20Amalgamated%20OT%2BNT"
+TAGNT_MAT_JHN_URL = f"{_RAW}/TAGNT%20Mat-Jhn%20-%20Translators%20Amalgamated%20Greek%20NT%20-%20STEPBible.org%20CC-BY.txt"
+TAGNT_ACT_REV_URL = f"{_RAW}/TAGNT%20Act-Rev%20-%20Translators%20Amalgamated%20Greek%20NT%20-%20STEPBible.org%20CC-BY.txt"
 
 KJV_URL = (
     "https://raw.githubusercontent.com/scrollmapper/bible_databases/master/"
-    "json/t_kjv.json"
+    "formats/json/KJV.json"
 )
 
-# Map scrollmapper book IDs (1–66) to TANTT NT abbreviations
-_SCROLL_ID_TO_ABBREV = {
-    40: "Mat", 41: "Mrk", 42: "Lke", 43: "Jhn", 44: "Act",
-    45: "Rom", 46: "1Co", 47: "2Co", 48: "Gal", 49: "Eph",
-    50: "Phl", 51: "Col", 52: "1Th", 53: "2Th", 54: "1Ti",
-    55: "2Ti", 56: "Tit", 57: "Phm", 58: "Hbr", 59: "Jas",
-    60: "1Pe", 61: "2Pe", 62: "1Jn", 63: "2Jn", 64: "3Jn",
-    65: "Jde", 66: "Rev",
-}
+# scrollmapper KJV.json has 66 books in order (0-indexed); NT starts at index 39 (Matthew)
+_NT_BOOK_ABBREVS = [
+    "Mat", "Mrk", "Luk", "Jhn", "Act",
+    "Rom", "1Co", "2Co", "Gal", "Eph", "Php", "Col",
+    "1Th", "2Th", "1Ti", "2Ti", "Tit", "Phm",
+    "Heb", "Jas", "1Pe", "2Pe", "1Jn", "2Jn", "3Jn", "Jud", "Rev",
+]
 
 
 def fetch(url: str, label: str) -> bytes:
     print(f"Fetching {label}…", flush=True)
     req = urllib.request.Request(url, headers={"User-Agent": "reshith/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urllib.request.urlopen(req, timeout=120) as r:
         data = r.read()
     print(f"  {len(data):,} bytes", flush=True)
     return data
 
 
-def fetch_tantt() -> None:
-    out = HERE / "TANTT.txt"
+def fetch_tagnt() -> None:
+    out = HERE / "TAGNT.txt"
     if out.exists():
-        print(f"TANTT.txt already exists ({out.stat().st_size:,} bytes), skipping.")
+        print(f"TAGNT.txt already exists ({out.stat().st_size:,} bytes), skipping.")
         return
-    data = fetch(TANTT_URL, "TANTT")
-    out.write_bytes(data)
-    print(f"Wrote {out}")
+    part1 = fetch(TAGNT_MAT_JHN_URL, "TAGNT Mat-Jhn")
+    part2 = fetch(TAGNT_ACT_REV_URL, "TAGNT Act-Rev")
+    # Concatenate; strip BOM from second file if present
+    combined = part1
+    if part2.startswith(b"\xef\xbb\xbf"):
+        part2 = part2[3:]
+    combined = combined + b"\n" + part2
+    out.write_bytes(combined)
+    print(f"Wrote {out} ({len(combined):,} bytes)")
 
 
 def fetch_kjv_nt() -> None:
@@ -68,21 +73,21 @@ def fetch_kjv_nt() -> None:
     data = fetch(KJV_URL, "KJV")
     raw = json.loads(data.decode("utf-8"))
 
-    # scrollmapper format: {"resultset": {"row": [{"field": [b, c, v, text]}, ...]}}
+    # New scrollmapper format: {"books": [{"name": "...", "chapters": [{"chapter": N, "verses": [{"verse": N, "text": "..."}]}]}]}
+    books = raw.get("books", [])
     result: dict[str, dict[str, dict[str, str]]] = {}
-    rows = raw.get("resultset", {}).get("row", [])
-    for row in rows:
-        fields = row.get("field", [])
-        if len(fields) < 4:
-            continue
-        book_id = int(fields[0])
-        ch = str(int(fields[1]))
-        v = str(int(fields[2]))
-        text = str(fields[3])
-        abbrev = _SCROLL_ID_TO_ABBREV.get(book_id)
-        if abbrev is None:
-            continue  # skip OT
-        result.setdefault(abbrev, {}).setdefault(ch, {})[v] = text
+
+    # NT is books[39..65]
+    nt_books = books[39:66]
+    for abbrev, book in zip(_NT_BOOK_ABBREVS, nt_books):
+        chapters: dict[str, dict[str, str]] = {}
+        for ch_data in book.get("chapters", []):
+            ch = str(ch_data["chapter"])
+            verses: dict[str, str] = {}
+            for v_data in ch_data.get("verses", []):
+                verses[str(v_data["verse"])] = v_data["text"]
+            chapters[ch] = verses
+        result[abbrev] = chapters
 
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote {out} ({len(result)} books)")
@@ -90,7 +95,7 @@ def fetch_kjv_nt() -> None:
 
 if __name__ == "__main__":
     try:
-        fetch_tantt()
+        fetch_tagnt()
         fetch_kjv_nt()
         print("Done.")
     except Exception as e:

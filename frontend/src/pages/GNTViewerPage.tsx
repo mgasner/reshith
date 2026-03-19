@@ -91,13 +91,22 @@ interface VerseTranslation {
 }
 
 // ── Morphology decoder ────────────────────────────────────────────────────────
+//
+// TAGNT grammar codes:
+//   Full-word (no dash): CONJ, PREP, ADV, PRT, INJ, COND
+//   Single-char prefix + dash: N-NSM, V-AAI-3S, A-APF, T-NSM, P-GSM (personal pron.), etc.
 
 const POS_NAMES: Record<string, string> = {
+  // Single-char prefixes
   N: 'noun', V: 'verb', A: 'adjective', D: 'adverb',
-  P: 'preposition', R: 'relative pronoun', C: 'conjunction',
-  T: 'article', I: 'interjection', X: 'particle',
+  P: 'personal pronoun', R: 'relative pronoun', C: 'conjunction',
+  T: 'article', I: 'interrogative pronoun', X: 'particle',
   F: 'reflexive pronoun', S: 'possessive pronoun',
-  K: 'correlative pronoun', Q: 'interrogative pronoun',
+  K: 'correlative', Q: 'interrogative',
+  // Full-word codes
+  CONJ: 'conjunction', PREP: 'preposition', ADV: 'adverb',
+  PRT: 'particle', INJ: 'interjection', COND: 'conditional',
+  NEG: 'negative',
 }
 
 const CASE_NAMES: Record<string, string> = {
@@ -107,7 +116,7 @@ const NUMBER_NAMES: Record<string, string> = { S: 'singular', P: 'plural' }
 const GENDER_NAMES: Record<string, string> = { M: 'masculine', F: 'feminine', N: 'neuter' }
 const TENSE_NAMES: Record<string, string> = {
   P: 'present', I: 'imperfect', F: 'future',
-  A: 'aorist', X: 'perfect', Y: 'pluperfect',
+  A: 'aorist', X: 'perfect', Y: 'pluperfect', L: '2nd perfect',
 }
 const VOICE_NAMES: Record<string, string> = {
   A: 'active', M: 'middle', P: 'passive',
@@ -124,29 +133,41 @@ const PERSON_NAMES: Record<string, string> = {
 function decodeGrammar(grammar: string): string[] {
   if (!grammar) return []
   const parts: string[] = []
-  // Format: POS-details  e.g. N-NSM  V-PAI-1S  A-APF  T-NSM  D-  P-
-  const dashIdx = grammar.indexOf('-')
-  if (dashIdx < 0) return [POS_NAMES[grammar] ?? grammar]
-  const pos = grammar.slice(0, dashIdx)
-  const detail = grammar.slice(dashIdx + 1)
+
+  // TAGNT may have compound codes like "CONJ + G1437=COND"; use just the first token
+  const primary = grammar.split(' + ')[0].trim()
+
+  const dashIdx = primary.indexOf('-')
+  if (dashIdx < 0) {
+    // Full-word code: CONJ, PREP, ADV, PRT, INJ, COND, or single-char
+    const name = POS_NAMES[primary]
+    return name ? [name] : [primary.toLowerCase()]
+  }
+
+  const pos = primary.slice(0, dashIdx)
+  const detail = primary.slice(dashIdx + 1)
   if (POS_NAMES[pos]) parts.push(POS_NAMES[pos])
   if (!detail) return parts
 
   if (pos === 'V') {
-    // Verb: tense+voice+mood[-person+number]  e.g. PAI-1S  or  PAP (participle, no person)
+    // Verb: tense+voice+mood[-person+number]  e.g. AAI-3S  PAP-NSM
     const segments = detail.split('-')
     const tvm = segments[0] ?? ''
     const pn = segments[1] ?? ''
     if (tvm[0] && TENSE_NAMES[tvm[0]]) parts.push(TENSE_NAMES[tvm[0]])
     if (tvm[1] && VOICE_NAMES[tvm[1]]) parts.push(VOICE_NAMES[tvm[1]])
     if (tvm[2] && MOOD_NAMES[tvm[2]]) parts.push(MOOD_NAMES[tvm[2]])
-    if (pn[0] && PERSON_NAMES[pn[0]]) parts.push(PERSON_NAMES[pn[0]])
-    if (pn[1] && NUMBER_NAMES[pn[1]]) parts.push(NUMBER_NAMES[pn[1]])
-    // Participle also carries case/number/gender: e.g. PAP-NSM
-    if (pn[0] && CASE_NAMES[pn[0]]) parts.push(CASE_NAMES[pn[0]])
-    if (pn[1] && GENDER_NAMES[pn[1]]) parts.push(GENDER_NAMES[pn[1]])
+    if (tvm[2] === 'P') {
+      // Participle: pn = case+number+gender
+      if (pn[0] && CASE_NAMES[pn[0]]) parts.push(CASE_NAMES[pn[0]])
+      if (pn[1] && NUMBER_NAMES[pn[1]]) parts.push(NUMBER_NAMES[pn[1]])
+      if (pn[2] && GENDER_NAMES[pn[2]]) parts.push(GENDER_NAMES[pn[2]])
+    } else {
+      if (pn[0] && PERSON_NAMES[pn[0]]) parts.push(PERSON_NAMES[pn[0]])
+      if (pn[1] && NUMBER_NAMES[pn[1]]) parts.push(NUMBER_NAMES[pn[1]])
+    }
   } else {
-    // Nominal: case+number+gender  e.g. NSM
+    // Nominal (noun, adj, pronoun, article): case+number+gender  e.g. NSM, APF
     if (detail[0] && CASE_NAMES[detail[0]]) parts.push(CASE_NAMES[detail[0]])
     if (detail[1] && NUMBER_NAMES[detail[1]]) parts.push(NUMBER_NAMES[detail[1]])
     if (detail[2] && GENDER_NAMES[detail[2]]) parts.push(GENDER_NAMES[detail[2]])
