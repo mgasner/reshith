@@ -126,7 +126,7 @@ function iastToDevanagari(iast: string): string {
     // Try to match a consonant
     let cons = ''
     let consLen = 0
-    for (const [lat, _dev] of IAST_CONSONANTS) {
+    for (const [lat] of IAST_CONSONANTS) {
       if (s.startsWith(lat, i) && lat.length > consLen) {
         cons = lat; consLen = lat.length
       }

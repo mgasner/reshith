@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from '@apollo/client'
 import { ExerciseRunner } from '@/components/ExerciseRunner'
-import { HebrewInput } from '@/components/HebrewInput'
 import { GET_TRANSLATION_EXERCISES, GRADE_TRANSLATION_EXERCISE } from '@/graphql/operations'
 
 interface TranslationExercise {
