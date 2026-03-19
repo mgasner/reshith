@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        hebrew: ['SBL Hebrew', 'Ezra SIL', 'serif'],
+        hebrew: ['SBL Hebrew', 'Noto Serif Hebrew', 'Ezra SIL', 'serif'],
         'hebrew-script': ['Hebrew Script', 'cursive'],
         rashi: ['Noto Rashi Hebrew', 'serif'],
         greek: ['SBL Greek', 'Gentium Plus', 'serif'],

@@ -1,5 +1,17 @@
 /* Noto Rashi Hebrew — Rashi script (semi-cursive) for traditional commentary display */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Rashi+Hebrew:wght@400;700&display=swap');
+/* Noto Serif Hebrew — fallback for Biblical Hebrew with vowels and cantillation marks */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Rashi+Hebrew:wght@400;700&family=Noto+Serif+Hebrew:wght@400;700&display=swap');
+
+/* SBL Hebrew — gold standard for Biblical Hebrew: full Tiberian vowel and cantillation mark support.
+   Designed by John Hudson / Tiro Typeworks for the Society of Biblical Literature. Free for use. */
+@font-face {
+  font-family: 'SBL Hebrew';
+  src: url('/fonts/SBL_Hbrw.woff2') format('woff2'),
+       url('/fonts/SBL_Hbrw.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -39,7 +51,7 @@
 }
 
 .hebrew-text {
-  font-family: 'SBL Hebrew', 'Ezra SIL', serif;
+  font-family: 'SBL Hebrew', 'Noto Serif Hebrew', 'Ezra SIL', serif;
   font-size: 1.5rem;
   line-height: 2;
 }
