@@ -90,27 +90,35 @@ interface VerseTranslation {
   text: string
 }
 
-// ── Morphology decoder (shared with GNT) ─────────────────────────────────────
+// ── CATSS morphology decoder ──────────────────────────────────────────────────
+//
+// CATSS/Packard format: 10-char code, e.g. "N1--DSF---", "VAI-AAI3S-", "P---------"
+//   chars[0]   : POS  (N=noun, V=verb, A=adj, R=pronoun, P=prep, C=conj, D=adv,
+//                       X=particle, I=interj, M=numeral)
+//   chars[1-2] : subtype (noun declension, verb paradigm, etc.)  — ignored for display
+//   chars[3]   : separator "-"
+//   chars[4]   : for nouns/adj/pronouns: case;  for verbs: tense
+//   chars[5]   : for nouns/adj/pronouns: number; for verbs: voice
+//   chars[6]   : for nouns/adj/pronouns: gender; for verbs: mood
+//   chars[7]   : for verbs: person (1/2/3);  for participles: case
+//   chars[8]   : for verbs: number;           for participles: number
+//   chars[9]   : padding "-"
 
-const POS_NAMES: Record<string, string> = {
-  N: 'noun', V: 'verb', A: 'adjective', D: 'adverb',
-  P: 'preposition', R: 'relative pronoun', C: 'conjunction',
-  T: 'article', I: 'interjection', X: 'particle',
-  F: 'reflexive pronoun', S: 'possessive pronoun',
-  K: 'correlative pronoun', Q: 'interrogative pronoun',
+const CATSS_POS: Record<string, string> = {
+  N: 'noun', V: 'verb', A: 'adjective', R: 'pronoun',
+  P: 'preposition', C: 'conjunction', D: 'adverb',
+  X: 'particle', I: 'interjection', M: 'numeral',
 }
 const CASE_NAMES: Record<string, string> = {
   N: 'nominative', G: 'genitive', D: 'dative', A: 'accusative', V: 'vocative',
 }
-const NUMBER_NAMES: Record<string, string> = { S: 'singular', P: 'plural' }
+const NUMBER_NAMES: Record<string, string> = { S: 'singular', D: 'dual', P: 'plural' }
 const GENDER_NAMES: Record<string, string> = { M: 'masculine', F: 'feminine', N: 'neuter' }
 const TENSE_NAMES: Record<string, string> = {
-  P: 'present', I: 'imperfect', F: 'future',
-  A: 'aorist', X: 'perfect', Y: 'pluperfect',
+  P: 'present', I: 'imperfect', F: 'future', A: 'aorist', X: 'perfect', Y: 'pluperfect',
 }
 const VOICE_NAMES: Record<string, string> = {
   A: 'active', M: 'middle', P: 'passive',
-  D: 'middle (deponent)', O: 'passive (deponent)', N: 'middle/passive',
 }
 const MOOD_NAMES: Record<string, string> = {
   I: 'indicative', D: 'imperative', S: 'subjunctive',
@@ -121,30 +129,39 @@ const PERSON_NAMES: Record<string, string> = {
 }
 
 function decodeGrammar(grammar: string): string[] {
-  if (!grammar) return []
+  if (!grammar || grammar.length < 1) return []
   const parts: string[] = []
-  const dashIdx = grammar.indexOf('-')
-  if (dashIdx < 0) return [POS_NAMES[grammar] ?? grammar]
-  const pos = grammar.slice(0, dashIdx)
-  const detail = grammar.slice(dashIdx + 1)
-  if (POS_NAMES[pos]) parts.push(POS_NAMES[pos])
-  if (!detail) return parts
+  const pos = grammar[0]
+  const posName = CATSS_POS[pos]
+  if (posName) parts.push(posName)
+
+  // Indeclinable POS — nothing more to decode
+  if ('PCDXIM'.includes(pos)) return parts
+
+  // Parse field starts at index 4 (after 3-char type + 1-char separator)
+  const p4 = grammar[4] ?? '-'
+  const p5 = grammar[5] ?? '-'
+  const p6 = grammar[6] ?? '-'
+  const p7 = grammar[7] ?? '-'
+  const p8 = grammar[8] ?? '-'
 
   if (pos === 'V') {
-    const segments = detail.split('-')
-    const tvm = segments[0] ?? ''
-    const pn = segments[1] ?? ''
-    if (tvm[0] && TENSE_NAMES[tvm[0]]) parts.push(TENSE_NAMES[tvm[0]])
-    if (tvm[1] && VOICE_NAMES[tvm[1]]) parts.push(VOICE_NAMES[tvm[1]])
-    if (tvm[2] && MOOD_NAMES[tvm[2]]) parts.push(MOOD_NAMES[tvm[2]])
-    if (pn[0] && PERSON_NAMES[pn[0]]) parts.push(PERSON_NAMES[pn[0]])
-    if (pn[1] && NUMBER_NAMES[pn[1]]) parts.push(NUMBER_NAMES[pn[1]])
-    if (pn[0] && CASE_NAMES[pn[0]]) parts.push(CASE_NAMES[pn[0]])
-    if (pn[1] && GENDER_NAMES[pn[1]]) parts.push(GENDER_NAMES[pn[1]])
+    if (p4 !== '-' && TENSE_NAMES[p4]) parts.push(TENSE_NAMES[p4])
+    if (p5 !== '-' && VOICE_NAMES[p5]) parts.push(VOICE_NAMES[p5])
+    if (p6 !== '-' && MOOD_NAMES[p6]) parts.push(MOOD_NAMES[p6])
+    if (p6 === 'P') {
+      // Participle: p7=case, p8=number, then gender at p6 position already 'P'
+      if (p7 !== '-' && CASE_NAMES[p7]) parts.push(CASE_NAMES[p7])
+      if (p8 !== '-' && NUMBER_NAMES[p8]) parts.push(NUMBER_NAMES[p8])
+    } else {
+      if (p7 !== '-' && PERSON_NAMES[p7]) parts.push(PERSON_NAMES[p7])
+      if (p8 !== '-' && NUMBER_NAMES[p8]) parts.push(NUMBER_NAMES[p8])
+    }
   } else {
-    if (detail[0] && CASE_NAMES[detail[0]]) parts.push(CASE_NAMES[detail[0]])
-    if (detail[1] && NUMBER_NAMES[detail[1]]) parts.push(NUMBER_NAMES[detail[1]])
-    if (detail[2] && GENDER_NAMES[detail[2]]) parts.push(GENDER_NAMES[detail[2]])
+    // Nouns, adjectives, pronouns, articles
+    if (p4 !== '-' && CASE_NAMES[p4]) parts.push(CASE_NAMES[p4])
+    if (p5 !== '-' && NUMBER_NAMES[p5]) parts.push(NUMBER_NAMES[p5])
+    if (p6 !== '-' && GENDER_NAMES[p6]) parts.push(GENDER_NAMES[p6])
   }
   return parts
 }
@@ -163,20 +180,18 @@ function WordCard({ token }: { token: GreekToken }) {
       {expanded ? (
         <span className="inline-flex flex-col items-start bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm shadow-sm min-w-[130px] max-w-xs">
           <span className="font-serif text-lg text-stone-900">{token.greek}</span>
-          <span className="text-stone-500 text-xs mt-0.5 italic">{token.transliteration}</span>
-          <span className="text-stone-700 text-xs mt-1 font-medium">{token.translation}</span>
+          {token.expanded && (
+            <span className="text-emerald-700 text-xs mt-0.5 font-medium">{token.expanded}</span>
+          )}
           {morphParts.length > 0 && (
             <span className="text-stone-500 text-xs mt-1">{morphParts.join(', ')}</span>
-          )}
-          {token.dstrongs && (
-            <span className="text-emerald-500 text-[10px] mt-0.5 font-mono">{token.dstrongs}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
         </span>
       ) : (
         <span className="inline-flex flex-col items-center hover:bg-emerald-50 rounded px-1.5 py-1 transition-colors">
           <span className="font-serif text-base text-stone-900">{token.greek}</span>
-          <span className="text-stone-400 text-[10px] leading-tight">{token.translation}</span>
+          <span className="text-stone-400 text-[10px] leading-tight">{token.expanded}</span>
         </span>
       )}
     </span>

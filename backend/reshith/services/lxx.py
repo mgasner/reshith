@@ -15,6 +15,17 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parents[3] / "data" / "nt_greek"
 TALXX_FILE = DATA_DIR / "TALXX.txt"
 
+# TALXX.txt column layout (tab-separated, produced by prepare_lxx.py):
+# [0] ref     e.g. "Gen.1.1#01=T"
+# [1] greek   e.g. "ἐν"
+# [2] (empty)
+# [3] (empty)
+# [4] (empty)
+# [5] grammar e.g. "P---------"  (CATSS morphology code)
+# [6] (empty)
+# [7] (empty)
+# [8] lemma   e.g. "ἐν"  (stored in 'expanded' field)
+
 LXX_BOOK_ORDER = [
     "Gen", "Exo", "Lev", "Num", "Deu",
     "Jos", "Jdg", "Rut", "1Sa", "2Sa", "1Ki", "2Ki",
@@ -83,21 +94,15 @@ def _parse_file() -> LXXIndex:
         idx.loaded = True
         return idx
 
-    past_header = False
     with open(TALXX_FILE, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip("\n")
 
             if not line or line.startswith("\t") or line.startswith("#"):
                 continue
-            if line.startswith("Eng"):
-                past_header = True
-                continue
-            if not past_header:
-                continue
 
             parts = line.split("\t")
-            if len(parts) < 6:
+            if len(parts) < 2:
                 continue
 
             ref = parts[0].strip()

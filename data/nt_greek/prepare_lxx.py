@@ -1,60 +1,144 @@
-"""Fetch STEPBible TALXX (Septuagint) and Brenton English translation data.
+"""Fetch LXX morphological data from nathans/lxxmorph-unicode.
 
-Data sources (CC BY 4.0 / public domain):
-  TALXX   — https://github.com/tyndale/STEPBible-Data
-  Brenton — https://github.com/eliranwong/LXX-Rahlfs-1935 or similar
+Data source:
+  CCAT Morphological Septuagint (Unicode edition by Nathan Smith)
+  https://github.com/nathans/lxxmorph-unicode
+  Based on CCAT/Packard Humanities Institute data (freely available for scholarly use)
 
-Outputs:
-  data/nt_greek/TALXX.txt        — STEPBible Translators Amalgamated LXX
-  data/nt_greek/brenton_lxx.json — Brenton translation (book→chapter→verse→text)
+Output:
+  data/nt_greek/TALXX.txt  — tab-separated interlinear LXX data, format:
+      Book.ch.v#tok=T  greek  (empty)  (empty)  (empty)  catss_grammar  (empty)  (empty)  lemma
+
+Note: Brenton English translation is not bundled here. The brenton_lxx.json
+      file can be supplied separately; the viewer gracefully shows Greek-only
+      if it is absent.
 
 Usage:
   cd data/nt_greek
-  python prepare_lxx.py
+  python3 prepare_lxx.py
 """
 
-import json
+import re
 import sys
 import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).parent
+RAW_BASE = "https://raw.githubusercontent.com/nathans/lxxmorph-unicode/master"
 
-TALXX_URL = (
-    "https://raw.githubusercontent.com/tyndale/STEPBible-Data/master/"
-    "Translators%20Amalgamated%20LXX%20-%20STEPBible.org%20CC%20BY.txt"
-)
+# (filename, our book abbreviation)
+# Using B-text for Joshua and Judges; DanielTh (Theodotion) for Daniel.
+# 2Esdras covers Ezra + Nehemiah in LXX numbering — stored as "Ezr" here.
+BOOK_FILES: list[tuple[str, str]] = [
+    ("01.Gen.txt", "Gen"),
+    ("02.Exod.txt", "Exo"),
+    ("03.Lev.txt", "Lev"),
+    ("04.Num.txt", "Num"),
+    ("05.Deut.txt", "Deu"),
+    ("06.JoshB.txt", "Jos"),
+    ("08.JudgesB.txt", "Jdg"),
+    ("10.Ruth.txt", "Rut"),
+    ("11.1Sam.txt", "1Sa"),
+    ("12.2Sam.txt", "2Sa"),
+    ("13.1Kings.txt", "1Ki"),
+    ("14.2Kings.txt", "2Ki"),
+    ("15.1Chron.txt", "1Ch"),
+    ("16.2Chron.txt", "2Ch"),
+    ("18.2Esdras.txt", "Ezr"),
+    ("19.Esther.txt", "Est"),
+    ("20.Judith.txt", "Jdt"),
+    ("21.TobitBA.txt", "Tob"),
+    ("23.1Macc.txt", "1Ma"),
+    ("24.2Macc.txt", "2Ma"),
+    ("25.3Macc.txt", "3Ma"),
+    ("26.4Macc.txt", "4Ma"),
+    ("27.Psalms.txt", "Psa"),
+    ("29.Proverbs.txt", "Pro"),
+    ("30.Qoheleth.txt", "Ecc"),
+    ("31.Canticles.txt", "Sng"),
+    ("32.Job.txt", "Job"),
+    ("33.Wisdom.txt", "Wis"),
+    ("34.Sirach.txt", "Sir"),
+    ("36.Hosea.txt", "Hos"),
+    ("37.Micah.txt", "Mic"),
+    ("38.Amos.txt", "Amo"),
+    ("39.Joel.txt", "Jol"),
+    ("40.Jonah.txt", "Jon"),
+    ("41.Obadiah.txt", "Oba"),
+    ("42.Nahum.txt", "Nah"),
+    ("43.Habakkuk.txt", "Hab"),
+    ("44.Zeph.txt", "Zep"),
+    ("45.Haggai.txt", "Hag"),
+    ("46.Zech.txt", "Zec"),
+    ("47.Malachi.txt", "Mal"),
+    ("48.Isaiah.txt", "Isa"),
+    ("49.Jer.txt", "Jer"),
+    ("50.Baruch.txt", "Bar"),
+    ("52.Lam.txt", "Lam"),
+    ("53.Ezek.txt", "Ezk"),
+    ("57.DanielTh.txt", "Dan"),
+]
 
-# Brenton LXX English translation — scrollmapper eng-lxx (public domain)
-BRENTON_URL = (
-    "https://raw.githubusercontent.com/scrollmapper/bible_databases/master/"
-    "json/t_lxx.json"
-)
-
-# Map scrollmapper book IDs to LXX abbreviations
-_SCROLL_ID_TO_ABBREV = {
-    1: "Gen", 2: "Exo", 3: "Lev", 4: "Num", 5: "Deu",
-    6: "Jos", 7: "Jdg", 8: "Rut", 9: "1Sa", 10: "2Sa",
-    11: "1Ki", 12: "2Ki", 13: "1Ch", 14: "2Ch",
-    15: "Ezr", 16: "Neh", 17: "Est",
-    18: "Job", 19: "Psa", 20: "Pro", 21: "Ecc", 22: "Sng",
-    23: "Isa", 24: "Jer", 25: "Lam", 26: "Ezk", 27: "Dan",
-    28: "Hos", 29: "Jol", 30: "Amo", 31: "Oba", 32: "Jon",
-    33: "Mic", 34: "Nah", 35: "Hab", 36: "Zep", 37: "Hag",
-    38: "Zec", 39: "Mal",
-    # Deuterocanon (IDs vary by source — adjust if needed)
-    68: "Tob", 69: "Jdt", 70: "1Ma", 71: "2Ma",
-    73: "Wis", 74: "Sir", 75: "Bar",
-}
+# Verse header formats:
+#   "Gen 1:1"     → chapter=1, verse=1   (standard)
+#   "Obad 1"      → chapter=1, verse=1   (single-chapter books: no colon, verse only)
+VERSE_HEADER_RE = re.compile(r"^\S+\s+(\d+):(\d+)")
+VERSE_HEADER_SINGLE_RE = re.compile(r"^\S+\s+(\d+)$")
 
 
-def fetch(url: str, label: str) -> bytes:
-    print(f"Fetching {label}…", flush=True)
+def fetch(url: str, label: str) -> str:
+    print(f"  Fetching {label}…", flush=True)
     req = urllib.request.Request(url, headers={"User-Agent": "reshith/1.0"})
     with urllib.request.urlopen(req, timeout=120) as r:
         data = r.read()
-    print(f"  {len(data):,} bytes", flush=True)
-    return data
+    print(f"    {len(data):,} bytes", flush=True)
+    return data.decode("utf-8", errors="replace")
+
+
+def convert_book(text: str, abbrev: str) -> list[str]:
+    """Convert one lxxmorph file into TALXX.txt lines."""
+    lines: list[str] = []
+    chapter = 0
+    verse = 0
+    token = 0
+
+    for raw in text.splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+
+        m = VERSE_HEADER_RE.match(raw)
+        if m:
+            chapter = int(m.group(1))
+            verse = int(m.group(2))
+            token = 0
+            continue
+
+        # Single-chapter books: "Obad 1" means chapter=1, verse=1
+        m2 = VERSE_HEADER_SINGLE_RE.match(raw)
+        if m2 and raw[0].isupper():
+            chapter = 1
+            verse = int(m2.group(1))
+            token = 0
+            continue
+
+        if chapter == 0:
+            continue  # skip pre-data header lines
+
+        parts = raw.split()
+        if len(parts) < 2:
+            continue
+
+        greek = parts[0]
+        grammar = parts[1]
+        lemma = parts[2] if len(parts) > 2 else ""
+
+        token += 1
+        ref = f"{abbrev}.{chapter}.{verse}#{token:02d}=T"
+        # Tab-separated: ref, greek, "", "", "", grammar, "", "", lemma
+        lines.append(f"{ref}\t{greek}\t\t\t\t{grammar}\t\t\t{lemma}")
+
+    return lines
 
 
 def fetch_talxx() -> None:
@@ -62,48 +146,30 @@ def fetch_talxx() -> None:
     if out.exists():
         print(f"TALXX.txt already exists ({out.stat().st_size:,} bytes), skipping.")
         return
-    data = fetch(TALXX_URL, "TALXX")
-    out.write_bytes(data)
-    print(f"Wrote {out}")
 
+    all_lines: list[str] = []
+    for filename, abbrev in BOOK_FILES:
+        url = f"{RAW_BASE}/{filename}"
+        try:
+            text = fetch(url, f"{abbrev} ({filename})")
+            book_lines = convert_book(text, abbrev)
+            all_lines.extend(book_lines)
+            print(f"    {abbrev}: {len(book_lines)} word tokens")
+        except Exception as e:
+            print(f"    Warning: could not fetch {filename}: {e}", file=sys.stderr)
 
-def fetch_brenton() -> None:
-    out = HERE / "brenton_lxx.json"
-    if out.exists():
-        print(f"brenton_lxx.json already exists, skipping.")
-        return
-    try:
-        data = fetch(BRENTON_URL, "Brenton LXX")
-        raw = json.loads(data.decode("utf-8"))
-
-        result: dict[str, dict[str, dict[str, str]]] = {}
-        rows = raw.get("resultset", {}).get("row", [])
-        for row in rows:
-            fields = row.get("field", [])
-            if len(fields) < 4:
-                continue
-            book_id = int(fields[0])
-            ch = str(int(fields[1]))
-            v = str(int(fields[2]))
-            text = str(fields[3])
-            abbrev = _SCROLL_ID_TO_ABBREV.get(book_id)
-            if abbrev is None:
-                continue
-            result.setdefault(abbrev, {}).setdefault(ch, {})[v] = text
-
-        out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Wrote {out} ({len(result)} books)")
-    except Exception as e:
-        print(f"  Warning: could not fetch Brenton translation: {e}")
-        print("  You can manually supply data/nt_greek/brenton_lxx.json")
-        print("  Format: {abbrev: {chapter_str: {verse_str: text}}}")
+    out.write_text("\n".join(all_lines) + "\n", encoding="utf-8")
+    print(f"Wrote {out} ({len(all_lines):,} total tokens)")
 
 
 if __name__ == "__main__":
+    print("Fetching LXX morphological data…")
     try:
         fetch_talxx()
-        fetch_brenton()
         print("Done.")
+        print()
+        print("Note: Brenton English translation (brenton_lxx.json) must be supplied")
+        print("      separately. The LXX viewer works without it (Greek-only mode).")
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
