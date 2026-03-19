@@ -261,6 +261,26 @@ Adding a new language:
 
 ---
 
+## Adding a new data source
+
+Whenever you pull in a new external dataset, corpus, lexicon, translation, font, or API, you **must** add an entry to `docs/sources.md` before the task is complete. This keeps the license record accurate and avoids legal surprises later.
+
+For each new source, record:
+
+1. **Name** — the dataset's official name and edition (e.g. "STEPBible TAHOT").
+2. **Description** — one or two sentences on what it is and how it is used in the project.
+3. **Source** — the canonical URL (GitHub repo, API root, project homepage, Gutenberg link, etc.).
+4. **License** — the exact SPDX identifier or license name (e.g. `CC BY 4.0`, `Public domain`, `MIT`). If unknown, research it before proceeding; do not leave it blank.
+5. **Attribution required** — Yes/No, and the required credit string if Yes.
+6. **Repo path** — where the data (or its processed output) lives in this repo.
+7. **Processing script** — the script that fetches or transforms it, if any.
+
+Place the entry under the appropriate section in `docs/sources.md` (Corpora, Lexica, Translations, Commentaries, APIs and NLP Services, Pedagogical Texts, or Fonts). If no existing section fits, add one.
+
+Also update the **License Compatibility Notes** table if the new license is not already represented there.
+
+---
+
 ## Common pitfalls
 
 - **`uv run` not plain `python`** — The backend imports `jose`, `strawberry`, etc. which are only in the uv-managed venv. Always use `uv run python` or `uv run pytest` in the `backend/` directory.
