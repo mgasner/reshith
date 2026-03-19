@@ -26,7 +26,7 @@ OT_BOOK_ORDER = [
 
 _BOOK_ORDER_MAP: dict[str, int] = {b: i for i, b in enumerate(OT_BOOK_ORDER)}
 
-REF_RE = re.compile(r'^([A-Z1-9][a-zA-Z0-9]+)\.(\d+)\.(\d+)#(\d+)=([A-Z])')
+REF_RE = re.compile(r'^([A-Z1-9][a-zA-Z0-9]+)\.(\d+)\.(\d+)(?:\([^)]+\))?#(\d+)=([A-Z])')
 
 
 @dataclass

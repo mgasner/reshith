@@ -127,6 +127,7 @@ function WordCard({
   showTranslation,
   showCantillation,
   showVowels,
+  revereDivineName,
   compact = false,
 }: {
   word: InterlinearWord
@@ -135,6 +136,7 @@ function WordCard({
   showTranslation: boolean
   showCantillation: boolean
   showVowels: boolean
+  revereDivineName: boolean
   compact?: boolean
 }) {
   const [showDetail, setShowDetail] = useState(false)
@@ -147,9 +149,13 @@ function WordCard({
   let displayNative = showBreaks ? cleanNative : cleanNative.replace(/\//g, '')
   if (!showCantillation) displayNative = displayNative.replace(CANTILLATION_RE, '')
   if (!showVowels) displayNative = displayNative.replace(VOWELS_RE, '')
-  const displayGloss = showBreaks
-    ? word.gloss
-    : word.gloss.replace(/\/ /g, ' ').replace(/\//g, '').trim()
+  const isTetragrammaton = revereDivineName && word.lemmaId === 'H3068G'
+  const displayGloss = isTetragrammaton
+    ? 'LORD'
+    : showBreaks
+      ? word.gloss
+      : word.gloss.replace(/\/ /g, ' ').replace(/\//g, '').trim()
+  const displayTranslit = isTetragrammaton ? 'ʾĂḏōnāy' : hebrewToLambdin(word.native)
 
   const handleClick = () => {
     if (!showDetail && word.lemmaId) {
@@ -176,7 +182,7 @@ function WordCard({
       {/* Lambdin transliteration */}
       {(showTranslit || showDetail) && (
         <div className="text-xs text-blue-700 font-mono leading-tight text-start">
-          {hebrewToLambdin(word.native)}
+          {displayTranslit}
         </div>
       )}
       {/* Gloss */}
@@ -257,6 +263,7 @@ function VerseDisplay({
   showCantillation,
   showVowels,
   showVariants,
+  revereDivineName,
 }: {
   verse: number
   words: InterlinearWord[]
@@ -266,10 +273,11 @@ function VerseDisplay({
   showCantillation: boolean
   showVowels: boolean
   showVariants: boolean
+  revereDivineName: boolean
 }) {
   const mainWords = words.filter((w) => w.textType === 'L')
   const variantWords = words.filter((w) => w.textType !== 'L')
-  const cardProps = { showBreaks, showTranslit, showTranslation, showCantillation, showVowels }
+  const cardProps = { showBreaks, showTranslit, showTranslation, showCantillation, showVowels, revereDivineName }
 
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -397,12 +405,14 @@ interface RashiFlowProps {
   showCantillation: boolean
   showVowels: boolean
   showVariants: boolean
+  revereDivineName: boolean
   translationMap: Record<number, string>
 }
 
 function RashiFlowLayout({
   verses, rashiData, rashiLoading, selectedChapter, selectedBook,
   showBreaks, showTranslit, showTranslation, showCantillation, showVowels, showVariants,
+  revereDivineName,
   translationMap,
 }: RashiFlowProps) {
   return (
@@ -423,6 +433,7 @@ function RashiFlowLayout({
                   showCantillation={showCantillation}
                   showVowels={showVowels}
                   showVariants={showVariants}
+                  revereDivineName={revereDivineName}
                 />
                 {translationMap[v.verse] && (
                   <p className="text-sm text-gray-600 italic mt-1 leading-snug">
@@ -469,6 +480,7 @@ export function TahotViewerPage() {
   const [showVariants, setShowVariants] = useState(false)
   const [showCantillation, setShowCantillation] = useState(true)
   const [showVowels, setShowVowels] = useState(true)
+  const [revereDivineName, setRevereDivineName] = useState(false)
   const [showJps, setShowJps] = useState(false)
   const [showRashi, setShowRashi] = useState(false)
   const [rashiLayout, setRashiLayout] = useState<'flow' | 'side'>('flow')
@@ -831,6 +843,19 @@ export function TahotViewerPage() {
                 K/Q
               </button>
               <button
+                onClick={() => setRevereDivineName((v) => !v)}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+                  revereDivineName
+                    ? 'border-amber-400 bg-amber-50 text-amber-700'
+                    : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                }`}
+                title={revereDivineName
+                  ? 'Divine name shown as LORD / ʾĂḏōnāy — click to show Yahweh'
+                  : 'Divine name shown as Yahweh — click to show LORD / ʾĂḏōnāy'}
+              >
+                LORD
+              </button>
+              <button
                 onClick={() => setShowJps((v) => !v)}
                 className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
                   showJps
@@ -963,6 +988,7 @@ export function TahotViewerPage() {
                     showCantillation={showCantillation}
                     showVowels={showVowels}
                     showVariants={showVariants}
+                    revereDivineName={revereDivineName}
                   />
                   {showJps && translationMap[v.verse] && (
                     <p className="text-sm text-gray-600 italic mt-1 mb-3 leading-snug">
@@ -987,6 +1013,7 @@ export function TahotViewerPage() {
               showCantillation={showCantillation}
               showVowels={showVowels}
               showVariants={showVariants}
+              revereDivineName={revereDivineName}
               translationMap={translationMap}
             />
           )}
@@ -1006,6 +1033,7 @@ export function TahotViewerPage() {
                       showCantillation={showCantillation}
                       showVowels={showVowels}
                       showVariants={showVariants}
+                      revereDivineName={revereDivineName}
                     />
                     {translationMap[v.verse] && (
                       <p className="text-sm text-gray-600 italic mt-1 leading-snug">
@@ -1097,6 +1125,7 @@ export function TahotViewerPage() {
                       let searchHebrew = w.hebrew.replace(/\\.*$/, '')
                       if (!showCantillation) searchHebrew = searchHebrew.replace(CANTILLATION_RE, '')
                       if (!showVowels) searchHebrew = searchHebrew.replace(VOWELS_RE, '')
+                      const searchIsTetragrammaton = revereDivineName && (w.rootStrongs === 'H3068G' || w.dstrongs === 'H3068G')
                       return (
                       <tr
                         key={`${w.ref}-${i}`}
@@ -1104,9 +1133,13 @@ export function TahotViewerPage() {
                       >
                         <td className="py-1.5 pr-4 font-mono text-xs text-gray-500">{w.ref}</td>
                         <td className="py-1.5 pr-4 font-hebrew text-xl" dir="rtl">{searchHebrew}</td>
-                        <td className="py-1.5 pr-4 font-mono text-xs text-blue-700">{hebrewToLambdin(w.hebrew)}</td>
+                        <td className="py-1.5 pr-4 font-mono text-xs text-blue-700">
+                          {searchIsTetragrammaton ? 'ʾĂḏōnāy' : hebrewToLambdin(w.hebrew)}
+                        </td>
                         <td className="py-1.5 pr-4 text-gray-700">
-                          {showBreaks ? w.translation : w.translation.replace(/\/ /g, ' ').replace(/\//g, '').trim()}
+                          {searchIsTetragrammaton
+                            ? 'LORD'
+                            : showBreaks ? w.translation : w.translation.replace(/\/ /g, ' ').replace(/\//g, '').trim()}
                         </td>
                         <td className="py-1.5 pr-4 font-mono text-xs text-gray-500">{w.rootStrongs || w.dstrongs}</td>
                         <td className="py-1.5 font-mono text-xs text-gray-400">{w.grammar}</td>
