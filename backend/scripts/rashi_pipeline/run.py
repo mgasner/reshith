@@ -58,6 +58,9 @@ RASHI_SOURCE_DIR = REPO_ROOT / "frontend" / "public" / "data" / "hebrew" / "rash
 OUTPUT_DIR = REPO_ROOT / "data" / "rashi_enriched"
 CACHE_DIR = REPO_ROOT / "data" / ".pipeline_cache"
 
+# May be overridden by --source-dir at runtime
+SOURCE_DIR = RASHI_SOURCE_DIR
+
 ALL_BOOKS = sorted(p.stem for p in RASHI_SOURCE_DIR.glob("*.json"))
 
 
@@ -253,7 +256,7 @@ async def process_book(
     dry_run: bool = False,
     resume: bool = False,
 ) -> None:
-    source_path = RASHI_SOURCE_DIR / f"{book}.json"
+    source_path = SOURCE_DIR / f"{book}.json"
     if not source_path.exists():
         logger.error(f"Source not found: {source_path}")
         return
@@ -316,13 +319,22 @@ async def process_book(
 # ---------------------------------------------------------------------------
 
 async def main(args: argparse.Namespace) -> None:
+    global SOURCE_DIR, OUTPUT_DIR
+
+    if args.source_dir:
+        SOURCE_DIR = args.source_dir
+    if args.output_dir != OUTPUT_DIR:
+        OUTPUT_DIR = args.output_dir  # type: ignore[assignment]
+
+    available_books = sorted(p.stem for p in SOURCE_DIR.glob("*.json"))
+
     if args.all:
-        books = ALL_BOOKS
+        books = available_books
     else:
         books = args.book or []
-        invalid = [b for b in books if b not in ALL_BOOKS]
+        invalid = [b for b in books if b not in available_books]
         if invalid:
-            logger.error(f"Unknown books: {invalid}. Available: {ALL_BOOKS}")
+            logger.error(f"Unknown books: {invalid}. Available: {available_books}")
             sys.exit(1)
 
     if not books:
@@ -360,13 +372,12 @@ if __name__ == "__main__":
     group.add_argument("--book", nargs="+", metavar="BOOK", help="Process specific book(s) e.g. gen exo")
     parser.add_argument("--dry-run", action="store_true", help="Analyze but don't write output")
     parser.add_argument("--resume", action="store_true", help="Skip already-processed chapters")
+    parser.add_argument("--source-dir", type=Path, default=None, help="Directory of raw commentary JSON (default: rashi)")
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR, help="Output directory")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    if args.output_dir != OUTPUT_DIR:
-        OUTPUT_DIR = args.output_dir  # type: ignore[assignment]
 
     asyncio.run(main(args))
