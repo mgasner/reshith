@@ -36,6 +36,15 @@ dev = [
     "ruff>=0.8.0",
 ]
 
+[tool.uv]
+# tokenizers 0.20.x has broken pyproject.toml (missing project.version).
+# Override to transformers 4.48+ which uses tokenizers>=0.21 (fixed).
+# parler-tts pins transformers==4.46.1 but typically works with newer versions.
+override-dependencies = [
+    "transformers>=4.48.0",
+    "tokenizers>=0.21.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
