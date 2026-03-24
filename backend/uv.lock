@@ -3040,17 +3040,12 @@ dependencies = [
     { name = "greenlet" },
     { name = "httpx" },
     { name = "openai" },
-    { name = "parler-tts" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
-    { name = "scipy" },
-    { name = "soundfile" },
     { name = "sqlalchemy" },
     { name = "strawberry-graphql", extra = ["fastapi"] },
-    { name = "torch" },
-    { name = "transformers" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -3061,6 +3056,13 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "ruff" },
+]
+ml = [
+    { name = "parler-tts" },
+    { name = "scipy" },
+    { name = "soundfile" },
+    { name = "torch" },
+    { name = "transformers" },
 ]
 
 [package.metadata]
@@ -3074,7 +3076,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "openai", specifier = ">=1.57.0" },
-    { name = "parler-tts", specifier = ">=0.2.0" },
+    { name = "parler-tts", marker = "extra == 'ml'", specifier = ">=0.2.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "pydantic-settings", specifier = ">=2.6.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.0" },
@@ -3083,15 +3085,15 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.3.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
-    { name = "scipy", specifier = ">=1.10.0" },
-    { name = "soundfile", specifier = ">=0.12.0" },
+    { name = "scipy", marker = "extra == 'ml'", specifier = ">=1.10.0" },
+    { name = "soundfile", marker = "extra == 'ml'", specifier = ">=0.12.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
     { name = "strawberry-graphql", extras = ["fastapi"], specifier = ">=0.252.0" },
-    { name = "torch", specifier = ">=2.0.0" },
-    { name = "transformers", specifier = ">=4.33.0" },
+    { name = "torch", marker = "extra == 'ml'", specifier = ">=2.0.0" },
+    { name = "transformers", marker = "extra == 'ml'", specifier = ">=4.33.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["ml", "dev"]
 
 [[package]]
 name = "rich"
