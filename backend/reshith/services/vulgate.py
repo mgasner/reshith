@@ -106,7 +106,9 @@ class VulgateIndex:
                     morphology=row["morphology"],
                     relation=row["relation"],
                 )
-                self._index.setdefault(book, {}).setdefault(chapter, {}).setdefault(verse, []).append(token)
+                (self._index.setdefault(book, {})
+                 .setdefault(chapter, {})
+                 .setdefault(verse, []).append(token))
                 self._book_chapters.setdefault(book, set()).add(chapter)
                 self._chapter_verses.setdefault((book, chapter), set()).add(verse)
 

@@ -34,15 +34,14 @@ import asyncio
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from .abbreviations import is_abbreviation, lookup_abbreviation
+from .abbreviations import lookup_abbreviation
 from .custom_lexicon import lookup_custom
 from .dicta_client import DictaClient
 from .language_id import LanguageIdentifier
 from .models import DictionaryEntry, Language, Morphology, Token, UncertaintyReason  # noqa: F401
-from .morph_parser import parse_morph_code
 from .sefaria_lexicon import SefariaLexicon
 from .tokenizer import is_hebrew_word, strip_vowels, tokenize_comment
 
@@ -170,7 +169,6 @@ async def process_verse(
     lang_id: LanguageIdentifier,
 ) -> dict:
     from .models import EnrichedVerse
-    from .dicta_client import DictaToken
 
     lang_id.reset()
 
@@ -205,8 +203,8 @@ async def process_verse(
     # Step 5: collect unique lemmas for Sefaria lookup
     unique_lemmas: set[str] = set()
     for dicta_result in dicta_results.values():
-        from .dicta_client import DictaToken as DT
-        if isinstance(dicta_result, DT) and dicta_result.lemma:
+        from .dicta_client import DictaToken
+        if isinstance(dicta_result, DictaToken) and dicta_result.lemma:
             unique_lemmas.add(strip_vowels(dicta_result.lemma))
 
     # Sefaria lookups — run concurrently (each is independent; Sefaria has its own
@@ -225,8 +223,8 @@ async def process_verse(
         dicta_result = dicta_results.get(i)
         # Get dictionary entry via lemma
         dictionary: DictionaryEntry | None = None
-        from .dicta_client import DictaToken as DT
-        if isinstance(dicta_result, DT) and dicta_result.lemma:
+        from .dicta_client import DictaToken
+        if isinstance(dicta_result, DictaToken) and dicta_result.lemma:
             dictionary = lemmas.get(strip_vowels(dicta_result.lemma))
         # Check custom lexicon as fallback
         if dictionary is None:
@@ -294,7 +292,7 @@ async def process_book(
                 "book": book,
                 "chapter": chapter,
                 "verse_count": len(verses),
-                "processed_at": datetime.now(timezone.utc).isoformat(),
+                "processed_at": datetime.now(UTC).isoformat(),
             },
             "verses": verse_results,
         }
@@ -310,7 +308,8 @@ async def process_book(
                 f"{uncertain_count} uncertain"
             )
         else:
-            out_path.write_text(json.dumps(chapter_doc, ensure_ascii=False, indent=2), encoding="utf-8")
+            content = json.dumps(chapter_doc, ensure_ascii=False, indent=2)
+            out_path.write_text(content, encoding="utf-8")
             logger.info(f"    wrote {out_path}")
 
 
@@ -369,10 +368,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Rashi morphological enrichment pipeline")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--all", action="store_true", help="Process all books")
-    group.add_argument("--book", nargs="+", metavar="BOOK", help="Process specific book(s) e.g. gen exo")
+    group.add_argument(
+        "--book", nargs="+", metavar="BOOK",
+        help="Process specific book(s) e.g. gen exo",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Analyze but don't write output")
     parser.add_argument("--resume", action="store_true", help="Skip already-processed chapters")
-    parser.add_argument("--source-dir", type=Path, default=None, help="Directory of raw commentary JSON (default: rashi)")
+    parser.add_argument(
+        "--source-dir", type=Path, default=None,
+        help="Directory of raw commentary JSON (default: rashi)",
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR, help="Output directory")
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     args = parser.parse_args()

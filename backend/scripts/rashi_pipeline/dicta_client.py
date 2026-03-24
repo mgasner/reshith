@@ -102,7 +102,7 @@ class DictaToken:
         }
 
     @classmethod
-    def from_cache_dict(cls, word: str, d: dict[str, Any]) -> "DictaToken":
+    def from_cache_dict(cls, word: str, d: dict[str, Any]) -> DictaToken:
         return cls(
             word=word,
             vocalized=d.get("vocalized"),
@@ -153,7 +153,10 @@ def _parse_response_token(item: dict[str, Any]) -> DictaToken | None:
                     alt_morph_id = None
                     if alt_morph_list and isinstance(alt_morph_list[0], list):
                         alt_morph_id = str(alt_morph_list[0][0]) if alt_morph_list[0] else None
-                        alt_lemma = str(alt_morph_list[0][1]) if len(alt_morph_list[0]) > 1 else None
+                        alt_lemma = (
+                            str(alt_morph_list[0][1])
+                            if len(alt_morph_list[0]) > 1 else None
+                        )
                     alternatives.append({
                         "vocalized": alt_voc,
                         "lemma": alt_lemma,
@@ -224,7 +227,7 @@ class DictaClient:
         self._cache = TokenCache(cache_dir)
         self._stats = {"cache_hits": 0, "api_calls": 0, "tokens_sent": 0}
 
-    async def __aenter__(self) -> "DictaClient":
+    async def __aenter__(self) -> DictaClient:
         self._client = httpx.AsyncClient(timeout=30.0)
         return self
 

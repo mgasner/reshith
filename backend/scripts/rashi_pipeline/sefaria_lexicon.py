@@ -127,7 +127,7 @@ class SefariaLexicon:
         # In-memory cache for this session (checked before acquiring lock)
         self._memory: dict[str, DictionaryEntry | None] = {}
 
-    async def __aenter__(self) -> "SefariaLexicon":
+    async def __aenter__(self) -> SefariaLexicon:
         self._client = httpx.AsyncClient(timeout=20.0)
         return self
 
@@ -206,7 +206,8 @@ class SefariaLexicon:
             for attempt in range(retries):
                 try:
                     url = SEFARIA_WORDS_URL.format(word=norm)
-                    resp = await self._client.get(url, params={"lookup_ref": "", "nevuchadnezar": "1"})
+                    params = {"lookup_ref": "", "nevuchadnezar": "1"}
+                    resp = await self._client.get(url, params=params)
                     if resp.status_code == 404:
                         self._write_cache(norm, None)
                         return None

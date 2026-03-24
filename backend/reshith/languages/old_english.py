@@ -20,7 +20,6 @@ Scholarly standard: Klaeber's Beowulf, 4th edition (Klaeber 4), ed. Fulk,
 Bjork, and Niles (University of Toronto Press, 2008).
 """
 
-import re
 import unicodedata
 
 from reshith.languages.base import LanguageModule

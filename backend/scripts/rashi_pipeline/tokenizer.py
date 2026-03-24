@@ -19,7 +19,6 @@ Key concerns:
 from __future__ import annotations
 
 import re
-import unicodedata
 
 CANTILLATION = set(range(0x0591, 0x05AF + 1))
 NIKUD = set(range(0x05B0, 0x05BD + 1)) | {0x05C1, 0x05C2, 0x05C4, 0x05C5, 0x05C7}
