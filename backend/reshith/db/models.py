@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from reshith.db.base import Base
 
 
-class LanguageCode(str, enum.Enum):
+class LanguageCode(enum.StrEnum):
     BIBLICAL_HEBREW = "hbo"
     LATIN = "lat"
     ECCLESIASTICAL_LATIN = "ecl"

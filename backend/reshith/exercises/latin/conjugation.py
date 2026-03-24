@@ -96,19 +96,28 @@ def _parse_verb(word: LatinWord) -> VerbInfo | None:
     if infinitive.endswith("āre"):
         # 1st conjugation: strip -āre (3 chars) to get consonant stem
         stem = infinitive[:-3]
-        return VerbInfo(word=word, infinitive=infinitive, stem=stem, conjugation="1", definition=word.definition)
+        return VerbInfo(
+            word=word, infinitive=infinitive, stem=stem,
+            conjugation="1", definition=word.definition,
+        )
 
     elif infinitive.endswith("ēre"):
         # 2nd conjugation: strip -ēre (3 chars) to get consonant stem
         stem = infinitive[:-3]
-        return VerbInfo(word=word, infinitive=infinitive, stem=stem, conjugation="2", definition=word.definition)
+        return VerbInfo(
+            word=word, infinitive=infinitive, stem=stem,
+            conjugation="2", definition=word.definition,
+        )
 
     else:
         # Check without macrons (e.g. "dare" with no macron on ā)
         inf_clean = strip_macrons(infinitive)
         if inf_clean.endswith("are"):
             stem = infinitive[:-3]  # strip last 3 chars (-are or -āre without macron)
-            return VerbInfo(word=word, infinitive=infinitive, stem=stem, conjugation="1", definition=word.definition)
+            return VerbInfo(
+                word=word, infinitive=infinitive, stem=stem,
+                conjugation="1", definition=word.definition,
+            )
         # 3rd/4th conjugation and irregulars are not supported
         return None
 

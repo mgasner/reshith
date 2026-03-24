@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class Language(str, Enum):
+class Language(StrEnum):
     HEBREW = "hebrew"
     ARAMAIC = "aramaic"
     OLD_FRENCH = "old_french"
@@ -16,7 +16,7 @@ class Language(str, Enum):
     UNKNOWN = "unknown"
 
 
-class UncertaintyReason(str, Enum):
+class UncertaintyReason(StrEnum):
     LOW_CONFIDENCE = "low_confidence"         # Dicta score below threshold
     MULTIPLE_ANALYSES = "multiple_analyses"   # Dicta returned several equally-scored options
     ARAMAIC = "aramaic"                       # Token identified as Aramaic

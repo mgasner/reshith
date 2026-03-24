@@ -12,20 +12,6 @@ from reshith.api.types import (
     ArticleDirection,
     ArticleExercise,
     AuthPayload,
-    InterlinearVerse,
-    InterlinearWord,
-    TahotBookInfo,
-    TahotChapterInfo,
-    TahotWord as TahotWordGQL,
-    VulgateBookInfo,
-    VulgateChapterInfo,
-    VulgateToken as VulgateTokenGQL,
-    TahotVerseTranslation,
-    VulgateVerseTranslation,
-    GreekToken as GreekTokenGQL,
-    GreekBookInfo,
-    GreekChapterInfo,
-    GreekVerseTranslation,
     Card,
     CardWithSRS,
     ComparativeExercise,
@@ -40,23 +26,26 @@ from reshith.api.types import (
     GradeArticleExerciseInput,
     GradeComparativeInput,
     GradeExerciseInput,
+    GradeGreekExerciseInput,
+    GradeLatinExerciseInput,
     GradeRelativeClauseInput,
+    GradeSanskritExerciseInput,
     GradeTranslationInput,
     GradeVerbalInput,
-    LanguageCode,
+    GreekBookInfo,
+    GreekChapterInfo,
     GreekConjugationExercise,
     GreekDeclensionExercise,
     GreekGradeResult,
     GreekVariant,
-    GradeGreekExerciseInput,
-    GradeSanskritExerciseInput,
-    SanskritDeclensionExercise,
-    SanskritGradeResult,
+    GreekVerseTranslation,
+    InterlinearVerse,
+    InterlinearWord,
+    LanguageCode,
     LatinConjugationExercise,
     LatinDeclensionExercise,
     LatinGradeResult,
     LatinVariant,
-    GradeLatinExerciseInput,
     LexiconEntry,
     LoginInput,
     PrepositionExercise,
@@ -66,10 +55,15 @@ from reshith.api.types import (
     RelativeClausePattern,
     ReviewInput,
     ReviewResult,
+    SanskritDeclensionExercise,
+    SanskritGradeResult,
     SentenceExercise,
     SentencePattern,
     SpeechSynthesisResult,
     SRSState,
+    TahotBookInfo,
+    TahotChapterInfo,
+    TahotVerseTranslation,
     TranslationExercise,
     TranslationGradeResult,
     TranslationHelp,
@@ -78,7 +72,21 @@ from reshith.api.types import (
     VerbalExercise,
     VerbalGradeResult,
     VerbalPattern,
+    VulgateBookInfo,
+    VulgateChapterInfo,
+    VulgateVerseTranslation,
+)
+from reshith.api.types import (
+    GreekToken as GreekTokenGQL,
+)
+from reshith.api.types import (
     StrongsEntry as StrongsEntryGQL,
+)
+from reshith.api.types import (
+    TahotWord as TahotWordGQL,
+)
+from reshith.api.types import (
+    VulgateToken as VulgateTokenGQL,
 )
 from reshith.db import models
 from reshith.exercises import advanced as advanced_exercises
@@ -87,21 +95,21 @@ from reshith.exercises import prepositions as prep_exercises
 from reshith.exercises import sentences as sentence_exercises
 from reshith.exercises import translation as translation_exercises
 from reshith.exercises import verbal as verbal_exercises
-from reshith.exercises.latin import declension as latin_declension
-from reshith.exercises.latin import conjugation as latin_conjugation
-from reshith.exercises.greek import declension as greek_declension
 from reshith.exercises.greek import conjugation as greek_conjugation
+from reshith.exercises.greek import declension as greek_declension
+from reshith.exercises.latin import conjugation as latin_conjugation
+from reshith.exercises.latin import declension as latin_declension
 from reshith.exercises.sanskrit import declension as sanskrit_declension
+from reshith.services import brenton as brenton_svc
+from reshith.services import drc as drc_svc
+from reshith.services import gnt as gnt_svc
+from reshith.services import jps as jps_svc
+from reshith.services import kjv as kjv_svc
+from reshith.services import llm, srs, tts
+from reshith.services import lxx as lxx_svc
 from reshith.services import tahot as tahot_svc
 from reshith.services import tbesh as tbesh_svc
-from reshith.services import drc as drc_svc
-from reshith.services import jps as jps_svc
 from reshith.services import vulgate as vulgate_svc
-from reshith.services import gnt as gnt_svc
-from reshith.services import lxx as lxx_svc
-from reshith.services import kjv as kjv_svc
-from reshith.services import brenton as brenton_svc
-from reshith.services import llm, srs, tts
 from reshith.services.auth import create_access_token, verify_password
 
 
@@ -971,7 +979,9 @@ async def resolve_latin_declension_exercises(
     max_lesson: int = 2,
     variant: LatinVariant = LatinVariant.CLASSICAL,
 ) -> list[LatinDeclensionExercise]:
-    exercises = latin_declension.generate_exercises(max_lesson=max_lesson, count=count, variant=variant.value)
+    exercises = latin_declension.generate_exercises(
+        max_lesson=max_lesson, count=count, variant=variant.value,
+    )
     return [
         LatinDeclensionExercise(
             id=ex.id,
@@ -994,7 +1004,9 @@ async def resolve_latin_conjugation_exercises(
     max_lesson: int = 2,
     variant: LatinVariant = LatinVariant.CLASSICAL,
 ) -> list[LatinConjugationExercise]:
-    exercises = latin_conjugation.generate_exercises(max_lesson=max_lesson, count=count, variant=variant.value)
+    exercises = latin_conjugation.generate_exercises(
+        max_lesson=max_lesson, count=count, variant=variant.value,
+    )
     return [
         LatinConjugationExercise(
             id=ex.id,

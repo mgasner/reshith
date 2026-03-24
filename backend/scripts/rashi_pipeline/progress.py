@@ -9,7 +9,7 @@ import json
 import re
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 SOURCE_DIR = Path(__file__).resolve().parents[3] / "frontend/public/data/hebrew/rashi"

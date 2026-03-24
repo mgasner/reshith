@@ -154,7 +154,7 @@ class LanguageIdentifier:
         Identify the language of a single token.
         Call in order — state carries across tokens within a comment.
         """
-        from .tokenizer import is_hebrew_word, PUNCTUATION_CHARS
+        from .tokenizer import PUNCTUATION_CHARS, is_hebrew_word
 
         # Punctuation
         if len(token) == 1 and token in PUNCTUATION_CHARS:

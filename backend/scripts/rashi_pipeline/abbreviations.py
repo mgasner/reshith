@@ -12,8 +12,6 @@ Sources:
 
 from __future__ import annotations
 
-import re
-
 GERESH = "\u05F3"   # ׳  (Hebrew geresh)
 GERSHAYIM = "\u05F4"  # ״  (Hebrew gershayim)
 # ASCII equivalents appear frequently in the source text
@@ -38,7 +36,7 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "תל": ("תלמוד לומר", "Scripture teaches"),
     "שנ": ("שנאמר", "as it says"),
     "שכ": ("שכתוב", "as it is written"),
-    "כמ": ("כמו שנאמר", "as it is said"),
+    "כמ": ("כמו שנאמר / כמה", "as it is said / how many"),
     "עש": ("עיין שם", "see there"),
     "עע": ("עיין עוד", "see further"),
     "כמש": ("כמו שנאמר", "as it is said"),
@@ -46,8 +44,7 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "להל": ("להלן", "below / later"),
     # Honorifics
     "זל": ("זכרונו לברכה", "of blessed memory"),
-    "עה": ("עליו השלום", "peace be upon him"),
-    "עה": ("עליהם השלום", "peace be upon them"),
+    "עה": ("עליו השלום / עליהם השלום", "peace be upon him/them"),
     "שי": ("שיחיה", "may he live"),
     "נע": ("נוחו עדן", "may he rest in Eden"),
     "הקב": ("הקדוש ברוך הוא", "the Holy One, blessed be He"),
@@ -55,10 +52,9 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "המק": ("המקום ברוך הוא", "the Omnipresent, blessed be He"),
     # Numbers / quantifiers
     "פא": ("פעם אחת", "once"),
-    "כמ": ("כמה", "how many / several"),
     # Talmudic/textual terms
     "גמ": ("גמרא", "Gemara"),
-    "מש": ("משנה", "Mishnah"),
+    "מש": ("משנה / משלי", "Mishnah / Proverbs"),
     "תו": ("תוספות", "Tosafot"),
     "ור": ("ורש\"י", "and Rashi"),
     "ריף": ("רבינו יצחק אלפסי", "Alfasi"),
@@ -66,7 +62,7 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "בב": ("בבלי", "Babylonian Talmud"),
     "פסי": ("פסיקתא", "Pesikta"),
     "מד": ("מדרש", "Midrash"),
-    "בר": ("בראשית רבה", "Bereishit Rabbah"),
+    "בר": ("בראשית רבה / בראשית", "Bereishit Rabbah / Genesis"),
     "שמר": ("שמות רבה", "Shemot Rabbah"),
     # Grammatical terms
     "לש": ("לשון", "language of / expression"),
@@ -95,7 +91,6 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "ריב": ("ריב\"ם", "Rivam"),
     "ר\"ת": ("רבינו תם", "Rabbenu Tam"),
     # Biblical book abbreviations (common in Rashi citations)
-    "בר": ("בראשית", "Genesis"),
     "שמ": ("שמות", "Exodus"),
     "וי": ("ויקרא", "Leviticus"),
     "במ": ("במדבר", "Numbers"),
@@ -103,7 +98,6 @@ ABBREVIATIONS: dict[str, tuple[str, str]] = {
     "יש": ("ישעיהו", "Isaiah"),
     "יר": ("ירמיהו", "Jeremiah"),
     "תה": ("תהילים", "Psalms"),
-    "מש": ("משלי", "Proverbs"),
     "אי": ("איוב", "Job"),
 }
 
