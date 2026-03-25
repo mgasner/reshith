@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { VocabularyCard, VocabularyCardData } from '@/components/VocabularyCard'
+import { useSwipe } from '@/hooks/useSwipe'
 
 interface LessonDeck {
   id: string
@@ -114,6 +115,16 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
   const progress = (completed.size / deck.cards.length) * 100
   const isRtl = ['hbo', 'arc', 'heb'].includes(languageCode)
 
+  const handleSwipeLeft = useCallback(() => {
+    if (deck) setCurrentIndex((i) => Math.min(deck.cards.length - 1, i + 1))
+  }, [deck])
+
+  const handleSwipeRight = useCallback(() => {
+    setCurrentIndex((i) => Math.max(0, i - 1))
+  }, [])
+
+  const swipeHandlers = useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight })
+
   return (
     <div className="px-4">
       <div className="mb-6">
@@ -162,7 +173,7 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2 justify-center">
+      <div className="mb-6 overflow-x-auto flex sm:flex-wrap gap-2 pb-2 sm:pb-0 sm:justify-center">
         {filteredCards.map((card, filteredIndex) => {
           const originalIndex = getOriginalIndex(filteredIndex)
           return (
@@ -186,7 +197,9 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
         })}
       </div>
 
-      <VocabularyCard key={currentIndex} card={currentCard} onReview={handleReview} language={languageCode} />
+      <div {...swipeHandlers}>
+        <VocabularyCard key={currentIndex} card={currentCard} onReview={handleReview} language={languageCode} />
+      </div>
 
       <div className="mt-8 flex justify-center gap-4">
         <button

@@ -31,20 +31,20 @@ export function FlashCard({
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-4 sm:p-8 min-h-[200px] sm:min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleFlip}
       >
         <div className="flex-1 flex flex-col justify-center">
           {!isFlipped ? (
             <div className={`text-center ${isRtl ? 'rtl hebrew-text' : ''}`}>
-              <p className="text-3xl">{front}</p>
+              <p className="text-2xl sm:text-3xl">{front}</p>
               {transliteration && (
                 <p className="text-lg text-gray-500 mt-4">{transliteration}</p>
               )}
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-2xl mb-4">{back}</p>
+              <p className="text-xl sm:text-2xl mb-4">{back}</p>
               {notes && <p className="text-sm text-gray-600 mt-4">{notes}</p>}
             </div>
           )}

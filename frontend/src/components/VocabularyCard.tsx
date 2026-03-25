@@ -81,17 +81,17 @@ export function VocabularyCard({
       case 'native':
         return (
           <p
-            className={`text-7xl ${isRtl ? 'font-hebrew rtl' : 'font-serif'}`}
+            className={`text-4xl sm:text-7xl ${isRtl ? 'font-hebrew rtl' : 'font-serif'}`}
           >
             {nativeWord}
           </p>
         )
       case 'transliteration':
-        return <p className="text-4xl font-mono">{card.transliteration}</p>
+        return <p className="text-2xl sm:text-4xl font-mono">{card.transliteration}</p>
       case 'definition':
         return (
           <div className="text-center max-w-lg">
-            <p className="text-2xl">{card.definition}</p>
+            <p className="text-xl sm:text-2xl">{card.definition}</p>
             {card.notes && (
               <p className="text-sm text-gray-500 mt-3 italic">{card.notes}</p>
             )}
@@ -103,7 +103,7 @@ export function VocabularyCard({
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-4 sm:p-8 min-h-[200px] sm:min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleNext}
       >
         <div className="flex-1 flex flex-col justify-center items-center">
