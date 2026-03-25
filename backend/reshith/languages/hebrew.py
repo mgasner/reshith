@@ -2,7 +2,7 @@
 
 import unicodedata
 
-from reshith.languages.base import LanguageModule
+from reshith.languages.base import CANTILLATION_RANGE, LanguageModule
 from reshith.languages.registry import register_language
 
 HEBREW_TO_LATIN = {
@@ -37,7 +37,6 @@ HEBREW_TO_LATIN = {
     "ת": "t",
 }
 
-CANTILLATION_RANGE = range(0x0591, 0x05AF + 1)
 POINTS_RANGE = range(0x05B0, 0x05BD + 1)
 SHIN_SIN_DOT = {0x05C1, 0x05C2}
 
