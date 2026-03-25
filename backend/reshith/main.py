@@ -6,9 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 
+import reshith.languages.aramaic  # noqa: F401 - Register language modules
+import reshith.languages.buddhist_hybrid_sanskrit  # noqa: F401 - Register language modules
 import reshith.languages.greek  # noqa: F401 - Register language modules
 import reshith.languages.hebrew  # noqa: F401 - Register language modules
 import reshith.languages.latin  # noqa: F401 - Register language modules
+import reshith.languages.midrashic_hebrew  # noqa: F401 - Register language modules
+import reshith.languages.old_english  # noqa: F401 - Register language modules
+import reshith.languages.pali  # noqa: F401 - Register language modules
 import reshith.languages.sanskrit  # noqa: F401 - Register language modules
 from reshith.api.schema import schema
 from reshith.core.config import get_settings
