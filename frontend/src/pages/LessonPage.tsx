@@ -93,6 +93,16 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
 
   const getNativeWord = (card: VocabularyCardData) => card.word ?? card.hebrew ?? ''
 
+  const handleSwipeLeft = useCallback(() => {
+    if (deck) setCurrentIndex((i) => Math.min(deck.cards.length - 1, i + 1))
+  }, [deck])
+
+  const handleSwipeRight = useCallback(() => {
+    setCurrentIndex((i) => Math.max(0, i - 1))
+  }, [])
+
+  const swipeHandlers = useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight })
+
   if (loading) {
     return (
       <div className="px-4 text-center py-12">
@@ -114,16 +124,6 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
   const currentCard = deck.cards[currentIndex]
   const progress = (completed.size / deck.cards.length) * 100
   const isRtl = ['hbo', 'arc', 'heb'].includes(languageCode)
-
-  const handleSwipeLeft = useCallback(() => {
-    if (deck) setCurrentIndex((i) => Math.min(deck.cards.length - 1, i + 1))
-  }, [deck])
-
-  const handleSwipeRight = useCallback(() => {
-    setCurrentIndex((i) => Math.max(0, i - 1))
-  }, [])
-
-  const swipeHandlers = useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight })
 
   return (
     <div className="px-4">
