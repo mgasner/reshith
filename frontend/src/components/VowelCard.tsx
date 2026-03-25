@@ -45,18 +45,18 @@ export function VowelCard({ card, onReview }: VowelCardProps) {
   const renderFaceContent = (face: CardFace) => {
     switch (face) {
       case 'example':
-        return <p className="text-8xl font-hebrew rtl">{card.hebrewExample}</p>
+        return <p className="text-4xl sm:text-8xl font-hebrew rtl">{card.hebrewExample}</p>
       case 'name':
-        return <p className="text-3xl">{card.name}</p>
+        return <p className="text-xl sm:text-3xl">{card.name}</p>
       case 'transliteration':
-        return <p className="text-4xl font-mono">{card.transliteration}</p>
+        return <p className="text-2xl sm:text-4xl font-mono">{card.transliteration}</p>
     }
   }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer"
+        className="bg-white rounded-xl shadow-lg p-4 sm:p-8 min-h-[200px] sm:min-h-[300px] flex flex-col cursor-pointer"
         onClick={handleNext}
       >
         <div className="flex-1 flex flex-col justify-center items-center">
