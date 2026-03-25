@@ -11,10 +11,8 @@ marks following the same logic as the Biblical Hebrew module.
 
 import unicodedata
 
-from reshith.languages.base import LanguageModule
+from reshith.languages.base import CANTILLATION_RANGE, LanguageModule
 from reshith.languages.registry import register_language
-
-CANTILLATION_RANGE = range(0x0591, 0x05AF + 1)
 
 
 class MidrashicHebrewModule(LanguageModule):
