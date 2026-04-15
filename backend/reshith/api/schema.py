@@ -15,6 +15,7 @@ from reshith.api.resolvers import (
     mutate_grade_latin_conjugation_exercise,
     mutate_grade_latin_declension_exercise,
     mutate_grade_preposition_exercise,
+    mutate_grade_qal_worksheet,
     mutate_grade_relative_clause_exercise,
     mutate_grade_sanskrit_exercise,
     mutate_grade_translation_exercise,
@@ -48,6 +49,8 @@ from reshith.api.resolvers import (
     resolve_lxx_verse,
     resolve_me,
     resolve_preposition_exercises,
+    resolve_qal_paradigm,
+    resolve_qal_worksheet,
     resolve_relative_clause_exercises,
     resolve_sanskrit_declension_exercises,
     resolve_sentence_exercises,
@@ -86,6 +89,7 @@ from reshith.api.types import (
     GradeExerciseInput,
     GradeGreekExerciseInput,
     GradeLatinExerciseInput,
+    GradeQalWorksheetInput,
     GradeRelativeClauseInput,
     GradeSanskritExerciseInput,
     GradeTranslationInput,
@@ -107,6 +111,9 @@ from reshith.api.types import (
     LoginInput,
     PrepositionExercise,
     PrepositionType,
+    QalParadigm,
+    QalWorksheet,
+    QalWorksheetGradeResult,
     RelativeClauseExercise,
     RelativeClauseGradeResult,
     ReviewInput,
@@ -255,6 +262,24 @@ class Query:
         max_lesson: int = 5,
     ) -> list[RelativeClauseExercise]:
         return await resolve_relative_clause_exercises(info, count, max_lesson)
+
+    @strawberry.field
+    async def qal_paradigm(
+        self,
+        info: strawberry.Info,
+        root: str | None = None,
+    ) -> QalParadigm | None:
+        return await resolve_qal_paradigm(info, root)
+
+    @strawberry.field
+    async def qal_worksheet(
+        self,
+        info: strawberry.Info,
+        num_blanks: int = 10,
+        root: str | None = None,
+        conjugations: list[str] | None = None,
+    ) -> QalWorksheet | None:
+        return await resolve_qal_worksheet(info, num_blanks, root, conjugations)
 
     @strawberry.field
     async def latin_declension_exercises(
@@ -533,6 +558,14 @@ class Mutation:
         input: GradeRelativeClauseInput,
     ) -> RelativeClauseGradeResult:
         return await mutate_grade_relative_clause_exercise(info, input)
+
+    @strawberry.mutation
+    async def grade_qal_worksheet(
+        self,
+        info: strawberry.Info,
+        input: GradeQalWorksheetInput,
+    ) -> QalWorksheetGradeResult:
+        return await mutate_grade_qal_worksheet(info, input)
 
     @strawberry.mutation
     async def grade_latin_declension_exercise(

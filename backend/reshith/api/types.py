@@ -425,6 +425,85 @@ class GradeLatinExerciseInput:
     expected: str
 
 
+# ── Qal paradigm types ───────────────────────────────────────────────────────
+
+
+@strawberry.type
+class QalParadigmForm:
+    conjugation: str
+    person: str
+    number: str
+    gender: str
+    label: str
+    hebrew: str
+    transliteration: str
+
+
+@strawberry.type
+class QalParadigm:
+    root: str
+    root_transliteration: str
+    citation: str
+    citation_transliteration: str
+    definition: str
+    available_roots: list[str]
+    forms: list[QalParadigmForm]
+
+
+@strawberry.type
+class QalWorksheetForm:
+    conjugation: str
+    person: str
+    number: str
+    gender: str
+    label: str
+    hebrew: str
+    transliteration: str
+    answer_hebrew: str
+    answer_transliteration: str
+    is_blank: bool
+
+
+@strawberry.type
+class QalWorksheet:
+    root: str
+    root_transliteration: str
+    citation: str
+    citation_transliteration: str
+    definition: str
+    forms: list[QalWorksheetForm]
+    num_blanks: int
+
+
+@strawberry.input
+class GradeQalWorksheetAnswer:
+    index: int
+    submitted: str
+
+
+@strawberry.input
+class GradeQalWorksheetInput:
+    root: str
+    answers: list[GradeQalWorksheetAnswer]
+
+
+@strawberry.type
+class QalWorksheetGradeItem:
+    index: int
+    label: str
+    correct: bool
+    expected: str
+    submitted: str
+    feedback: str
+
+
+@strawberry.type
+class QalWorksheetGradeResult:
+    total: int
+    correct_count: int
+    items: list[QalWorksheetGradeItem]
+
+
 @strawberry.type
 class InterlinearWord:
     """A single word token in an interlinear text, source-agnostic."""

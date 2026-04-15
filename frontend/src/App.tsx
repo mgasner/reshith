@@ -14,6 +14,7 @@ import { TranslationExercisePage } from '@/pages/TranslationExercisePage'
 import { VerbalExercisePage } from '@/pages/VerbalExercisePage'
 import { ComparativeExercisePage } from '@/pages/ComparativeExercisePage'
 import { RelativeClauseExercisePage } from '@/pages/RelativeClauseExercisePage'
+import { QalParadigmPage } from '@/pages/QalParadigmPage'
 import { LatinLessonPage } from '@/pages/LatinLessonPage'
 import { LatinHomePage } from '@/pages/LatinHomePage'
 import { LatinExercisesPage } from '@/pages/LatinExercisesPage'
@@ -77,6 +78,7 @@ function App() {
         <Route path="exercises/hebrew/verbal" element={<VerbalExercisePage />} />
         <Route path="exercises/hebrew/comparative" element={<ComparativeExercisePage />} />
         <Route path="exercises/hebrew/relative-clauses" element={<RelativeClauseExercisePage />} />
+        <Route path="exercises/hebrew/qal-paradigm" element={<QalParadigmPage />} />
 
         {/* Latin exercises */}
         <Route path="exercises/latin" element={<LatinExercisesPage />} />
