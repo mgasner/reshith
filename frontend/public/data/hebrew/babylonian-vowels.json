@@ -1,0 +1,59 @@
+{
+  "id": "hebrew-babylonian-vowels",
+  "name": "Babylonian (Superlinear) Vowels",
+  "description": "The vowel signs of the Babylonian superlinear vocalization system, used in Jewish communities of Babylonia (Iraq). Unlike the Tiberian system, most signs are placed above the consonant. The simple Babylonian system makes fewer vowel distinctions than Tiberian — e.g. segol and ṣere are often merged. Note: Unicode lacks dedicated Babylonian vocalization codepoints; combining diacritical marks are used here to approximate the superlinear placement.",
+  "language": "hbo",
+  "cardType": "vowel",
+  "cards": [
+    {
+      "name": "pataḥ (short a)",
+      "hebrewExample": "ב̄",
+      "transliteration": "a"
+    },
+    {
+      "name": "qameṣ (long a / back o)",
+      "hebrewExample": "ב̂",
+      "transliteration": "ā or ɔ"
+    },
+    {
+      "name": "segol–ṣere (e-class, often merged)",
+      "hebrewExample": "ב̈",
+      "transliteration": "e / ē"
+    },
+    {
+      "name": "ḥireq (short i — sublinear in both systems)",
+      "hebrewExample": "בִ",
+      "transliteration": "i"
+    },
+    {
+      "name": "ḥireq with mater y (long i)",
+      "hebrewExample": "בִי",
+      "transliteration": "î"
+    },
+    {
+      "name": "ḥolem (o-class)",
+      "hebrewExample": "ב̊",
+      "transliteration": "ō"
+    },
+    {
+      "name": "ḥolem with mater w",
+      "hebrewExample": "בו̊",
+      "transliteration": "ō"
+    },
+    {
+      "name": "qubbuṣ (u-class)",
+      "hebrewExample": "ב̃",
+      "transliteration": "u"
+    },
+    {
+      "name": "šureq (long u, mater w)",
+      "hebrewExample": "בוּ",
+      "transliteration": "û"
+    },
+    {
+      "name": "šəwa (reduced vowel)",
+      "hebrewExample": "ב̆",
+      "transliteration": "ə"
+    }
+  ]
+}
