@@ -43,6 +43,12 @@ const EXERCISE_TYPES = [
     description: 'Translate relative clauses using אֲשֶׁר.',
     tag: 'Hebrew → English',
   },
+  {
+    path: '/exercises/hebrew/qal-paradigm',
+    title: 'Qal Verb Paradigms',
+    description: 'Study full Qal paradigm tables or fill in worksheets with missing forms.',
+    tag: 'Paradigm / Worksheet',
+  },
 ]
 
 export function HebrewExercisesPage() {
