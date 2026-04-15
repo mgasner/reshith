@@ -17,6 +17,7 @@ const LANGUAGES = [
     homePath: '/',
     alphabetPath: '/hebrew/alphabet',
     vowelsPath: '/hebrew/vowels',
+    babylonianVowelsPath: '/hebrew/babylonian-vowels',
     exercisesPath: '/exercises/hebrew',
     resourcesPath: '/hebrew/tahot',
     hasAlphabet: true,
@@ -35,6 +36,7 @@ const LANGUAGES = [
     homePath: '/latin',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/exercises/latin',
     resourcesPath: null,
     hasAlphabet: false,
@@ -53,6 +55,7 @@ const LANGUAGES = [
     homePath: '/greek',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/exercises/greek',
     resourcesPath: null,
     hasAlphabet: false,
@@ -71,6 +74,7 @@ const LANGUAGES = [
     homePath: '/nt-greek',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/exercises/nt-greek',
     resourcesPath: null,
     hasAlphabet: false,
@@ -89,6 +93,7 @@ const LANGUAGES = [
     homePath: '/sanskrit',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/exercises/sanskrit',
     resourcesPath: null,
     hasAlphabet: false,
@@ -103,6 +108,7 @@ const LANGUAGES = [
     homePath: '/old-english',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/old-english',
     resourcesPath: '/old-english/beowulf',
     hasAlphabet: false,
@@ -121,6 +127,7 @@ const LANGUAGES = [
     homePath: '/ecclesiastical-latin',
     alphabetPath: null,
     vowelsPath: null,
+    babylonianVowelsPath: null,
     exercisesPath: '/exercises/ecclesiastical-latin',
     resourcesPath: null,
     hasAlphabet: false,
@@ -224,6 +231,14 @@ export function Layout() {
                   className="text-sm font-medium text-gray-500 hover:text-gray-900"
                 >
                   Vowels
+                </Link>
+              )}
+              {activeLang.babylonianVowelsPath && (
+                <Link
+                  to={activeLang.babylonianVowelsPath}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Babylonian Vowels
                 </Link>
               )}
               <Link

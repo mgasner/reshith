@@ -5,6 +5,7 @@ import { DecksPage } from '@/pages/DecksPage'
 import { StudyPage } from '@/pages/StudyPage'
 import { AlphabetPage } from '@/pages/AlphabetPage'
 import { VowelsPage } from '@/pages/VowelsPage'
+import { BabylonianVowelsPage } from '@/pages/BabylonianVowelsPage'
 import { LessonPage } from '@/pages/LessonPage'
 import { ExercisesPage } from '@/pages/ExercisesPage'
 import { PrepositionExercisePage } from '@/pages/PrepositionExercisePage'
@@ -58,6 +59,7 @@ function App() {
         {/* Hebrew */}
         <Route path="hebrew/alphabet" element={<AlphabetPage />} />
         <Route path="hebrew/vowels" element={<VowelsPage />} />
+        <Route path="hebrew/babylonian-vowels" element={<BabylonianVowelsPage />} />
         <Route path="hebrew/lesson/:lessonId?" element={<LessonPage />} />
         <Route path="hebrew/tahot" element={<TahotViewerPage />} />
 
