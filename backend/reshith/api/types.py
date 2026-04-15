@@ -449,12 +449,15 @@ class QalParadigmForm:
 
 @strawberry.type
 class QalParadigm:
+    binyan: str
+    binyan_display: str
     root: str
     root_transliteration: str
     citation: str
     citation_transliteration: str
     definition: str
     available_roots: list[str]
+    available_binyanim: list[str]
     forms: list[QalParadigmForm]
 
 
@@ -474,6 +477,8 @@ class QalWorksheetForm:
 
 @strawberry.type
 class QalWorksheet:
+    binyan: str
+    binyan_display: str
     root: str
     root_transliteration: str
     citation: str
@@ -492,6 +497,7 @@ class GradeQalWorksheetAnswer:
 @strawberry.input
 class GradeQalWorksheetInput:
     root: str
+    binyan: str | None = None
     answers: list[GradeQalWorksheetAnswer]
 
 
