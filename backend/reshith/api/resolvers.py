@@ -28,6 +28,7 @@ from reshith.api.types import (
     GradeExerciseInput,
     GradeGreekExerciseInput,
     GradeLatinExerciseInput,
+    GradeQalWorksheetInput,
     GradeRelativeClauseInput,
     GradeSanskritExerciseInput,
     GradeTranslationInput,
@@ -50,6 +51,8 @@ from reshith.api.types import (
     LoginInput,
     PrepositionExercise,
     PrepositionType,
+    QalWorksheetGradeItem,
+    QalWorksheetGradeResult,
     RelativeClauseExercise,
     RelativeClauseGradeResult,
     RelativeClausePattern,
@@ -79,6 +82,10 @@ from reshith.api.types import (
 from reshith.api.types import (
     GreekToken as GreekTokenGQL,
 )
+from reshith.api.types import QalParadigm as QalParadigmGQL
+from reshith.api.types import QalParadigmForm as QalParadigmFormGQL
+from reshith.api.types import QalWorksheet as QalWorksheetGQL
+from reshith.api.types import QalWorksheetForm as QalWorksheetFormGQL
 from reshith.api.types import (
     StrongsEntry as StrongsEntryGQL,
 )
@@ -94,6 +101,7 @@ from reshith.exercises import article as article_exercises
 from reshith.exercises import prepositions as prep_exercises
 from reshith.exercises import sentences as sentence_exercises
 from reshith.exercises import translation as translation_exercises
+from reshith.exercises import verb_paradigm
 from reshith.exercises import verbal as verbal_exercises
 from reshith.exercises.greek import conjugation as greek_conjugation
 from reshith.exercises.greek import declension as greek_declension
@@ -1481,4 +1489,112 @@ def resolve_strongs_entry(strongs_id: str) -> StrongsEntryGQL | None:
         morph=entry.morph,
         gloss=entry.gloss,
         meaning=entry.meaning,
+    )
+
+
+# ── Verb paradigm ────────────────────────────────────────────────────────────
+
+
+async def resolve_qal_paradigm(
+    info: strawberry.Info,
+    root: str | None = None,
+    binyan: str = "qal",
+) -> QalParadigmGQL | None:
+    paradigm = verb_paradigm.get_paradigm(binyan, root)
+    if paradigm is None:
+        return None
+    return QalParadigmGQL(
+        binyan=paradigm.binyan,
+        binyan_display=paradigm.binyan_display,
+        root=paradigm.root,
+        root_transliteration=paradigm.root_transliteration,
+        citation=paradigm.citation,
+        citation_transliteration=paradigm.citation_transliteration,
+        definition=paradigm.definition,
+        available_roots=verb_paradigm.available_roots(binyan),
+        available_binyanim=verb_paradigm.available_binyanim(),
+        forms=[
+            QalParadigmFormGQL(
+                conjugation=f.conjugation,
+                person=f.person,
+                number=f.number,
+                gender=f.gender,
+                label=f.label,
+                hebrew=f.hebrew,
+                transliteration=f.transliteration,
+            )
+            for f in paradigm.forms
+        ],
+    )
+
+
+async def resolve_qal_worksheet(
+    info: strawberry.Info,
+    num_blanks: int = 10,
+    root: str | None = None,
+    conjugations: list[str] | None = None,
+    binyan: str = "qal",
+) -> QalWorksheetGQL | None:
+    worksheet = verb_paradigm.generate_worksheet(
+        binyan, root, num_blanks, conjugations,
+    )
+    if worksheet is None:
+        return None
+    return QalWorksheetGQL(
+        binyan=worksheet.binyan,
+        binyan_display=worksheet.binyan_display,
+        root=worksheet.root,
+        root_transliteration=worksheet.root_transliteration,
+        citation=worksheet.citation,
+        citation_transliteration=worksheet.citation_transliteration,
+        definition=worksheet.definition,
+        num_blanks=worksheet.num_blanks,
+        forms=[
+            QalWorksheetFormGQL(
+                conjugation=f.conjugation,
+                person=f.person,
+                number=f.number,
+                gender=f.gender,
+                label=f.label,
+                hebrew=f.hebrew,
+                transliteration=f.transliteration,
+                answer_hebrew=f.answer_hebrew,
+                answer_transliteration=f.answer_transliteration,
+                is_blank=f.is_blank,
+            )
+            for f in worksheet.forms
+        ],
+    )
+
+
+async def mutate_grade_qal_worksheet(
+    info: strawberry.Info,
+    input: GradeQalWorksheetInput,
+) -> QalWorksheetGradeResult:
+    binyan = input.binyan or "qal"
+    full_ws = verb_paradigm.generate_worksheet(
+        binyan, input.root, num_blanks=0,
+    )
+    if full_ws is None:
+        return QalWorksheetGradeResult(total=0, correct_count=0, items=[])
+
+    answers = [(a.index, a.submitted) for a in input.answers]
+    results = verb_paradigm.grade_worksheet(answers, full_ws)
+
+    items = [
+        QalWorksheetGradeItem(
+            index=r.index,
+            label=r.label,
+            correct=r.correct,
+            expected=r.expected,
+            submitted=r.submitted,
+            feedback=r.feedback,
+        )
+        for r in results
+    ]
+    correct_count = sum(1 for r in results if r.correct)
+    return QalWorksheetGradeResult(
+        total=len(results),
+        correct_count=correct_count,
+        items=items,
     )

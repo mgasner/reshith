@@ -426,6 +426,75 @@ export const GRADE_LATIN_CONJUGATION_EXERCISE = gql`
   }
 `
 
+export const GET_QAL_PARADIGM = gql`
+  query GetQalParadigm($root: String, $binyan: String!) {
+    qalParadigm(root: $root, binyan: $binyan) {
+      binyan
+      binyanDisplay
+      root
+      rootTransliteration
+      citation
+      citationTransliteration
+      definition
+      availableRoots
+      availableBinyanim
+      forms {
+        conjugation
+        person
+        number
+        gender
+        label
+        hebrew
+        transliteration
+      }
+    }
+  }
+`
+
+export const GET_QAL_WORKSHEET = gql`
+  query GetQalWorksheet($numBlanks: Int!, $root: String, $conjugations: [String!], $binyan: String!) {
+    qalWorksheet(numBlanks: $numBlanks, root: $root, conjugations: $conjugations, binyan: $binyan) {
+      binyan
+      binyanDisplay
+      root
+      rootTransliteration
+      citation
+      citationTransliteration
+      definition
+      numBlanks
+      forms {
+        conjugation
+        person
+        number
+        gender
+        label
+        hebrew
+        transliteration
+        answerHebrew
+        answerTransliteration
+        isBlank
+      }
+    }
+  }
+`
+
+export const GRADE_QAL_WORKSHEET = gql`
+  mutation GradeQalWorksheet($input: GradeQalWorksheetInput!) {
+    gradeQalWorksheet(input: $input) {
+      total
+      correctCount
+      items {
+        index
+        label
+        correct
+        expected
+        submitted
+        feedback
+      }
+    }
+  }
+`
+
 export const TAHOT_BOOKS = gql`
   query TahotBooks {
     tahotBooks {
