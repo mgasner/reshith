@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation } from '@apollo/client'
 import { GET_QAL_PARADIGM, GET_QAL_WORKSHEET, GRADE_QAL_WORKSHEET } from '@/graphql/operations'
 
@@ -13,12 +13,15 @@ interface ParadigmForm {
 }
 
 interface Paradigm {
+  binyan: string
+  binyanDisplay: string
   root: string
   rootTransliteration: string
   citation: string
   citationTransliteration: string
   definition: string
   availableRoots: string[]
+  availableBinyanim: string[]
   forms: ParadigmForm[]
 }
 
@@ -29,6 +32,8 @@ interface WorksheetForm extends ParadigmForm {
 }
 
 interface Worksheet {
+  binyan: string
+  binyanDisplay: string
   root: string
   rootTransliteration: string
   citation: string
@@ -55,7 +60,18 @@ const CONJUGATION_SECTIONS = [
   { key: 'inf_absolute', label: 'Infinitive Absolute' },
   { key: 'ptc_active', label: 'Active Participle' },
   { key: 'ptc_passive', label: 'Passive Participle' },
+  { key: 'participle', label: 'Participle' },
 ]
+
+const BINYAN_LABELS: Record<string, string> = {
+  qal: 'Qal (קַל)',
+  niphal: 'Niphal (נִפְעַל)',
+  piel: 'Piel (פִּעֵל)',
+  pual: 'Pual (פֻּעַל)',
+  hiphil: 'Hiphil (הִפְעִיל)',
+  hophal: 'Hophal (הֻפְעַל)',
+  hithpael: 'Hithpael (הִתְפַּעֵל)',
+}
 
 function ParadigmTable({ forms }: { forms: ParadigmForm[] }) {
   return (
@@ -117,7 +133,6 @@ function WorksheetTable({
     <div className="space-y-6">
       {CONJUGATION_SECTIONS.map(({ key, label }) => {
         const sectionForms: { form: WorksheetForm; idx: number }[] = []
-        // We need the global index, so iterate all forms to track it
         let tempIdx = -1
         for (const form of forms) {
           tempIdx++
@@ -201,6 +216,7 @@ function WorksheetTable({
 
 export function QalParadigmPage() {
   const [mode, setMode] = useState<'paradigm' | 'worksheet'>('paradigm')
+  const [selectedBinyan, setSelectedBinyan] = useState('qal')
   const [selectedRoot, setSelectedRoot] = useState<string | undefined>(undefined)
   const [numBlanks, setNumBlanks] = useState(10)
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({})
@@ -208,11 +224,23 @@ export function QalParadigmPage() {
   const [gradeResults, setGradeResults] = useState<GradeItem[] | null>(null)
   const [conjugationFilter, setConjugationFilter] = useState<string[]>([])
 
+  const resetWorksheetState = () => {
+    setWorksheetAnswers({})
+    setWorksheetSubmitted(false)
+    setGradeResults(null)
+  }
+
+  // Reset root when binyan changes (roots differ per binyan)
+  useEffect(() => {
+    setSelectedRoot(undefined)
+    resetWorksheetState()
+  }, [selectedBinyan])
+
   const {
     data: paradigmData,
     loading: paradigmLoading,
   } = useQuery(GET_QAL_PARADIGM, {
-    variables: { root: selectedRoot || null },
+    variables: { root: selectedRoot || null, binyan: selectedBinyan },
     skip: mode !== 'paradigm',
     fetchPolicy: 'network-only',
   })
@@ -226,6 +254,7 @@ export function QalParadigmPage() {
       numBlanks,
       root: selectedRoot || null,
       conjugations: conjugationFilter.length > 0 ? conjugationFilter : null,
+      binyan: selectedBinyan,
     },
     skip: mode !== 'worksheet',
     fetchPolicy: 'network-only',
@@ -236,20 +265,18 @@ export function QalParadigmPage() {
   const paradigm: Paradigm | null = paradigmData?.qalParadigm || null
   const worksheet: Worksheet | null = worksheetData?.qalWorksheet || null
 
-  // Get available roots from whichever query has loaded
   const rootOptions = paradigm?.availableRoots || []
+  const binyanOptions = paradigm?.availableBinyanim || Object.keys(BINYAN_LABELS)
 
   const handleNewWorksheet = () => {
-    setWorksheetAnswers({})
-    setWorksheetSubmitted(false)
-    setGradeResults(null)
+    resetWorksheetState()
     refetchWorksheet()
   }
 
   const handleSubmitWorksheet = async () => {
     if (!worksheet) return
     const answers = Object.entries(worksheetAnswers)
-      .filter(([_, v]) => v.trim() !== '')
+      .filter(([, v]) => v.trim() !== '')
       .map(([idx, submitted]) => ({ index: parseInt(idx), submitted }))
 
     try {
@@ -257,6 +284,7 @@ export function QalParadigmPage() {
         variables: {
           input: {
             root: worksheet.root,
+            binyan: worksheet.binyan,
             answers,
           },
         },
@@ -273,13 +301,14 @@ export function QalParadigmPage() {
 
   const loading = mode === 'paradigm' ? paradigmLoading : worksheetLoading
   const activeData = mode === 'paradigm' ? paradigm : worksheet
+  const displayBinyan = paradigm?.binyanDisplay || worksheet?.binyanDisplay || BINYAN_LABELS[selectedBinyan] || selectedBinyan
 
   return (
     <div className="px-4 max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Qal Verb Paradigms</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Hebrew Verb Paradigms</h1>
         <p className="text-gray-600">
-          Study complete Qal paradigm tables or test yourself with fill-in worksheets.
+          Study verb paradigm tables across all seven binyanim, or test yourself with fill-in worksheets.
         </p>
       </div>
 
@@ -302,9 +331,7 @@ export function QalParadigmPage() {
             <button
               onClick={() => {
                 setMode('worksheet')
-                setWorksheetAnswers({})
-                setWorksheetSubmitted(false)
-                setGradeResults(null)
+                resetWorksheetState()
               }}
               className={`px-4 py-2 text-sm font-medium border-l ${
                 mode === 'worksheet'
@@ -317,6 +344,22 @@ export function QalParadigmPage() {
           </div>
         </div>
 
+        {/* Binyan selector */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Binyan</label>
+          <select
+            value={selectedBinyan}
+            onChange={(e) => setSelectedBinyan(e.target.value)}
+            className="px-3 py-2 border rounded-lg"
+          >
+            {binyanOptions.map((b) => (
+              <option key={b} value={b}>
+                {BINYAN_LABELS[b] || b}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Verb selector */}
         {rootOptions.length > 0 && (
           <div>
@@ -325,9 +368,7 @@ export function QalParadigmPage() {
               value={selectedRoot || ''}
               onChange={(e) => {
                 setSelectedRoot(e.target.value || undefined)
-                setWorksheetAnswers({})
-                setWorksheetSubmitted(false)
-                setGradeResults(null)
+                resetWorksheetState()
               }}
               className="px-3 py-2 border rounded-lg"
             >
@@ -350,9 +391,7 @@ export function QalParadigmPage() {
                 value={numBlanks}
                 onChange={(e) => {
                   setNumBlanks(Number(e.target.value))
-                  setWorksheetAnswers({})
-                  setWorksheetSubmitted(false)
-                  setGradeResults(null)
+                  resetWorksheetState()
                 }}
                 className="px-3 py-2 border rounded-lg"
               >
@@ -371,9 +410,7 @@ export function QalParadigmPage() {
                 onChange={(e) => {
                   const val = e.target.value
                   setConjugationFilter(val === 'all' ? [] : val.split(','))
-                  setWorksheetAnswers({})
-                  setWorksheetSubmitted(false)
-                  setGradeResults(null)
+                  resetWorksheetState()
                 }}
                 className="px-3 py-2 border rounded-lg"
               >
@@ -382,7 +419,7 @@ export function QalParadigmPage() {
                 <option value="imperfect">Imperfect only</option>
                 <option value="perfect,imperfect">Perfect + Imperfect</option>
                 <option value="imperative">Imperative only</option>
-                <option value="ptc_active,ptc_passive">Participles only</option>
+                <option value="ptc_active,ptc_passive,participle">Participles only</option>
               </select>
             </div>
 
@@ -412,6 +449,7 @@ export function QalParadigmPage() {
       {!loading && mode === 'paradigm' && paradigm && (
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="text-center mb-6">
+            <p className="text-sm font-medium text-blue-600 mb-1">{displayBinyan}</p>
             <p className="text-3xl font-serif" dir="rtl">
               {paradigm.citation}
             </p>
@@ -431,6 +469,7 @@ export function QalParadigmPage() {
       {!loading && mode === 'worksheet' && worksheet && (
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="text-center mb-6">
+            <p className="text-sm font-medium text-blue-600 mb-1">{displayBinyan}</p>
             <p className="text-3xl font-serif" dir="rtl">
               {worksheet.citation}
             </p>

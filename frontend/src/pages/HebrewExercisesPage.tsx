@@ -45,8 +45,8 @@ const EXERCISE_TYPES = [
   },
   {
     path: '/exercises/hebrew/qal-paradigm',
-    title: 'Qal Verb Paradigms',
-    description: 'Study full Qal paradigm tables or fill in worksheets with missing forms.',
+    title: 'Verb Paradigms',
+    description: 'Study full verb paradigm tables across all seven binyanim, or fill in worksheets with missing forms.',
     tag: 'Paradigm / Worksheet',
   },
 ]

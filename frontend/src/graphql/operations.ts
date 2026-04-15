@@ -427,14 +427,17 @@ export const GRADE_LATIN_CONJUGATION_EXERCISE = gql`
 `
 
 export const GET_QAL_PARADIGM = gql`
-  query GetQalParadigm($root: String) {
-    qalParadigm(root: $root) {
+  query GetQalParadigm($root: String, $binyan: String!) {
+    qalParadigm(root: $root, binyan: $binyan) {
+      binyan
+      binyanDisplay
       root
       rootTransliteration
       citation
       citationTransliteration
       definition
       availableRoots
+      availableBinyanim
       forms {
         conjugation
         person
@@ -449,8 +452,10 @@ export const GET_QAL_PARADIGM = gql`
 `
 
 export const GET_QAL_WORKSHEET = gql`
-  query GetQalWorksheet($numBlanks: Int!, $root: String, $conjugations: [String!]) {
-    qalWorksheet(numBlanks: $numBlanks, root: $root, conjugations: $conjugations) {
+  query GetQalWorksheet($numBlanks: Int!, $root: String, $conjugations: [String!], $binyan: String!) {
+    qalWorksheet(numBlanks: $numBlanks, root: $root, conjugations: $conjugations, binyan: $binyan) {
+      binyan
+      binyanDisplay
       root
       rootTransliteration
       citation

@@ -268,8 +268,9 @@ class Query:
         self,
         info: strawberry.Info,
         root: str | None = None,
+        binyan: str = "qal",
     ) -> QalParadigm | None:
-        return await resolve_qal_paradigm(info, root)
+        return await resolve_qal_paradigm(info, root, binyan)
 
     @strawberry.field
     async def qal_worksheet(
@@ -278,8 +279,11 @@ class Query:
         num_blanks: int = 10,
         root: str | None = None,
         conjugations: list[str] | None = None,
+        binyan: str = "qal",
     ) -> QalWorksheet | None:
-        return await resolve_qal_worksheet(info, num_blanks, root, conjugations)
+        return await resolve_qal_worksheet(
+            info, num_blanks, root, conjugations, binyan,
+        )
 
     @strawberry.field
     async def latin_declension_exercises(
