@@ -81,8 +81,10 @@ from reshith.api.types import (
     TranslationHelp,
     TranslationPattern,
     UpdateDeckSRSSettingsInput,
+    UpdateUserAPIKeysInput,
     UpdateUserSRSSettingsInput,
     User,
+    UserAPIKeysType,
     VerbalExercise,
     VerbalGradeResult,
     VerbalPattern,
@@ -92,6 +94,9 @@ from reshith.api.types import (
 )
 from reshith.api.types import (
     GreekToken as GreekTokenGQL,
+)
+from reshith.api.types import (
+    LLMProvider as LLMProviderGQL,
 )
 from reshith.api.types import QalParadigm as QalParadigmGQL
 from reshith.api.types import QalParadigmForm as QalParadigmFormGQL
@@ -105,13 +110,6 @@ from reshith.api.types import (
 )
 from reshith.api.types import (
     VulgateToken as VulgateTokenGQL,
-)
-from reshith.api.types import (
-    LLMProvider as LLMProviderGQL,
-)
-from reshith.api.types import (
-    UpdateUserAPIKeysInput,
-    UserAPIKeysType,
 )
 from reshith.core.config import get_settings
 from reshith.db import models

@@ -40,7 +40,7 @@ def test_encrypt_without_key_raises(monkeypatch):
     _set_key(monkeypatch, "")
 
     assert crypto.is_configured() is False
-    with pytest.raises(crypto.SecretsEncryptionNotConfigured):
+    with pytest.raises(crypto.SecretsEncryptionNotConfiguredError):
         crypto.encrypt("anything")
 
 

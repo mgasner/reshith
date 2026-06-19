@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from reshith.exercises.article import Noun, add_definite_article, load_nouns_for_exercises
-from reshith.services.llm_providers import DEFAULT_MODELS, LLMProvider, chat_complete
 from reshith.exercises.vocabulary import load_lessons_up_to
+from reshith.services.llm_providers import DEFAULT_MODELS, LLMProvider, chat_complete
 
 logger = logging.getLogger(__name__)
 

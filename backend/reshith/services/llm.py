@@ -9,7 +9,6 @@ from reshith.services.llm_providers import (
 )
 from reshith.services.reference import format_for_prompt, search_gesenius
 
-
 TRANSLATION_SYSTEM_PROMPT = """\
 You are an expert tutor for classical languages, specializing in helping students \
 develop reading and translation skills. You provide:

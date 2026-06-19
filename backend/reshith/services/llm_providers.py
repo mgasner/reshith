@@ -137,7 +137,11 @@ async def _anthropic_chat(
     )
 
     # Anthropic returns a list of content blocks; concatenate the text ones.
-    text_parts = [block.text for block in response.content if getattr(block, "type", None) == "text"]
+    text_parts = [
+        block.text
+        for block in response.content
+        if getattr(block, "type", None) == "text"
+    ]
     text = "".join(text_parts)
 
     if json_mode:

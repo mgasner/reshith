@@ -16,7 +16,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from reshith.core.config import get_settings
 
 
-class SecretsEncryptionNotConfigured(RuntimeError):
+class SecretsEncryptionNotConfiguredError(RuntimeError):
     """Raised when SECRETS_ENCRYPTION_KEY is not set but encryption is required."""
 
 
@@ -24,7 +24,7 @@ class SecretsEncryptionNotConfigured(RuntimeError):
 def _fernet() -> Fernet:
     key = get_settings().secrets_encryption_key
     if not key:
-        raise SecretsEncryptionNotConfigured(
+        raise SecretsEncryptionNotConfiguredError(
             "SECRETS_ENCRYPTION_KEY is not configured. Generate one with "
             "`python -c 'from cryptography.fernet import Fernet; "
             "print(Fernet.generate_key().decode())'` and set it in the backend "
