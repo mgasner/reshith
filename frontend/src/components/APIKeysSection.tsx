@@ -104,10 +104,9 @@ export function APIKeysSection() {
     <section className="mb-8">
       <h2 className="text-lg font-semibold text-gray-800 mb-1">LLM API Keys</h2>
       <p className="text-sm text-gray-600 mb-4">
-        Use your own OpenAI or Anthropic key for translation help, drills, and
-        exercise generation. Keys are encrypted at rest on the server and only
-        used for your own requests. Without a personal key, LLM features fall
-        back to the server's default key (if configured).
+        Translation help and drill generation use your own OpenAI or Anthropic
+        key — without one, those features are disabled. Keys are encrypted at
+        rest on the server and only used for your own requests.
       </p>
 
       {!current.encryptionConfigured && (
@@ -155,9 +154,7 @@ export function APIKeysSection() {
             <option value="ANTHROPIC">Anthropic</option>
           </select>
           <p className="text-xs text-gray-500 mt-1">
-            Determines which provider is used when both keys are configured.
-            Note: Hebrew Gesenius (GKC) semantic search always uses OpenAI
-            embeddings.
+            Determines which of your keys is used when both are configured.
           </p>
         </div>
       </div>

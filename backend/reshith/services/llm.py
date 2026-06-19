@@ -23,8 +23,8 @@ grammar and patterns."""
 
 
 _NOT_CONFIGURED_MSG = (
-    "LLM service not configured. Add an API key in Settings, or set "
-    "OPENAI_API_KEY / ANTHROPIC_API_KEY on the server."
+    "No API key on file. Add an OpenAI or Anthropic API key in Settings to "
+    "enable LLM-powered features."
 )
 
 

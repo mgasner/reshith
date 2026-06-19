@@ -128,20 +128,24 @@ If the index has not been built, the reference service automatically falls back 
 Create a `.env` file in the `backend/` directory:
 
 ```bash
-# At least one LLM provider key is required for translation help and drill
-# generation. Users can also paste their own key into the in-app Settings
-# page, which overrides the env-level key per request.
+# Server-side LLM keys used by SYSTEM features only — the shared, cached
+# infrastructure that supports user-facing features: Gesenius (GKC)
+# embedding lookup, and the noun/verb/comparative mapping generation that
+# seeds the exercise endpoints. These are billed to the server, not to
+# individual users, and never used to serve a per-user request.
 OPENAI_API_KEY=your-openai-api-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
 
-# Default provider used when neither the user nor the env config picks one.
+# Default provider used by the system features above when both keys are set.
 # Either "openai" or "anthropic".
 DEFAULT_LLM_PROVIDER=openai
 
-# Fernet key used to encrypt user-supplied API keys at rest. Generate with:
+# User-facing LLM features (translation help, drill generation) use only
+# the requester's own API key, stored encrypted in user_api_keys. Set this
+# Fernet key to enable that path; without it, the Settings page refuses to
+# save user keys and the user-facing features return a clear "add a key in
+# Settings" message. Generate one with:
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-# Without this, the Settings page refuses to save user keys (the env-level
-# keys still work for everyone).
 SECRETS_ENCRYPTION_KEY=
 
 # Optional: Google Cloud TTS for pronunciation

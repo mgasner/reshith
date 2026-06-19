@@ -695,8 +695,10 @@ async def mutate_get_translation_help(
         LanguageCode.MIDRASHIC_HEBREW: "Midrashic Hebrew",
     }
 
-    provider, api_key, model = await _resolve_llm_credentials(info)
-    embedding_key = await _resolve_openai_api_key(info)
+    provider, api_key, model = await _resolve_user_llm_credentials(info)
+    # Gesenius embeddings are a shared retrieval-index detail, not billed
+    # to the user — always use the env-level OpenAI key.
+    embedding_key = _resolve_system_openai_api_key()
     result = await llm.get_translation_help(
         text=text,
         language=language_names.get(language, "Unknown"),
@@ -727,7 +729,7 @@ async def mutate_generate_drill(
         LanguageCode.MIDRASHIC_HEBREW: "Midrashic Hebrew",
     }
 
-    provider, api_key, model = await _resolve_llm_credentials(info)
+    provider, api_key, model = await _resolve_user_llm_credentials(info)
     result = await llm.generate_drill(
         vocabulary=vocabulary,
         language=language_names.get(language, "Unknown"),
@@ -1039,7 +1041,7 @@ async def resolve_sentence_exercises(
     if patterns:
         pattern_strs = [sentence_pattern_to_str(p) for p in patterns]
 
-    provider, api_key, model = await _resolve_llm_credentials(info)
+    provider, api_key, model = _system_llm_credentials()
     exercises = await sentence_exercises.generate_sentence_exercises(
         max_lesson=effective_max,
         count=count,
@@ -1175,7 +1177,7 @@ async def resolve_verbal_exercises(
     if patterns:
         pattern_strs = [verbal_pattern_to_str(p) for p in patterns]
 
-    provider, api_key, model = await _resolve_llm_credentials(info)
+    provider, api_key, model = _system_llm_credentials()
     exercises = await verbal_exercises.generate_verbal_exercises(
         max_lesson=effective_max,
         count=count,
@@ -1253,7 +1255,7 @@ async def resolve_comparative_exercises(
     db_lang = models.LanguageCode.BIBLICAL_HEBREW
     effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
 
-    provider, api_key, model = await _resolve_llm_credentials(info)
+    provider, api_key, model = _system_llm_credentials()
     exercises = await advanced_exercises.generate_comparative_exercises(
         max_lesson=effective_max,
         count=count,
@@ -2143,23 +2145,26 @@ def _other_provider(provider: LLMProvider) -> LLMProvider:
     )
 
 
-def _resolve_llm_credentials_from_row(
+def _user_llm_credentials_from_row(
     row: models.UserAPIKeys | None,
 ) -> tuple[LLMProvider, str | None, str | None]:
-    """Resolve (provider, api_key, model) from an already-loaded user row.
+    """Resolve (provider, api_key, model) from a user_api_keys row only.
 
-    Prefers the user's stored key for their preferred provider; falls back
-    to the other provider's user key, then to the server's env-configured
-    keys (in default-provider order). Returns ``(provider, None, model)``
-    if no key is available anywhere.
+    Used by user-facing LLM features (translation help, drills) where we
+    intentionally do *not* fall back to the server's env-configured keys —
+    users opt in by adding their own credentials in Settings.
+
+    Prefers the user's preferred provider; falls back to the other provider
+    only if the user has a key stored for it but not for their preference.
+    Returns ``(provider, None, model)`` when no user key is available.
     """
     settings = get_settings()
+    default_provider = normalize_provider(settings.default_llm_provider)
 
     if row is not None:
         preferred = normalize_provider(
             row.preferred_provider or settings.default_llm_provider
         )
-        # Try the preferred provider first, then the other one.
         for candidate in (preferred, _other_provider(preferred)):
             ciphertext = (
                 row.openai_api_key_encrypted
@@ -2175,7 +2180,19 @@ def _resolve_llm_credentials_from_row(
                 )
                 return candidate, plaintext, model
 
-    # Fall back to env keys, preferring the configured default provider.
+    return default_provider, None, DEFAULT_MODELS[default_provider]
+
+
+def _system_llm_credentials() -> tuple[LLMProvider, str | None, str | None]:
+    """Resolve (provider, api_key, model) from env config only.
+
+    Used by system features (exercise mapping generation, retrieval
+    embeddings) that are cached and shared across all users — they should
+    always run against the server's keys, never a single user's quota.
+    Prefers the configured default provider; falls back to the other one
+    only if the default's key isn't set.
+    """
+    settings = get_settings()
     default_provider = normalize_provider(settings.default_llm_provider)
     for candidate in (default_provider, _other_provider(default_provider)):
         env_key = (
@@ -2194,28 +2211,22 @@ def _resolve_llm_credentials_from_row(
     return default_provider, None, DEFAULT_MODELS[default_provider]
 
 
-def _resolve_openai_api_key_from_row(row: models.UserAPIKeys | None) -> str | None:
-    """OpenAI-only credential resolver — used for embedding-based search,
-    which Anthropic does not provide. Falls back to the env key.
-    """
-    settings = get_settings()
-    if row is not None:
-        plaintext = secrets_crypto.decrypt(row.openai_api_key_encrypted)
-        if plaintext:
-            return plaintext
-    return settings.openai_api_key or None
-
-
-async def _resolve_llm_credentials(
+async def _resolve_user_llm_credentials(
     info: strawberry.Info,
 ) -> tuple[LLMProvider, str | None, str | None]:
+    """User-facing credential resolver — user key only, never env."""
     row = await _load_user_api_keys_row(info)
-    return _resolve_llm_credentials_from_row(row)
+    return _user_llm_credentials_from_row(row)
 
 
-async def _resolve_openai_api_key(info: strawberry.Info) -> str | None:
-    row = await _load_user_api_keys_row(info)
-    return _resolve_openai_api_key_from_row(row)
+def _resolve_system_openai_api_key() -> str | None:
+    """OpenAI-only system credential resolver — env only.
+
+    Used for the Gesenius (GKC) embedding lookup, which is part of the
+    shared retrieval index rather than something billed to the requesting
+    user.
+    """
+    return get_settings().openai_api_key or None
 
 
 async def mutate_update_user_srs_settings(
