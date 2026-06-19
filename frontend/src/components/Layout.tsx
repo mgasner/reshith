@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useApolloClient } from '@apollo/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -136,6 +136,23 @@ export function Layout() {
   const apollo = useApolloClient()
   const { user, logout } = useAuth()
   const [lessonsOpen, setLessonsOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [mobileMenuOpen])
 
   const handleLogout = async () => {
     logout()
@@ -205,7 +222,7 @@ export function Layout() {
                 }`}
               >
                 <span className="text-base leading-none">{lang.label}</span>
-                <span>{lang.name}</span>
+                <span className="hidden sm:inline">{lang.name}</span>
               </button>
             ))}
           </div>
@@ -215,7 +232,8 @@ export function Layout() {
       {/* Second bar: main nav */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-14 gap-8">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-8">
             <Link to={activeLang.homePath} className="flex-shrink-0">
               <span className="text-xl font-semibold text-gray-900">Reshith</span>
             </Link>
@@ -287,6 +305,7 @@ export function Layout() {
                 Decks
               </Link>
             </div>
+            </div>
             <div className="hidden sm:flex sm:items-center sm:gap-3 ml-auto">
               {user ? (
                 <>
@@ -317,8 +336,44 @@ export function Layout() {
                 </>
               )}
             </div>
+            <button
+              className="sm:hidden p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div ref={mobileMenuRef} className="sm:hidden border-t bg-white px-4 py-3 space-y-2">
+            {activeLang.hasAlphabet && activeLang.alphabetPath && (
+              <Link to={activeLang.alphabetPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Alphabet</Link>
+            )}
+            {activeLang.hasVowels && activeLang.vowelsPath && (
+              <Link to={activeLang.vowelsPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Vowels</Link>
+            )}
+            <Link to={activeLang.exercisesPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Exercises</Link>
+            <div className="py-2">
+              <span className="text-sm font-medium text-gray-700">Lessons</span>
+              <div className="mt-1 ml-3 space-y-1">
+                {activeLang.lessons.map((lesson) => (
+                  <Link key={lesson.num} to={activeLang.lessonPath(lesson.num)} className="block py-1 text-sm text-gray-500 hover:text-gray-900">{lesson.name}</Link>
+                ))}
+              </div>
+            </div>
+            {activeLang.resourcesPath && (
+              <Link to={activeLang.resourcesPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Resources</Link>
+            )}
+            <Link to="/decks" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Decks</Link>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

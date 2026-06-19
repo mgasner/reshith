@@ -51,7 +51,7 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
     switch (face) {
       case 'letter': {
         const fontKey = handwriting ? 'script' : 'print'
-        const letterClass = `text-8xl leading-[1.6] ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`
+        const letterClass = `text-4xl sm:text-8xl leading-[1.6] ${handwriting ? 'font-hebrew-script' : 'font-hebrew'}`
         return (
           <div key={fontKey} className="flex gap-8 justify-center items-baseline rtl overflow-visible">
             <span className={letterClass}>{card.letter}</span>
@@ -65,18 +65,18 @@ export function AlphabetCard({ card, onReview }: AlphabetCardProps) {
         )
       }
       case 'name':
-        return <p className="text-4xl capitalize">{card.name}</p>
+        return <p className="text-2xl sm:text-4xl capitalize">{card.name}</p>
       case 'transcription':
-        return <p className="text-5xl font-mono">{card.transcription}</p>
+        return <p className="text-2xl sm:text-5xl font-mono">{card.transcription}</p>
       case 'phonetic':
-        return <p className="text-3xl">{card.phoneticValue}</p>
+        return <p className="text-xl sm:text-3xl">{card.phoneticValue}</p>
     }
   }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className="bg-white rounded-xl shadow-lg p-8 min-h-[300px] flex flex-col cursor-pointer relative overflow-visible"
+        className="bg-white rounded-xl shadow-lg p-4 sm:p-8 min-h-[200px] sm:min-h-[300px] flex flex-col cursor-pointer relative overflow-visible"
         onClick={handleNext}
       >
         <button
