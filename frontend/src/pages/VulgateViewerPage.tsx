@@ -173,10 +173,10 @@ function WordCard({ token }: { token: VulgateToken }) {
           <span className="mt-1.5">
             <AddToDeckButton
               language="LATIN"
-              front={token.form}
-              back={token.lemma}
+              front={token.lemma || token.form}
+              back={posName}
               grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : null}
-              notes={posName}
+              notes={`Form: ${token.form}`}
               sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
             />
           </span>

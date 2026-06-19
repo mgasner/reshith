@@ -200,15 +200,30 @@ function WordCard({ token }: { token: GreekToken }) {
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
           <span className="mt-1.5">
-            <AddToDeckButton
-              language="NT_GREEK"
-              front={token.greek}
-              back={token.translation}
-              transliteration={token.transliteration}
-              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
-              notes={token.dstrongs ? `Strong's ${token.dstrongs}` : null}
-              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
-            />
+            {(() => {
+              // TAGNT `expanded` is "lemma=gloss"; fall back to surface form / translation.
+              const [lemma, lemmaGloss] = token.expanded.includes('=')
+                ? token.expanded.split('=', 2)
+                : [token.expanded, '']
+              return (
+                <AddToDeckButton
+                  language="NT_GREEK"
+                  front={lemma || token.greek}
+                  back={lemmaGloss || token.translation}
+                  transliteration={token.transliteration}
+                  grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+                  notes={
+                    [
+                      `Form: ${token.greek}`,
+                      token.dstrongs ? `Strong's ${token.dstrongs}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  }
+                  sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
+                />
+              )
+            })()}
           </span>
         </span>
       ) : (

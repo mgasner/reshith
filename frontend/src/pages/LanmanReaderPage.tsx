@@ -274,8 +274,8 @@ function WordCard({
         <span className="mt-1.5">
           <AddToDeckButton
             language="SANSKRIT"
-            front={word.form}
-            back={lexEntry?.gloss ?? word.lemma ?? word.form}
+            front={word.lemma || word.form}
+            back={lexEntry?.gloss ?? ''}
             transliteration={word.unsandhied || null}
             grammaticalInfo={
               [
@@ -285,7 +285,7 @@ function WordCard({
                 .filter(Boolean)
                 .join(' · ') || null
             }
-            notes={word.lemma ? `Lemma ${word.lemma}` : null}
+            notes={`Form: ${word.form}`}
             sourceReference={sourceReference ?? null}
           />
         </span>
