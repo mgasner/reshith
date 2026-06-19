@@ -128,8 +128,25 @@ If the index has not been built, the reference service automatically falls back 
 Create a `.env` file in the `backend/` directory:
 
 ```bash
-# Required for LLM features (translation help, drill generation)
-OPENAI_API_KEY=your-api-key
+# Server-side LLM keys used by SYSTEM features only — the shared, cached
+# infrastructure that supports user-facing features: Gesenius (GKC)
+# embedding lookup, and the noun/verb/comparative mapping generation that
+# seeds the exercise endpoints. These are billed to the server, not to
+# individual users, and never used to serve a per-user request.
+OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Default provider used by the system features above when both keys are set.
+# Either "openai" or "anthropic".
+DEFAULT_LLM_PROVIDER=openai
+
+# User-facing LLM features (translation help, drill generation) use only
+# the requester's own API key, stored encrypted in user_api_keys. Set this
+# Fernet key to enable that path; without it, the Settings page refuses to
+# save user keys and the user-facing features return a clear "add a key in
+# Settings" message. Generate one with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+SECRETS_ENCRYPTION_KEY=
 
 # Optional: Google Cloud TTS for pronunciation
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json

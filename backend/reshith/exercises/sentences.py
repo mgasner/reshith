@@ -16,11 +16,9 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
-from openai import AsyncOpenAI
-
-from reshith.core.config import get_settings
 from reshith.exercises.article import Noun, add_definite_article, load_nouns_for_exercises
 from reshith.exercises.vocabulary import load_lessons_up_to
+from reshith.services.llm_providers import DEFAULT_MODELS, LLMProvider, chat_complete
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +93,23 @@ def load_conjunctions(max_lesson: int) -> list[Conjunction]:
     ]
 
 
-def _get_cache_key(nouns: list[Noun], preps: list[Preposition]) -> str:
-    """Generate a cache key for noun-prep mapping."""
+def _get_cache_key(
+    nouns: list[Noun],
+    preps: list[Preposition],
+    provider: str = "fallback",
+    model: str = "",
+) -> str:
+    """Generate a cache key for noun-prep mapping.
+
+    Provider/model are included so two callers using different LLMs don't
+    overwrite each other's cached output (and so the deterministic
+    "fallback" path doesn't read a cached LLM result).
+    """
     noun_ids = sorted([n.transliteration for n in nouns])
     prep_ids = sorted([p.transliteration for p in preps])
-    content = json.dumps({"nouns": noun_ids, "preps": prep_ids})
+    content = json.dumps(
+        {"nouns": noun_ids, "preps": prep_ids, "provider": provider, "model": model}
+    )
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
@@ -112,6 +122,10 @@ async def generate_noun_prep_mapping(
     nouns: list[Noun],
     preps: list[Preposition],
     force_refresh: bool = False,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> dict[str, dict[str, list[str]]]:
     """
     Generate mapping of which nouns can sensibly relate to other nouns via prepositions.
@@ -120,7 +134,13 @@ async def generate_noun_prep_mapping(
     Returns:
         Dict mapping noun transliterations to {preposition: [compatible_nouns]}
     """
-    cache_key = _get_cache_key(nouns, preps)
+    resolved_model = model or DEFAULT_MODELS[provider]
+    cache_key = _get_cache_key(
+        nouns,
+        preps,
+        provider=provider.value if api_key else "fallback",
+        model=resolved_model if api_key else "",
+    )
     cache_path = _get_cache_path(cache_key)
 
     if not force_refresh and cache_path.exists():
@@ -128,12 +148,9 @@ async def generate_noun_prep_mapping(
         with open(cache_path, encoding="utf-8") as f:
             return json.load(f)
 
-    settings = get_settings()
-    if not settings.openai_api_key:
-        logger.warning("OpenAI API key not set, using fallback noun-prep mapping")
+    if not api_key:
+        logger.warning("LLM API key not provided, using fallback noun-prep mapping")
         return _generate_fallback_mapping(nouns, preps)
-
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     noun_list = [f"{n.transliteration} ({n.definition})" for n in nouns]
     prep_list = [f"{p.transliteration} ({p.definition})" for p in preps]
@@ -159,8 +176,10 @@ async def generate_noun_prep_mapping(
     )
 
     try:
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
+        raw = await chat_complete(
+            provider=provider,
+            api_key=api_key,
+            model=resolved_model,
             messages=[
                 {
                     "role": "system",
@@ -172,10 +191,10 @@ async def generate_noun_prep_mapping(
                 {"role": "user", "content": prompt},
             ],
             temperature=0.3,
-            response_format={"type": "json_object"},
+            json_mode=True,
         )
 
-        result = json.loads(response.choices[0].message.content or "{}")
+        result = json.loads(raw or "{}")
 
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
@@ -513,6 +532,10 @@ async def generate_sentence_exercises(
     max_lesson: int = 1,
     count: int = 10,
     patterns: list[str] | None = None,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> list[SentenceExercise]:
     """
     Generate sentence-level exercises.
@@ -536,7 +559,9 @@ async def generate_sentence_exercises(
     if not nouns or not preps:
         return []
 
-    noun_prep_map = await generate_noun_prep_mapping(nouns, preps)
+    noun_prep_map = await generate_noun_prep_mapping(
+        nouns, preps, provider=provider, api_key=api_key, model=model,
+    )
 
     exercises = []
     attempts = 0

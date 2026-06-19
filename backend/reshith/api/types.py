@@ -230,6 +230,54 @@ class UpdateUserSRSSettingsInput:
     reviews_per_day: int | None = None
 
 
+# ── LLM API keys ──────────────────────────────────────────────────────────────
+
+
+@strawberry.enum
+class LLMProvider(enum.Enum):
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+
+
+@strawberry.type
+class UserAPIKeysType:
+    """Per-user LLM credential state.
+
+    Plaintext keys are never returned. ``openai_key_last4`` /
+    ``anthropic_key_last4`` are populated when a key is configured so the UI
+    can show "••••sk-1234" instead of forcing the user to re-enter to verify.
+    ``preferred_provider`` is the user's explicit pick; ``None`` means the
+    server default is in effect.
+    """
+    preferred_provider: LLMProvider | None
+    has_openai_key: bool
+    has_anthropic_key: bool
+    openai_key_last4: str | None
+    anthropic_key_last4: str | None
+    # Whether the server has the encryption key configured. False means the
+    # update mutation will reject writes — surface this in the UI so users
+    # aren't confused by a save failure.
+    encryption_configured: bool
+
+
+@strawberry.input
+class UpdateUserAPIKeysInput:
+    """Update payload for a user's LLM credentials.
+
+    ``openai_api_key`` / ``anthropic_api_key`` set the corresponding key when
+    non-empty. Pass ``clear_openai=True`` / ``clear_anthropic=True`` to remove
+    a stored key. ``preferred_provider=None`` leaves the existing preference
+    unchanged; pass it explicitly to change which provider is used, or set
+    ``clear_preferred_provider=True`` to revert to the server default.
+    """
+    openai_api_key: str | None = None
+    clear_openai: bool = False
+    anthropic_api_key: str | None = None
+    clear_anthropic: bool = False
+    preferred_provider: LLMProvider | None = None
+    clear_preferred_provider: bool = False
+
+
 @strawberry.input
 class UpdateDeckSRSSettingsInput:
     """Sparse update for a deck's SRS overrides. Null means "clear override",

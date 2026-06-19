@@ -181,6 +181,32 @@ class UserSRSSettings(Base):
     )
 
 
+class UserAPIKeys(Base):
+    """Per-user encrypted LLM provider credentials. One row per user.
+
+    Keys are stored as Fernet-encrypted ciphertext (see
+    :mod:`reshith.services.crypto`). ``preferred_provider`` is the user's
+    explicit choice; ``None`` means defer to the server default.
+    """
+
+    __tablename__ = "user_api_keys"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True
+    )
+
+    openai_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    anthropic_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # "openai" or "anthropic"; NULL means use the server default.
+    preferred_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class DeckSRSSettings(Base):
     """Per-deck overrides of the user's SRS configuration. Sparse — every config
     column is nullable, and ``NULL`` means "inherit from the user-level row."

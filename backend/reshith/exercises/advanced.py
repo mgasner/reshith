@@ -14,11 +14,9 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
-from openai import AsyncOpenAI
-
-from reshith.core.config import get_settings
 from reshith.exercises.article import Noun, add_definite_article, load_nouns_for_exercises
 from reshith.exercises.vocabulary import load_lessons_up_to
+from reshith.services.llm_providers import DEFAULT_MODELS, LLMProvider, chat_complete
 
 logger = logging.getLogger(__name__)
 
@@ -156,11 +154,25 @@ def attach_min_preposition(
 def _get_comparative_cache_key(
     adjectives: list[Adjective],
     nouns: list[Noun],
+    provider: str = "fallback",
+    model: str = "",
 ) -> str:
-    """Generate a cache key for comparative mappings."""
+    """Generate a cache key for comparative mappings.
+
+    Provider/model are included so two callers using different LLMs don't
+    overwrite each other's cached output (and so the deterministic
+    "fallback" path doesn't read a cached LLM result).
+    """
     adj_ids = sorted([a.transliteration for a in adjectives])
     noun_ids = sorted([n.transliteration for n in nouns])
-    content = json.dumps({"adjectives": adj_ids, "nouns": noun_ids})
+    content = json.dumps(
+        {
+            "adjectives": adj_ids,
+            "nouns": noun_ids,
+            "provider": provider,
+            "model": model,
+        }
+    )
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
@@ -173,6 +185,10 @@ async def generate_comparative_mappings(
     adjectives: list[Adjective],
     nouns: list[Noun],
     force_refresh: bool = False,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> dict:
     """
     Generate mappings for adjective-noun comparative relationships using LLM.
@@ -182,7 +198,13 @@ async def generate_comparative_mappings(
         that make semantic sense for comparison.
         e.g., {"yāqār": [["zāhāḇ", "késep̄"], ["ḥoḵmāh", "zāhāḇ"]]}
     """
-    cache_key = _get_comparative_cache_key(adjectives, nouns)
+    resolved_model = model or DEFAULT_MODELS[provider]
+    cache_key = _get_comparative_cache_key(
+        adjectives,
+        nouns,
+        provider=provider.value if api_key else "fallback",
+        model=resolved_model if api_key else "",
+    )
     cache_path = _get_comparative_cache_path(cache_key)
 
     if not force_refresh and cache_path.exists():
@@ -190,12 +212,9 @@ async def generate_comparative_mappings(
         with open(cache_path, encoding="utf-8") as f:
             return json.load(f)
 
-    settings = get_settings()
-    if not settings.openai_api_key:
-        logger.warning("OpenAI API key not set, using fallback comparative mappings")
+    if not api_key:
+        logger.warning("LLM API key not provided, using fallback comparative mappings")
         return _generate_fallback_comparative_mappings(adjectives, nouns)
-
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     adj_list = [f"{a.transliteration} ({a.definition})" for a in adjectives]
     noun_list = [f"{n.transliteration} ({n.definition})" for n in nouns]
@@ -220,8 +239,10 @@ async def generate_comparative_mappings(
     )
 
     try:
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
+        raw = await chat_complete(
+            provider=provider,
+            api_key=api_key,
+            model=resolved_model,
             messages=[
                 {
                     "role": "system",
@@ -233,10 +254,10 @@ async def generate_comparative_mappings(
                 {"role": "user", "content": prompt},
             ],
             temperature=0.3,
-            response_format={"type": "json_object"},
+            json_mode=True,
         )
 
-        result = json.loads(response.choices[0].message.content or "{}")
+        result = json.loads(raw or "{}")
 
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
@@ -431,6 +452,10 @@ async def generate_relative_clause_exercise(
 async def generate_comparative_exercises(
     max_lesson: int = 5,
     count: int = 10,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> list[ComparativeExercise]:
     """
     Generate comparative construction exercises.
@@ -448,7 +473,9 @@ async def generate_comparative_exercises(
     if not adjectives or not nouns:
         return []
 
-    comparative_mappings = await generate_comparative_mappings(adjectives, nouns)
+    comparative_mappings = await generate_comparative_mappings(
+        adjectives, nouns, provider=provider, api_key=api_key, model=model,
+    )
 
     exercises: list[ComparativeExercise] = []
     attempts = 0

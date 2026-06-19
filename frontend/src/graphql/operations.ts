@@ -152,6 +152,31 @@ export const UPDATE_USER_SRS_SETTINGS = gql`
   }
 `
 
+const USER_API_KEYS_FIELDS = `
+  preferredProvider
+  hasOpenaiKey
+  hasAnthropicKey
+  openaiKeyLast4
+  anthropicKeyLast4
+  encryptionConfigured
+`
+
+export const GET_USER_API_KEYS = gql`
+  query GetUserApiKeys {
+    userApiKeys {
+      ${USER_API_KEYS_FIELDS}
+    }
+  }
+`
+
+export const UPDATE_USER_API_KEYS = gql`
+  mutation UpdateUserApiKeys($input: UpdateUserAPIKeysInput!) {
+    updateUserApiKeys(input: $input) {
+      ${USER_API_KEYS_FIELDS}
+    }
+  }
+`
+
 export const GET_DECK_SRS_SETTINGS = gql`
   query GetDeckSRSSettings($deckId: UUID!) {
     deckSrsSettings(deckId: $deckId) {

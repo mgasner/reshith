@@ -29,6 +29,7 @@ from reshith.api.resolvers import (
     mutate_submit_review,
     mutate_synthesize_speech,
     mutate_update_deck_srs_settings,
+    mutate_update_user_api_keys,
     mutate_update_user_srs_settings,
     resolve_article_exercises,
     resolve_cards,
@@ -75,6 +76,7 @@ from reshith.api.resolvers import (
     resolve_tahot_search,
     resolve_tahot_verse,
     resolve_translation_exercises,
+    resolve_user_api_keys,
     resolve_user_srs_settings,
     resolve_verbal_exercises,
     resolve_vulgate_books,
@@ -152,8 +154,10 @@ from reshith.api.types import (
     TranslationHelp,
     TranslationPattern,
     UpdateDeckSRSSettingsInput,
+    UpdateUserAPIKeysInput,
     UpdateUserSRSSettingsInput,
     User,
+    UserAPIKeysType,
     VerbalExercise,
     VerbalGradeResult,
     VerbalPattern,
@@ -228,6 +232,10 @@ class Query:
     @strawberry.field
     async def user_srs_settings(self, info: strawberry.Info) -> SRSConfigType:
         return await resolve_user_srs_settings(info)
+
+    @strawberry.field
+    async def user_api_keys(self, info: strawberry.Info) -> UserAPIKeysType:
+        return await resolve_user_api_keys(info)
 
     @strawberry.field
     async def deck_srs_settings(
@@ -689,6 +697,14 @@ class Mutation:
         input: UpdateUserSRSSettingsInput,
     ) -> SRSConfigType:
         return await mutate_update_user_srs_settings(info, input)
+
+    @strawberry.mutation
+    async def update_user_api_keys(
+        self,
+        info: strawberry.Info,
+        input: UpdateUserAPIKeysInput,
+    ) -> UserAPIKeysType:
+        return await mutate_update_user_api_keys(info, input)
 
     @strawberry.mutation
     async def update_deck_srs_settings(

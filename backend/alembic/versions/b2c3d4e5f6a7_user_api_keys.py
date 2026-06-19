@@ -1,0 +1,52 @@
+"""user_api_keys
+
+Adds the per-user encrypted LLM provider credentials table. Mirrors the
+shape of ``user_srs_settings``: one row per user, ``user_id`` is a unique
+FK with cascade delete. Both key columns are nullable so a user can
+configure only one provider.
+
+Revision ID: b2c3d4e5f6a7
+Revises: 9a2c5e1b8f30
+Create Date: 2026-06-18
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = "b2c3d4e5f6a7"
+down_revision: Union[str, Sequence[str], None] = "9a2c5e1b8f30"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        "user_api_keys",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=False),
+        sa.Column("openai_api_key_encrypted", sa.Text(), nullable=True),
+        sa.Column("anthropic_api_key_encrypted", sa.Text(), nullable=True),
+        sa.Column("preferred_provider", sa.String(length=20), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("user_id"),
+    )
+
+
+def downgrade() -> None:
+    op.drop_table("user_api_keys")
