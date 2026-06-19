@@ -34,6 +34,11 @@ def test_default_models_cover_every_provider():
         ('```json\n{"a": 1}\n```', '{"a": 1}'),
         ('```\n{"a": 1}\n```', '{"a": 1}'),
         ('   ```json\n{"a": 1}\n```   ', '{"a": 1}'),
+        # Single-line fenced blocks (no newlines) — observed rarely from
+        # Anthropic when the model collapses the response.
+        ('```json{"a": 1}```', '{"a": 1}'),
+        ('```{"a": 1}```', '{"a": 1}'),
+        ('```JSON{"a": 1}```', '{"a": 1}'),
     ],
 )
 def test_strip_json_fences_handles_anthropic_quirks(raw, expected):

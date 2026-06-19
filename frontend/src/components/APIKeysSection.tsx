@@ -58,14 +58,17 @@ export function APIKeysSection() {
     setStatus(null)
     setErrMsg(null)
     try {
+      // Detect when the user explicitly picked "Server default" and the
+      // backend currently has a stored preference, so we send the explicit
+      // clear flag instead of null (which means "leave unchanged").
+      const clearPreferred = preferred === '' && current?.preferredProvider != null
       await updateKeys({
         variables: {
           input: {
             openaiApiKey: openaiInput || null,
             anthropicApiKey: anthropicInput || null,
-            // Only send preferredProvider when the user has actually picked
-            // one — null means "leave unchanged" per the input contract.
             preferredProvider: preferred || null,
+            clearPreferredProvider: clearPreferred,
           },
         },
       })

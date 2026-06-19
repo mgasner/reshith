@@ -80,12 +80,27 @@ def _get_verb_cache_key(
     verbs: list[Verb],
     nouns: list[Noun],
     preps: list[Preposition],
+    provider: str = "fallback",
+    model: str = "",
 ) -> str:
-    """Generate a cache key for verb mappings."""
+    """Generate a cache key for verb mappings.
+
+    Provider/model are included so two callers using different LLMs don't
+    overwrite each other's cached output (and so the deterministic
+    "fallback" path doesn't read a cached LLM result).
+    """
     verb_ids = sorted([v.transliteration for v in verbs])
     noun_ids = sorted([n.transliteration for n in nouns])
     prep_ids = sorted([p.transliteration for p in preps])
-    content = json.dumps({"verbs": verb_ids, "nouns": noun_ids, "preps": prep_ids})
+    content = json.dumps(
+        {
+            "verbs": verb_ids,
+            "nouns": noun_ids,
+            "preps": prep_ids,
+            "provider": provider,
+            "model": model,
+        }
+    )
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
@@ -110,7 +125,14 @@ async def generate_verb_mappings(
     Returns:
         Dict with 'subjects', 'objects', 'prepositions' mappings
     """
-    cache_key = _get_verb_cache_key(verbs, nouns, preps)
+    resolved_model = model or DEFAULT_MODELS[provider]
+    cache_key = _get_verb_cache_key(
+        verbs,
+        nouns,
+        preps,
+        provider=provider.value if api_key else "fallback",
+        model=resolved_model if api_key else "",
+    )
     cache_path = _get_verb_cache_path(cache_key)
 
     if not force_refresh and cache_path.exists():
@@ -155,7 +177,7 @@ async def generate_verb_mappings(
         raw = await chat_complete(
             provider=provider,
             api_key=api_key,
-            model=model or DEFAULT_MODELS[provider],
+            model=resolved_model,
             messages=[
                 {
                     "role": "system",

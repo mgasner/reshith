@@ -267,13 +267,15 @@ class UpdateUserAPIKeysInput:
     ``openai_api_key`` / ``anthropic_api_key`` set the corresponding key when
     non-empty. Pass ``clear_openai=True`` / ``clear_anthropic=True`` to remove
     a stored key. ``preferred_provider=None`` leaves the existing preference
-    unchanged; pass it explicitly to change which provider is used.
+    unchanged; pass it explicitly to change which provider is used, or set
+    ``clear_preferred_provider=True`` to revert to the server default.
     """
     openai_api_key: str | None = None
     clear_openai: bool = False
     anthropic_api_key: str | None = None
     clear_anthropic: bool = False
     preferred_provider: LLMProvider | None = None
+    clear_preferred_provider: bool = False
 
 
 @strawberry.input

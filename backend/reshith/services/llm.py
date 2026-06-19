@@ -36,9 +36,11 @@ async def get_translation_help(
     provider: LLMProvider = LLMProvider.OPENAI,
     api_key: str | None = None,
     model: str | None = None,
-    # Gesenius RAG only works against OpenAI embeddings; pass through
-    # explicitly so we can keep using the env-level OpenAI key for the
-    # embedding step even when the chat call goes to Anthropic.
+    # Gesenius RAG only works against OpenAI embeddings; pass an OpenAI key
+    # explicitly so the embedding step can use the user's (or env-level)
+    # OpenAI key even when the chat call goes to Anthropic. When this is
+    # None and no OpenAI key is available, search_gesenius falls back to
+    # keyword search.
     embedding_api_key: str | None = None,
 ) -> str:
     """Get LLM assistance for translating a text."""
@@ -49,12 +51,13 @@ async def get_translation_help(
     if context:
         user_prompt += f"\n\nContext: {context}"
 
-    # Retrieve relevant GKC sections for Hebrew queries
+    # Retrieve relevant GKC sections for Hebrew queries. Forward only an
+    # OpenAI key — passing the chat api_key (which may be Anthropic) would
+    # crash the OpenAI embeddings client. With no OpenAI key,
+    # search_gesenius transparently degrades to keyword search.
     gkc_context = ""
     if language.lower() in ("biblical hebrew", "hebrew", "hbo"):
-        chunks = await search_gesenius(
-            text, top_k=3, api_key=embedding_api_key or api_key
-        )
+        chunks = await search_gesenius(text, top_k=3, api_key=embedding_api_key)
         gkc_context = format_for_prompt(chunks)
 
     messages: list[dict] = [{"role": "system", "content": TRANSLATION_SYSTEM_PROMPT}]

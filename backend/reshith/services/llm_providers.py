@@ -159,12 +159,24 @@ async def _anthropic_chat(
 
 def _strip_json_fences(text: str) -> str:
     stripped = text.strip()
-    if stripped.startswith("```"):
-        # Drop the opening fence (``` or ```json) and the closing fence.
-        first_newline = stripped.find("\n")
-        if first_newline != -1:
-            stripped = stripped[first_newline + 1 :]
-        if stripped.endswith("```"):
-            stripped = stripped[: -3]
-        stripped = stripped.strip()
-    return stripped
+    if not stripped.startswith("```"):
+        return stripped
+
+    # Drop the opening fence (``` or ```json/```JSON, optionally followed by a
+    # newline or run-on body) and the closing fence. Handle both the
+    # multi-line form (fence on its own line) and the single-line form
+    # ` ```json{"a":1}``` ` that some models occasionally emit.
+    body = stripped[3:]
+    first_newline = body.find("\n")
+    if first_newline != -1:
+        # Multi-line: drop the language tag line.
+        body = body[first_newline + 1 :]
+    else:
+        # Single-line: strip an optional language tag prefix like "json".
+        for tag in ("json", "JSON"):
+            if body.startswith(tag):
+                body = body[len(tag) :]
+                break
+    if body.endswith("```"):
+        body = body[:-3]
+    return body.strip()

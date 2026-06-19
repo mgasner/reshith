@@ -93,11 +93,23 @@ def load_conjunctions(max_lesson: int) -> list[Conjunction]:
     ]
 
 
-def _get_cache_key(nouns: list[Noun], preps: list[Preposition]) -> str:
-    """Generate a cache key for noun-prep mapping."""
+def _get_cache_key(
+    nouns: list[Noun],
+    preps: list[Preposition],
+    provider: str = "fallback",
+    model: str = "",
+) -> str:
+    """Generate a cache key for noun-prep mapping.
+
+    Provider/model are included so two callers using different LLMs don't
+    overwrite each other's cached output (and so the deterministic
+    "fallback" path doesn't read a cached LLM result).
+    """
     noun_ids = sorted([n.transliteration for n in nouns])
     prep_ids = sorted([p.transliteration for p in preps])
-    content = json.dumps({"nouns": noun_ids, "preps": prep_ids})
+    content = json.dumps(
+        {"nouns": noun_ids, "preps": prep_ids, "provider": provider, "model": model}
+    )
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
@@ -122,7 +134,13 @@ async def generate_noun_prep_mapping(
     Returns:
         Dict mapping noun transliterations to {preposition: [compatible_nouns]}
     """
-    cache_key = _get_cache_key(nouns, preps)
+    resolved_model = model or DEFAULT_MODELS[provider]
+    cache_key = _get_cache_key(
+        nouns,
+        preps,
+        provider=provider.value if api_key else "fallback",
+        model=resolved_model if api_key else "",
+    )
     cache_path = _get_cache_path(cache_key)
 
     if not force_refresh and cache_path.exists():
@@ -161,7 +179,7 @@ async def generate_noun_prep_mapping(
         raw = await chat_complete(
             provider=provider,
             api_key=api_key,
-            model=model or DEFAULT_MODELS[provider],
+            model=resolved_model,
             messages=[
                 {
                     "role": "system",

@@ -2106,48 +2106,74 @@ async def mutate_update_user_api_keys(
             input.anthropic_api_key.strip()
         )
 
-    if input.preferred_provider is not None:
+    if input.clear_preferred_provider:
+        row.preferred_provider = None
+    elif input.preferred_provider is not None:
         row.preferred_provider = input.preferred_provider.value
 
     await session.flush()
     return _user_api_keys_to_gql(row)
 
 
-async def _resolve_llm_credentials(
+async def _load_user_api_keys_row(
     info: strawberry.Info,
-) -> tuple[LLMProvider, str | None, str | None]:
-    """Resolve (provider, api_key, model) for an LLM call.
+) -> models.UserAPIKeys | None:
+    """Single point of access for the current request's user_api_keys row.
 
-    Prefers per-user credentials when the request is authenticated and the
-    user has stored a key for their preferred provider; otherwise falls back
-    to the server's env-configured key. Returns ``(provider, None, model)``
-    if no key is available anywhere — callers surface that to the user.
+    Returns ``None`` when there's no authenticated user, encryption isn't
+    configured, or the user hasn't saved any keys. Cached on
+    ``info.context`` so that resolvers needing both the chat and embedding
+    credentials don't hit the DB twice.
+    """
+    if "user_api_keys_row" in info.context:
+        return info.context["user_api_keys_row"]
+
+    row: models.UserAPIKeys | None = None
+    user_id = info.context.get("current_user_id")
+    if user_id is not None and secrets_crypto.is_configured():
+        session: AsyncSession = info.context["db"]
+        row = await _get_user_api_keys(session, user_id)
+    info.context["user_api_keys_row"] = row
+    return row
+
+
+def _other_provider(provider: LLMProvider) -> LLMProvider:
+    return (
+        LLMProvider.ANTHROPIC if provider == LLMProvider.OPENAI else LLMProvider.OPENAI
+    )
+
+
+def _resolve_llm_credentials_from_row(
+    row: models.UserAPIKeys | None,
+) -> tuple[LLMProvider, str | None, str | None]:
+    """Resolve (provider, api_key, model) from an already-loaded user row.
+
+    Prefers the user's stored key for their preferred provider; falls back
+    to the other provider's user key, then to the server's env-configured
+    keys (in default-provider order). Returns ``(provider, None, model)``
+    if no key is available anywhere.
     """
     settings = get_settings()
-    session: AsyncSession = info.context["db"]
-    user_id = info.context.get("current_user_id")
 
-    if user_id is not None and secrets_crypto.is_configured():
-        row = await _get_user_api_keys(session, user_id)
-        if row is not None:
-            preferred = normalize_provider(
-                row.preferred_provider or settings.default_llm_provider
+    if row is not None:
+        preferred = normalize_provider(
+            row.preferred_provider or settings.default_llm_provider
+        )
+        # Try the preferred provider first, then the other one.
+        for candidate in (preferred, _other_provider(preferred)):
+            ciphertext = (
+                row.openai_api_key_encrypted
+                if candidate == LLMProvider.OPENAI
+                else row.anthropic_api_key_encrypted
             )
-            # Try the preferred provider first, then the other one.
-            for candidate in (preferred, _other_provider(preferred)):
-                ciphertext = (
-                    row.openai_api_key_encrypted
+            plaintext = secrets_crypto.decrypt(ciphertext)
+            if plaintext:
+                model = (
+                    settings.openai_model
                     if candidate == LLMProvider.OPENAI
-                    else row.anthropic_api_key_encrypted
+                    else settings.anthropic_model
                 )
-                plaintext = secrets_crypto.decrypt(ciphertext)
-                if plaintext:
-                    model = (
-                        settings.openai_model
-                        if candidate == LLMProvider.OPENAI
-                        else settings.anthropic_model
-                    )
-                    return candidate, plaintext, model
+                return candidate, plaintext, model
 
     # Fall back to env keys, preferring the configured default provider.
     default_provider = normalize_provider(settings.default_llm_provider)
@@ -2168,28 +2194,28 @@ async def _resolve_llm_credentials(
     return default_provider, None, DEFAULT_MODELS[default_provider]
 
 
-def _other_provider(provider: LLMProvider) -> LLMProvider:
-    return (
-        LLMProvider.ANTHROPIC if provider == LLMProvider.OPENAI else LLMProvider.OPENAI
-    )
+def _resolve_openai_api_key_from_row(row: models.UserAPIKeys | None) -> str | None:
+    """OpenAI-only credential resolver — used for embedding-based search,
+    which Anthropic does not provide. Falls back to the env key.
+    """
+    settings = get_settings()
+    if row is not None:
+        plaintext = secrets_crypto.decrypt(row.openai_api_key_encrypted)
+        if plaintext:
+            return plaintext
+    return settings.openai_api_key or None
+
+
+async def _resolve_llm_credentials(
+    info: strawberry.Info,
+) -> tuple[LLMProvider, str | None, str | None]:
+    row = await _load_user_api_keys_row(info)
+    return _resolve_llm_credentials_from_row(row)
 
 
 async def _resolve_openai_api_key(info: strawberry.Info) -> str | None:
-    """OpenAI-only credential resolver — used for embedding-based search,
-    which Anthropic does not provide.
-    """
-    settings = get_settings()
-    session: AsyncSession = info.context["db"]
-    user_id = info.context.get("current_user_id")
-
-    if user_id is not None and secrets_crypto.is_configured():
-        row = await _get_user_api_keys(session, user_id)
-        if row is not None:
-            plaintext = secrets_crypto.decrypt(row.openai_api_key_encrypted)
-            if plaintext:
-                return plaintext
-
-    return settings.openai_api_key or None
+    row = await _load_user_api_keys_row(info)
+    return _resolve_openai_api_key_from_row(row)
 
 
 async def mutate_update_user_srs_settings(

@@ -154,11 +154,25 @@ def attach_min_preposition(
 def _get_comparative_cache_key(
     adjectives: list[Adjective],
     nouns: list[Noun],
+    provider: str = "fallback",
+    model: str = "",
 ) -> str:
-    """Generate a cache key for comparative mappings."""
+    """Generate a cache key for comparative mappings.
+
+    Provider/model are included so two callers using different LLMs don't
+    overwrite each other's cached output (and so the deterministic
+    "fallback" path doesn't read a cached LLM result).
+    """
     adj_ids = sorted([a.transliteration for a in adjectives])
     noun_ids = sorted([n.transliteration for n in nouns])
-    content = json.dumps({"adjectives": adj_ids, "nouns": noun_ids})
+    content = json.dumps(
+        {
+            "adjectives": adj_ids,
+            "nouns": noun_ids,
+            "provider": provider,
+            "model": model,
+        }
+    )
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
@@ -184,7 +198,13 @@ async def generate_comparative_mappings(
         that make semantic sense for comparison.
         e.g., {"yāqār": [["zāhāḇ", "késep̄"], ["ḥoḵmāh", "zāhāḇ"]]}
     """
-    cache_key = _get_comparative_cache_key(adjectives, nouns)
+    resolved_model = model or DEFAULT_MODELS[provider]
+    cache_key = _get_comparative_cache_key(
+        adjectives,
+        nouns,
+        provider=provider.value if api_key else "fallback",
+        model=resolved_model if api_key else "",
+    )
     cache_path = _get_comparative_cache_path(cache_key)
 
     if not force_refresh and cache_path.exists():
@@ -222,7 +242,7 @@ async def generate_comparative_mappings(
         raw = await chat_complete(
             provider=provider,
             api_key=api_key,
-            model=model or DEFAULT_MODELS[provider],
+            model=resolved_model,
             messages=[
                 {
                     "role": "system",
