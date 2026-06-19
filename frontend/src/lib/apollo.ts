@@ -1,27 +1,26 @@
-import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client'
+import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 
 const STORAGE_KEY = 'reshith_auth'
 
 const httpLink = new HttpLink({ uri: '/graphql' })
 
-const authLink = setContext((_, { headers }) => {
-  let token: string | null = null
+const authLink = setContext((_operation, { headers }) => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) token = JSON.parse(raw).token ?? null
+    if (raw) {
+      const { token } = JSON.parse(raw) as { token?: string }
+      if (token) {
+        return { headers: { ...headers, Authorization: `Bearer ${token}` } }
+      }
+    }
   } catch {
-    token = null
+    // localStorage unavailable or JSON malformed — fall through to no auth.
   }
-  return {
-    headers: {
-      ...(headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  }
+  return { headers }
 })
 
 export const client = new ApolloClient({
-  link: from([authLink, httpLink]),
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 })

@@ -149,3 +149,63 @@ class LexiconEntry(Base):
     morphology: Mapped[str | None] = mapped_column(Text, nullable=True)
     frequency: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+
+class UserSRSSettings(Base):
+    """Per-user Anki-style SRS configuration. One row per user."""
+
+    __tablename__ = "user_srs_settings"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True
+    )
+
+    initial_ef: Mapped[float] = mapped_column(Float, nullable=False, default=2.5)
+    minimum_ef: Mapped[float] = mapped_column(Float, nullable=False, default=1.3)
+    graduating_interval_days: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    easy_interval_days: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
+    hard_multiplier: Mapped[float] = mapped_column(Float, nullable=False, default=1.2)
+    easy_bonus: Mapped[float] = mapped_column(Float, nullable=False, default=1.3)
+    interval_modifier: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    maximum_interval_days: Mapped[int] = mapped_column(Integer, nullable=False, default=36500)
+    lapse_multiplier: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    lapse_minimum_interval_days: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    new_cards_per_day: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
+    reviews_per_day: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class DeckSRSSettings(Base):
+    """Per-deck overrides of the user's SRS configuration. Sparse — every config
+    column is nullable, and ``NULL`` means "inherit from the user-level row."
+    """
+
+    __tablename__ = "deck_srs_settings"
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    deck_id: Mapped[UUID] = mapped_column(
+        ForeignKey("decks.id", ondelete="CASCADE"), unique=True
+    )
+
+    initial_ef: Mapped[float | None] = mapped_column(Float, nullable=True)
+    minimum_ef: Mapped[float | None] = mapped_column(Float, nullable=True)
+    graduating_interval_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    easy_interval_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    hard_multiplier: Mapped[float | None] = mapped_column(Float, nullable=True)
+    easy_bonus: Mapped[float | None] = mapped_column(Float, nullable=True)
+    interval_modifier: Mapped[float | None] = mapped_column(Float, nullable=True)
+    maximum_interval_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    lapse_multiplier: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lapse_minimum_interval_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    new_cards_per_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reviews_per_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

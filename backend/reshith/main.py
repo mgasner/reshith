@@ -36,6 +36,8 @@ async def get_context(request: Request):
 
     current_user_id = decode_token(token) if token else None
 
+    # Commit on clean exit / roll back on exception so mutations actually
+    # persist — previously the GraphQL context never committed.
     async with async_session_maker() as session:
         try:
             yield {"db": session, "current_user_id": current_user_id}

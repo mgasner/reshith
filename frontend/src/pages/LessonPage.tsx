@@ -2,6 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { VocabularyCard, VocabularyCardData } from '@/components/VocabularyCard'
 import { useSwipe } from '@/hooks/useSwipe'
+import { AddToSRSButton } from '@/components/AddToSRSButton'
+
+// Map this page's `languageCode` (db enum value like "hbo") to the GraphQL
+// LanguageCode enum string the backend's `importLesson` mutation expects.
+const LANGUAGE_CODE_TO_GQL: Record<string, string> = {
+  hbo: 'BIBLICAL_HEBREW',
+  lat: 'LATIN',
+  ecl: 'ECCLESIASTICAL_LATIN',
+  grc: 'ANCIENT_GREEK',
+  gnt: 'NT_GREEK',
+  san: 'SANSKRIT',
+}
 
 interface LessonDeck {
   id: string
@@ -127,9 +139,18 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
 
   return (
     <div className="px-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{deck.name}</h1>
-        <p className="text-gray-600">{deck.description}</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{deck.name}</h1>
+          <p className="text-gray-600">{deck.description}</p>
+        </div>
+        {LANGUAGE_CODE_TO_GQL[languageCode] && (
+          <AddToSRSButton
+            language={LANGUAGE_CODE_TO_GQL[languageCode]}
+            lessonId={lessonId || '01'}
+            deckName={deck.name}
+          />
+        )}
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">

@@ -145,6 +145,89 @@ class ReviewInput:
     quality: int
 
 
+# ── SRS configuration types ───────────────────────────────────────────────────
+
+
+@strawberry.type
+class SRSConfigType:
+    """Effective Anki-style SRS configuration (all fields populated)."""
+    initial_ef: float
+    minimum_ef: float
+    graduating_interval_days: int
+    easy_interval_days: int
+    hard_multiplier: float
+    easy_bonus: float
+    interval_modifier: float
+    maximum_interval_days: int
+    lapse_multiplier: float
+    lapse_minimum_interval_days: int
+    new_cards_per_day: int
+    reviews_per_day: int
+
+
+@strawberry.type
+class DeckSRSConfigType:
+    """Sparse per-deck override. Any null field means inherit from the user
+    settings."""
+    deck_id: UUID
+    initial_ef: float | None
+    minimum_ef: float | None
+    graduating_interval_days: int | None
+    easy_interval_days: int | None
+    hard_multiplier: float | None
+    easy_bonus: float | None
+    interval_modifier: float | None
+    maximum_interval_days: int | None
+    lapse_multiplier: float | None
+    lapse_minimum_interval_days: int | None
+    new_cards_per_day: int | None
+    reviews_per_day: int | None
+
+
+@strawberry.input
+class UpdateUserSRSSettingsInput:
+    """Update payload for the per-user SRS settings. Any null field is left
+    unchanged."""
+    initial_ef: float | None = None
+    minimum_ef: float | None = None
+    graduating_interval_days: int | None = None
+    easy_interval_days: int | None = None
+    hard_multiplier: float | None = None
+    easy_bonus: float | None = None
+    interval_modifier: float | None = None
+    maximum_interval_days: int | None = None
+    lapse_multiplier: float | None = None
+    lapse_minimum_interval_days: int | None = None
+    new_cards_per_day: int | None = None
+    reviews_per_day: int | None = None
+
+
+@strawberry.input
+class UpdateDeckSRSSettingsInput:
+    """Sparse update for a deck's SRS overrides. Null means "clear override",
+    i.e. revert to inheriting from the user-level value."""
+    deck_id: UUID
+    initial_ef: float | None = None
+    minimum_ef: float | None = None
+    graduating_interval_days: int | None = None
+    easy_interval_days: int | None = None
+    hard_multiplier: float | None = None
+    easy_bonus: float | None = None
+    interval_modifier: float | None = None
+    maximum_interval_days: int | None = None
+    lapse_multiplier: float | None = None
+    lapse_minimum_interval_days: int | None = None
+    new_cards_per_day: int | None = None
+    reviews_per_day: int | None = None
+
+
+@strawberry.input
+class ImportLessonInput:
+    language: LanguageCode
+    lesson_id: str
+    deck_name: str | None = None
+
+
 @strawberry.enum
 class PrepositionType(enum.Enum):
     BE = "bə"

@@ -5,6 +5,8 @@ import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { DecksPage } from '@/pages/DecksPage'
+import { DeckSettingsPage } from '@/pages/DeckSettingsPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { StudyPage } from '@/pages/StudyPage'
 import { AlphabetPage } from '@/pages/AlphabetPage'
 import { VowelsPage } from '@/pages/VowelsPage'
@@ -64,6 +66,22 @@ function App() {
           element={
             <RequireAuth>
               <DecksPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="decks/:deckId/settings"
+          element={
+            <RequireAuth>
+              <DeckSettingsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <RequireAuth>
+              <SettingsPage />
             </RequireAuth>
           }
         />

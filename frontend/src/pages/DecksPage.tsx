@@ -135,12 +135,16 @@ export function DecksPage() {
         </div>
       ) : decks.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-          <p>No decks yet. Create your first deck to get started!</p>
+          <p>No decks yet. Create one above, or open a lesson page and click
+            "Add to SRS" to import a vocabulary set.</p>
         </div>
       ) : (
         <ul className="space-y-3">
           {decks.map((deck) => (
-            <li key={deck.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+            <li
+              key={deck.id}
+              className="bg-white rounded-lg shadow p-4 flex justify-between items-center gap-3"
+            >
               <div className="flex items-start gap-2 min-w-0">
                 <button
                   type="button"
@@ -165,21 +169,30 @@ export function DecksPage() {
                   {deck.isPrimary ? '★' : '☆'}
                 </button>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900">{deck.name}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 truncate">{deck.name}</h2>
                   <p className="text-sm text-gray-500">
-                    {LANGUAGE_NAMES[deck.language] ?? deck.language} · {deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}
+                    {LANGUAGE_NAMES[deck.language] ?? deck.language} · {deck.cardCount} card
+                    {deck.cardCount === 1 ? '' : 's'}
                   </p>
                   {deck.description && (
-                    <p className="text-sm text-gray-600 mt-1">{deck.description}</p>
+                    <p className="text-sm text-gray-600 mt-1 truncate">{deck.description}</p>
                   )}
                 </div>
               </div>
-              <Link
-                to={`/study/${deck.id}`}
-                className="text-sm font-medium text-blue-600 hover:underline"
-              >
-                Study →
-              </Link>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <Link
+                  to={`/study/${deck.id}`}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Study
+                </Link>
+                <Link
+                  to={`/decks/${deck.id}/settings`}
+                  className="px-3 py-1.5 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                >
+                  Settings
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

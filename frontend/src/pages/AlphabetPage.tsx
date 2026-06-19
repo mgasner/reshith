@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AlphabetCard, AlphabetCardData } from '@/components/AlphabetCard'
+import { AddToSRSButton } from '@/components/AddToSRSButton'
 
 interface AlphabetDeck {
   id: string
@@ -64,9 +65,16 @@ export function AlphabetPage() {
 
   return (
     <div className="px-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{deck.name}</h1>
-        <p className="text-gray-600">{deck.description}</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{deck.name}</h1>
+          <p className="text-gray-600">{deck.description}</p>
+        </div>
+        <AddToSRSButton
+          language="BIBLICAL_HEBREW"
+          lessonId="alphabet"
+          deckName={deck.name}
+        />
       </div>
 
       <div className="mb-6">
