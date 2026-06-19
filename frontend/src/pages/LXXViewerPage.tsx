@@ -191,11 +191,18 @@ function WordCard({ token }: { token: GreekToken }) {
           <span className="mt-1.5">
             <AddToDeckButton
               language="NT_GREEK"
-              front={token.greek}
-              back={token.translation || token.expanded}
+              front={token.expanded || token.greek}
+              back={token.translation || ''}
               transliteration={token.transliteration}
               grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
-              notes={token.dstrongs ? `Strong's ${token.dstrongs}` : null}
+              notes={
+                [
+                  `Form: ${token.greek}`,
+                  token.dstrongs ? `Strong's ${token.dstrongs}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              }
               sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
             />
           </span>
