@@ -2146,6 +2146,7 @@ async def mutate_import_lesson(
         name=deck.name,
         description=deck.description,
         language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
         created_at=deck.created_at,
         updated_at=deck.updated_at,
         card_count=card_count,
