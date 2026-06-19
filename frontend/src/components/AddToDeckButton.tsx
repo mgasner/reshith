@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLazyQuery, useMutation } from '@apollo/client'
-import { CREATE_CARD, CREATE_DECK, PRIMARY_DECK } from '@/graphql/operations'
+import { CREATE_CARD, CREATE_DECK, PRIMARY_DECK, SET_PRIMARY_DECK } from '@/graphql/operations'
 import { useAuth } from '@/contexts/AuthContext'
 
 const LANGUAGE_LABELS: Record<string, string> = {
@@ -54,7 +54,14 @@ export function AddToDeckButton({
     variables: { language },
     fetchPolicy: 'network-only',
   })
-  const [createDeck] = useMutation<CreateDeckResult>(CREATE_DECK)
+  const [createDeck] = useMutation<CreateDeckResult>(CREATE_DECK, {
+    refetchQueries: ['GetDecks', 'PrimaryDeck'],
+    awaitRefetchQueries: true,
+  })
+  const [setPrimaryDeck] = useMutation(SET_PRIMARY_DECK, {
+    refetchQueries: ['GetDecks', 'PrimaryDeck'],
+    awaitRefetchQueries: true,
+  })
   const [createCard] = useMutation(CREATE_CARD)
 
   if (!user) {
@@ -83,7 +90,10 @@ export function AddToDeckButton({
       let deckId = data?.primaryDeck?.id
       if (!deckId) {
         // No primary deck for this language — auto-create one. The backend
-        // marks the first deck per language as primary automatically.
+        // only marks the first-ever deck per language as primary, so if the
+        // user already has non-primary decks in this language we must star
+        // the new deck explicitly. Otherwise the next click would auto-create
+        // another duplicate.
         const created = await createDeck({
           variables: {
             input: {
@@ -93,8 +103,12 @@ export function AddToDeckButton({
             },
           },
         })
-        deckId = created.data?.createDeck.id
-        if (!deckId) throw new Error('Could not create deck')
+        const newDeck = created.data?.createDeck
+        if (!newDeck) throw new Error('Could not create deck')
+        if (!newDeck.isPrimary) {
+          await setPrimaryDeck({ variables: { deckId: newDeck.id } })
+        }
+        deckId = newDeck.id
       }
       await createCard({
         variables: {
