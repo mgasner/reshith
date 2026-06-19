@@ -22,6 +22,7 @@ from reshith.api.resolvers import (
     mutate_grade_verbal_exercise,
     mutate_login,
     mutate_register,
+    mutate_set_primary_deck,
     mutate_submit_review,
     mutate_synthesize_speech,
     resolve_article_exercises,
@@ -50,6 +51,7 @@ from reshith.api.resolvers import (
     resolve_lxx_verse,
     resolve_me,
     resolve_preposition_exercises,
+    resolve_primary_deck,
     resolve_qal_paradigm,
     resolve_qal_worksheet,
     resolve_relative_clause_exercises,
@@ -169,6 +171,12 @@ class Query:
     @strawberry.field
     async def deck(self, info: strawberry.Info, id: UUID) -> Deck | None:
         return await resolve_deck(info, id)
+
+    @strawberry.field
+    async def primary_deck(
+        self, info: strawberry.Info, language: LanguageCode
+    ) -> Deck | None:
+        return await resolve_primary_deck(info, language)
 
     @strawberry.field
     async def cards(self, info: strawberry.Info, deck_id: UUID) -> list[Card]:
@@ -482,6 +490,10 @@ class Mutation:
     @strawberry.mutation
     async def create_deck(self, info: strawberry.Info, input: CreateDeckInput) -> Deck:
         return await mutate_create_deck(info, input)
+
+    @strawberry.mutation
+    async def set_primary_deck(self, info: strawberry.Info, deck_id: UUID) -> Deck:
+        return await mutate_set_primary_deck(info, deck_id)
 
     @strawberry.mutation
     async def create_card(self, info: strawberry.Info, input: CreateCardInput) -> Card:

@@ -56,6 +56,7 @@ class Deck:
     name: str
     description: str | None
     language: LanguageCode
+    is_primary: bool
     created_at: datetime
     updated_at: datetime
     card_count: int

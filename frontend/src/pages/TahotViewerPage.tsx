@@ -4,6 +4,7 @@ import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { TAHOT_BOOKS, TAHOT_CHAPTER_VERSES, INTERLINEAR_PASSAGE, TAHOT_SEARCH, STRONGS_ENTRY, SYNTHESIZE_SPEECH, TAHOT_CHAPTER_TRANSLATIONS } from '@/graphql/operations'
 import { hebrewToLambdin } from '@/utils/hebrewTranslit'
 import { SpeakButton } from '@/components/SpeakButton'
+import { AddToDeckButton } from '@/components/AddToDeckButton'
 import { CommentaryFlow, CommentaryFlowItem } from '@/components/CommentaryFlow'
 
 interface TahotBookInfo {
@@ -122,6 +123,9 @@ const TAHOT_TO_RASHI_FILE: Record<string, string> = {
 
 function WordCard({
   word,
+  book,
+  chapter,
+  verse,
   showBreaks,
   showTranslit,
   showTranslation,
@@ -131,6 +135,9 @@ function WordCard({
   compact = false,
 }: {
   word: InterlinearWord
+  book: string
+  chapter: number
+  verse: number
   showBreaks: boolean
   showTranslit: boolean
   showTranslation: boolean
@@ -248,6 +255,21 @@ function WordCard({
             )}
             <div className="text-xs text-gray-400 font-mono">{word.ref}</div>
           </div>
+          <div className="pt-2">
+            <AddToDeckButton
+              language="BIBLICAL_HEBREW"
+              front={cleanNative.replace(/\//g, '')}
+              back={displayGloss}
+              transliteration={displayTranslit}
+              grammaticalInfo={word.morphology}
+              notes={
+                word.lemma || word.lemmaId
+                  ? `Lemma ${word.lemma} (Strong's ${word.lemmaId})`
+                  : null
+              }
+              sourceReference={`${BOOK_NAMES[book] ?? book} ${chapter}:${verse}`}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -256,6 +278,8 @@ function WordCard({
 
 function VerseDisplay({
   verse,
+  book,
+  chapter,
   words,
   showBreaks,
   showTranslit,
@@ -266,6 +290,8 @@ function VerseDisplay({
   revereDivineName,
 }: {
   verse: number
+  book: string
+  chapter: number
   words: InterlinearWord[]
   showBreaks: boolean
   showTranslit: boolean
@@ -277,7 +303,7 @@ function VerseDisplay({
 }) {
   const mainWords = words.filter((w) => w.textType === 'L')
   const variantWords = words.filter((w) => w.textType !== 'L')
-  const cardProps = { showBreaks, showTranslit, showTranslation, showCantillation, showVowels, revereDivineName }
+  const cardProps = { book, chapter, verse, showBreaks, showTranslit, showTranslation, showCantillation, showVowels, revereDivineName }
 
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -426,6 +452,8 @@ function RashiFlowLayout({
               <>
                 <VerseDisplay
                   verse={v.verse}
+                  book={selectedBook}
+                  chapter={selectedChapter}
                   words={v.words}
                   showBreaks={showBreaks}
                   showTranslit={showTranslit}
@@ -981,6 +1009,8 @@ export function TahotViewerPage() {
                 <div key={v.verse}>
                   <VerseDisplay
                     verse={v.verse}
+                    book={selectedBook}
+                    chapter={selectedChapter}
                     words={v.words}
                     showBreaks={showBreaks}
                     showTranslit={showTranslit}
@@ -1026,6 +1056,8 @@ export function TahotViewerPage() {
                   <div className="flex-1 min-w-0">
                     <VerseDisplay
                       verse={v.verse}
+                      book={selectedBook}
+                      chapter={selectedChapter}
                       words={v.words}
                       showBreaks={showBreaks}
                       showTranslit={showTranslit}

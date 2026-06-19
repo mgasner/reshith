@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { AddToDeckButton } from '@/components/AddToDeckButton'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ function morphGloss(feats: Record<string, string>): string {
 // ── Word card ─────────────────────────────────────────────────────────────────
 
 function WordCard({
-  word, displayMode, scriptMode, active, onClick, lexEntry,
+  word, displayMode, scriptMode, active, onClick, lexEntry, sourceReference,
 }: {
   word: Word
   displayMode: DisplayMode
@@ -218,6 +219,7 @@ function WordCard({
   active: boolean
   onClick: () => void
   lexEntry?: LexiconEntry
+  sourceReference?: string | null
 }) {
   const surface = displayMode === 'padapatha' ? word.unsandhied : word.form
   const display = scriptMode === 'devanagari' ? iastToDevanagari(surface) : surface
@@ -269,6 +271,24 @@ function WordCard({
             {lexEntry.gloss}
           </span>
         )}
+        <span className="mt-1.5">
+          <AddToDeckButton
+            language="SANSKRIT"
+            front={word.form}
+            back={lexEntry?.gloss ?? word.lemma ?? word.form}
+            transliteration={word.unsandhied || null}
+            grammaticalInfo={
+              [
+                word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
+                Object.keys(word.feats).length > 0 ? morphGloss(word.feats) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || null
+            }
+            notes={word.lemma ? `Lemma ${word.lemma}` : null}
+            sourceReference={sourceReference ?? null}
+          />
+        </span>
       </span>
     )
   }
@@ -302,7 +322,7 @@ function WordCard({
 // ── Sentence display ──────────────────────────────────────────────────────────
 
 function SentenceDisplay({
-  sentence, displayMode, scriptMode, activeWord, onWordClick, lexicon,
+  sentence, displayMode, scriptMode, activeWord, onWordClick, lexicon, sourceTitle,
 }: {
   sentence: Sentence
   displayMode: DisplayMode
@@ -310,6 +330,7 @@ function SentenceDisplay({
   activeWord: number | null
   onWordClick: (wordIdx: number) => void
   lexicon: Lexicon
+  sourceTitle?: string
 }) {
   // Build a map from word index to sandhi group it belongs to
   const wordToGroup = new Map<number, SandhiGroup>()
@@ -344,6 +365,9 @@ function SentenceDisplay({
       )
       for (const idx of group.words) rendered.add(idx)
     } else {
+      const chRefForCard = sentence.chapter
+        ? `${sourceTitle ? sourceTitle + ' ' : ''}${sentence.chapter[0]}.${sentence.chapter[1]}`
+        : sourceTitle ?? null
       elements.push(
         <WordCard
           key={wi}
@@ -353,6 +377,7 @@ function SentenceDisplay({
           active={activeWord === wi}
           onClick={() => onWordClick(wi)}
           lexEntry={w.lemma ? lexicon[w.lemma] : undefined}
+          sourceReference={chRefForCard}
         />
       )
       rendered.add(wi)
@@ -654,6 +679,7 @@ export function LanmanReaderPage() {
                       activeWord={activeWord?.sentIdx === si ? activeWord.wordIdx : null}
                       onWordClick={(wi) => handleWordClick(si, wi)}
                       lexicon={lexiconReady ? lexiconRef.current : {}}
+                      sourceTitle={ocrSelection?.title ?? dcsData?.title}
                     />
                   ))}
                 </div>

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery } from '@apollo/client'
 import { gql } from '@apollo/client'
+import { AddToDeckButton } from '@/components/AddToDeckButton'
 
 // ── GraphQL ───────────────────────────────────────────────────────────────────
 
@@ -187,6 +188,17 @@ function WordCard({ token }: { token: GreekToken }) {
             <span className="text-stone-500 text-xs mt-1">{morphParts.join(', ')}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
+          <span className="mt-1.5">
+            <AddToDeckButton
+              language="NT_GREEK"
+              front={token.greek}
+              back={token.translation || token.expanded}
+              transliteration={token.transliteration}
+              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+              notes={token.dstrongs ? `Strong's ${token.dstrongs}` : null}
+              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
+            />
+          </span>
         </span>
       ) : (
         <span className="inline-flex flex-col items-center hover:bg-emerald-50 rounded px-1.5 py-1 transition-colors">

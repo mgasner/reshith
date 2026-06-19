@@ -46,6 +46,7 @@ export const GET_DECKS = gql`
       name
       description
       language
+      isPrimary
       cardCount
       createdAt
       updatedAt
@@ -60,9 +61,22 @@ export const GET_DECK = gql`
       name
       description
       language
+      isPrimary
       cardCount
       createdAt
       updatedAt
+    }
+  }
+`
+
+export const PRIMARY_DECK = gql`
+  query PrimaryDeck($language: LanguageCode!) {
+    primaryDeck(language: $language) {
+      id
+      name
+      language
+      isPrimary
+      cardCount
     }
   }
 `
@@ -129,7 +143,18 @@ export const CREATE_DECK = gql`
       name
       description
       language
+      isPrimary
       cardCount
+    }
+  }
+`
+
+export const SET_PRIMARY_DECK = gql`
+  mutation SetPrimaryDeck($deckId: UUID!) {
+    setPrimaryDeck(deckId: $deckId) {
+      id
+      isPrimary
+      language
     }
   }
 `
