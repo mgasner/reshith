@@ -40,6 +40,7 @@ from reshith.api.types import (
     GreekChapterInfo,
     GreekConjugationExercise,
     GreekDeclensionExercise,
+    GreekExerciseKind,
     GreekGradeResult,
     GreekVariant,
     GreekVerseTranslation,
@@ -51,6 +52,8 @@ from reshith.api.types import (
     LatinDeclensionExercise,
     LatinGradeResult,
     LatinVariant,
+    LessonCard,
+    LessonProgressInfo,
     LexiconEntry,
     LoginInput,
     PrepositionExercise,
@@ -118,10 +121,23 @@ from reshith.exercises.latin import declension as latin_declension
 from reshith.exercises.sanskrit import declension as sanskrit_declension
 from reshith.services import brenton as brenton_svc
 from reshith.services import drc as drc_svc
+from reshith.services import (
+    exercise_attempts as attempt_svc,
+)
 from reshith.services import gnt as gnt_svc
 from reshith.services import jps as jps_svc
 from reshith.services import kjv as kjv_svc
-from reshith.services import llm, srs, tts
+from reshith.services import (
+    lesson_progress as lesson_progress_svc,
+)
+from reshith.services import (
+    llm,
+    primary_deck,
+    srs,
+    tts,
+    vocab_catalog,
+    vocab_sampling,
+)
 from reshith.services import lxx as lxx_svc
 from reshith.services import tahot as tahot_svc
 from reshith.services import tbesh as tbesh_svc
@@ -142,6 +158,36 @@ def _require_user_id(info: strawberry.Info) -> UUID:
     if user_id is None:
         raise Exception("Not authenticated")
     return user_id
+
+
+def _maybe_user_id(info: strawberry.Info) -> UUID | None:
+    """Return the current user id or ``None`` if the request is anonymous.
+
+    Used by exercise queries and grading mutations that remain accessible
+    anonymously but become progress-aware when authenticated.
+    """
+    return info.context.get("current_user_id")
+
+
+async def _resolve_max_lesson(
+    session: AsyncSession,
+    user_id: UUID | None,
+    language: "models.LanguageCode",
+    fallback: int,
+) -> int:
+    """Resolve the effective max-lesson for an exercise query.
+
+    Anonymous users get the per-page selector value directly. Authenticated
+    users get the *higher* of ``fallback`` (per-page selector, defaults to
+    the page's hardcoded constant) and ``current_lesson`` — that way a
+    user-driven selector still has visible effect (it can broaden scope
+    beyond the current lesson) but a stale page default cannot accidentally
+    drop their pool below where they've progressed to.
+    """
+    if user_id is None:
+        return fallback
+    current = await lesson_progress_svc.get_current_lesson(session, user_id, language)
+    return max(current, fallback)
 
 
 async def _require_owned_deck(
@@ -532,22 +578,40 @@ async def mutate_submit_review(
     session: AsyncSession = info.context["db"]
     user_id = _require_user_id(info)
 
-    # Verify the card belongs to a deck the current user owns and pick up the
-    # deck id so we can look up per-deck SRS config overrides.
-    owner_check = await session.execute(
-        select(models.Card)
-        .join(models.Deck, models.Card.deck_id == models.Deck.id)
-        .where(models.Card.id == input.card_id, models.Deck.owner_id == user_id)
-    )
-    card = owner_check.scalar_one_or_none()
-    if card is None:
-        raise Exception("Card not found")
+    if input.card_id is None:
+        # Lesson-page flow: identify the card via (language, lemma) and
+        # lazily provision it in the user's primary deck. Returns a fully
+        # populated `Card` instance so the per-deck SRS config below can
+        # look up overrides via card.deck_id.
+        if input.language is None or not input.vocab_lemma:
+            raise Exception("Either card_id or (language + vocab_lemma) is required")
+        db_lang = gql_language_to_db(input.language)
+        deck = await primary_deck.get_or_create_primary_deck(session, user_id, db_lang)
+        cards_by_id = await primary_deck.ensure_cards_for_vocab(
+            session,
+            deck,
+            [primary_deck.VocabSeed(lemma=input.vocab_lemma, definition="")],
+        )
+        # ensure_cards_for_vocab returns id→Card for all freshly upserted
+        # rows; grab the single result.
+        card = next(iter(cards_by_id.values()))
+    else:
+        # Legacy explicit-card flow: verify ownership and load the row.
+        owner_check = await session.execute(
+            select(models.Card)
+            .join(models.Deck, models.Card.deck_id == models.Deck.id)
+            .where(models.Card.id == input.card_id, models.Deck.owner_id == user_id)
+        )
+        card = owner_check.scalar_one_or_none()
+        if card is None:
+            raise Exception("Card not found")
 
+    card_id = card.id
     config = await _effective_srs_config(session, user_id, card.deck_id)
 
     result = await session.execute(
         select(models.SRSState).where(
-            models.SRSState.card_id == input.card_id,
+            models.SRSState.card_id == card_id,
             models.SRSState.user_id == user_id,
         )
     )
@@ -574,7 +638,7 @@ async def mutate_submit_review(
             config=config,
         )
         srs_state = models.SRSState(
-            card_id=input.card_id,
+            card_id=card_id,
             user_id=user_id,
             easiness_factor=update.easiness_factor,
             interval_days=update.interval_days,
@@ -585,14 +649,14 @@ async def mutate_submit_review(
 
     review = models.Review(
         user_id=user_id,
-        card_id=input.card_id,
+        card_id=card_id,
         quality=input.quality,
     )
     session.add(review)
     await session.flush()
 
     return ReviewResult(
-        card_id=input.card_id,
+        card_id=card_id,
         new_srs=SRSState(
             easiness_factor=update.easiness_factor,
             interval_days=update.interval_days,
@@ -688,9 +752,20 @@ async def resolve_preposition_exercises(
     if prepositions:
         prep_list = [gql_to_prep_type(p) for p in prepositions]
 
-    nouns = prep_exercises.load_nouns_up_to_lesson(max_lesson)
-    if not nouns:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
+    pool = prep_exercises.load_nouns_up_to_lesson(effective_max)
+    if not pool:
         return []
+    # SRS-weighted sample (uniform for anon) — oversample so the generator
+    # has room to vary preposition x noun combinations.
+    nouns = await vocab_sampling.sample_vocab(
+        session, user_id, db_lang.value, pool,
+        id_fn=lambda n: n.hebrew, k=min(len(pool), count * 3),
+    )
 
     phrases = prep_exercises.generate_exercises(
         nouns=nouns,
@@ -725,6 +800,9 @@ async def mutate_grade_preposition_exercise(
     input: GradeExerciseInput,
 ) -> ExerciseGradeResult:
     """Grade a preposition exercise submission."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+
     if input.direction == ExerciseDirection.HEBREW_TO_ENGLISH:
         submitted_norm = prep_exercises.normalize_english(input.submitted)
         expected_norm = prep_exercises.normalize_english(input.expected_english)
@@ -745,6 +823,13 @@ async def mutate_grade_preposition_exercise(
         else:
             feedback = f"Expected something like: '{input.expected_english}'"
 
+        await attempt_svc.record_attempt(
+            session, user_id,
+            language=models.LanguageCode.BIBLICAL_HEBREW,
+            exercise_type="preposition",
+            correct=correct,
+            vocab_lemma=input.vocab_lemma,
+        )
         return ExerciseGradeResult(
             correct=correct,
             expected=input.expected_english,
@@ -762,6 +847,13 @@ async def mutate_grade_preposition_exercise(
         else:
             feedback = f"Expected: {input.expected_hebrew}"
 
+        await attempt_svc.record_attempt(
+            session, user_id,
+            language=models.LanguageCode.BIBLICAL_HEBREW,
+            exercise_type="preposition",
+            correct=correct,
+            vocab_lemma=input.vocab_lemma,
+        )
         return ExerciseGradeResult(
             correct=correct,
             expected=input.expected_hebrew,
@@ -823,8 +915,12 @@ async def resolve_article_exercises(
     max_lesson: int = 1,
 ) -> list[ArticleExercise]:
     """Generate definite article exercises."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
     phrases = article_exercises.generate_article_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
     )
 
@@ -860,6 +956,8 @@ async def mutate_grade_article_exercise(
     input: GradeArticleExerciseInput,
 ) -> ExerciseGradeResult:
     """Grade an article exercise submission."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     submitted_norm = article_exercises.normalize_hebrew(input.submitted)
 
     if input.direction == ArticleDirection.INDEFINITE_TO_DEFINITE:
@@ -876,6 +974,13 @@ async def mutate_grade_article_exercise(
     else:
         feedback = f"Expected: {expected_display}"
 
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.BIBLICAL_HEBREW,
+        exercise_type="article",
+        correct=correct,
+        vocab_lemma=input.vocab_lemma,
+    )
     return ExerciseGradeResult(
         correct=correct,
         expected=expected_display,
@@ -903,12 +1008,17 @@ async def resolve_sentence_exercises(
     """Generate sentence-level exercises."""
     import json
 
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
     pattern_strs = None
     if patterns:
         pattern_strs = [sentence_pattern_to_str(p) for p in patterns]
 
     exercises = await sentence_exercises.generate_sentence_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
         patterns=pattern_strs,
     )
@@ -949,12 +1059,17 @@ async def resolve_translation_exercises(
     """Generate English-to-Hebrew translation exercises."""
     import json
 
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
     pattern_strs = None
     if patterns:
         pattern_strs = [translation_pattern_to_str(p) for p in patterns]
 
     exercises = await translation_exercises.generate_translation_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
         patterns=pattern_strs,
     )
@@ -980,10 +1095,20 @@ async def mutate_grade_translation_exercise(
     input: GradeTranslationInput,
 ) -> TranslationGradeResult:
     """Grade an English-to-Hebrew translation exercise."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     result = translation_exercises.grade_translation(
         submitted=input.submitted,
         expected_hebrew=input.expected_hebrew,
         expected_transliteration=input.expected_transliteration,
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.BIBLICAL_HEBREW,
+        exercise_type="translation",
+        pattern=input.pattern,
+        correct=result.correct,
+        score=result.score,
     )
 
     return TranslationGradeResult(
@@ -1015,12 +1140,17 @@ async def resolve_verbal_exercises(
     """Generate Hebrew-to-English verbal sentence exercises."""
     import json
 
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
     pattern_strs = None
     if patterns:
         pattern_strs = [verbal_pattern_to_str(p) for p in patterns]
 
     exercises = await verbal_exercises.generate_verbal_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
         patterns=pattern_strs,
     )
@@ -1046,9 +1176,19 @@ async def mutate_grade_verbal_exercise(
     input: GradeVerbalInput,
 ) -> VerbalGradeResult:
     """Grade a Hebrew-to-English verbal exercise."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     result = verbal_exercises.grade_verbal_exercise(
         submitted=input.submitted,
         expected_english=input.expected_english,
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.BIBLICAL_HEBREW,
+        exercise_type="verbal",
+        pattern=input.pattern,
+        correct=result.correct,
+        score=result.score,
     )
 
     return VerbalGradeResult(
@@ -1078,8 +1218,13 @@ async def resolve_comparative_exercises(
     """Generate comparative construction exercises."""
     import json
 
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
     exercises = await advanced_exercises.generate_comparative_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
     )
 
@@ -1104,9 +1249,19 @@ async def mutate_grade_comparative_exercise(
     input: GradeComparativeInput,
 ) -> ComparativeGradeResult:
     """Grade a Hebrew-to-English comparative exercise."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     result = advanced_exercises.grade_comparative_exercise(
         submitted=input.submitted,
         expected_english=input.expected_english,
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.BIBLICAL_HEBREW,
+        exercise_type="comparative",
+        pattern=input.pattern,
+        correct=result.correct,
+        score=result.score,
     )
 
     return ComparativeGradeResult(
@@ -1136,8 +1291,13 @@ async def resolve_relative_clause_exercises(
     """Generate relative clause exercises with אֲשֶׁר."""
     import json
 
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.BIBLICAL_HEBREW
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+
     exercises = await advanced_exercises.generate_relative_clause_exercises(
-        max_lesson=max_lesson,
+        max_lesson=effective_max,
         count=count,
     )
 
@@ -1162,9 +1322,19 @@ async def mutate_grade_relative_clause_exercise(
     input: GradeRelativeClauseInput,
 ) -> RelativeClauseGradeResult:
     """Grade a Hebrew-to-English relative clause exercise."""
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     result = advanced_exercises.grade_relative_clause_exercise(
         submitted=input.submitted,
         expected_english=input.expected_english,
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.BIBLICAL_HEBREW,
+        exercise_type="relative_clause",
+        pattern=input.pattern,
+        correct=result.correct,
+        score=result.score,
     )
 
     return RelativeClauseGradeResult(
@@ -1184,8 +1354,15 @@ async def resolve_latin_declension_exercises(
     max_lesson: int = 2,
     variant: LatinVariant = LatinVariant.CLASSICAL,
 ) -> list[LatinDeclensionExercise]:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = (
+        models.LanguageCode.LATIN if variant == LatinVariant.CLASSICAL
+        else models.LanguageCode.ECCLESIASTICAL_LATIN
+    )
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
     exercises = latin_declension.generate_exercises(
-        max_lesson=max_lesson, count=count, variant=variant.value,
+        max_lesson=effective_max, count=count, variant=variant.value,
     )
     return [
         LatinDeclensionExercise(
@@ -1209,8 +1386,15 @@ async def resolve_latin_conjugation_exercises(
     max_lesson: int = 2,
     variant: LatinVariant = LatinVariant.CLASSICAL,
 ) -> list[LatinConjugationExercise]:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = (
+        models.LanguageCode.LATIN if variant == LatinVariant.CLASSICAL
+        else models.LanguageCode.ECCLESIASTICAL_LATIN
+    )
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
     exercises = latin_conjugation.generate_exercises(
-        max_lesson=max_lesson, count=count, variant=variant.value,
+        max_lesson=effective_max, count=count, variant=variant.value,
     )
     return [
         LatinConjugationExercise(
@@ -1232,9 +1416,24 @@ async def mutate_grade_latin_declension_exercise(
     info: strawberry.Info,
     input: GradeLatinExerciseInput,
 ) -> LatinGradeResult:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     correct, feedback = latin_declension.grade_exercise(
         submitted=input.submitted,
         expected=input.expected,
+    )
+    db_lang = (
+        models.LanguageCode.ECCLESIASTICAL_LATIN
+        if input.variant == LatinVariant.ECCLESIASTICAL
+        else models.LanguageCode.LATIN
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=db_lang,
+        exercise_type="latin_declension",
+        pattern=input.pattern,
+        correct=correct,
+        vocab_lemma=input.vocab_lemma,
     )
     return LatinGradeResult(
         correct=correct,
@@ -1248,9 +1447,24 @@ async def mutate_grade_latin_conjugation_exercise(
     info: strawberry.Info,
     input: GradeLatinExerciseInput,
 ) -> LatinGradeResult:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     correct, feedback = latin_conjugation.grade_exercise(
         submitted=input.submitted,
         expected=input.expected,
+    )
+    db_lang = (
+        models.LanguageCode.ECCLESIASTICAL_LATIN
+        if input.variant == LatinVariant.ECCLESIASTICAL
+        else models.LanguageCode.LATIN
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=db_lang,
+        exercise_type="latin_conjugation",
+        pattern=input.pattern,
+        correct=correct,
+        vocab_lemma=input.vocab_lemma,
     )
     return LatinGradeResult(
         correct=correct,
@@ -1268,8 +1482,15 @@ async def resolve_greek_declension_exercises(
     max_lesson: int = 2,
     variant: GreekVariant = GreekVariant.ANCIENT,
 ) -> list[GreekDeclensionExercise]:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = (
+        models.LanguageCode.ANCIENT_GREEK if variant == GreekVariant.ANCIENT
+        else models.LanguageCode.NT_GREEK
+    )
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
     exercises = greek_declension.generate_exercises(
-        max_lesson=max_lesson, count=count, variant=variant.value
+        max_lesson=effective_max, count=count, variant=variant.value
     )
     return [
         GreekDeclensionExercise(
@@ -1293,8 +1514,15 @@ async def resolve_greek_conjugation_exercises(
     max_lesson: int = 2,
     variant: GreekVariant = GreekVariant.ANCIENT,
 ) -> list[GreekConjugationExercise]:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = (
+        models.LanguageCode.ANCIENT_GREEK if variant == GreekVariant.ANCIENT
+        else models.LanguageCode.NT_GREEK
+    )
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
     exercises = greek_conjugation.generate_exercises(
-        max_lesson=max_lesson, count=count, variant=variant.value
+        max_lesson=effective_max, count=count, variant=variant.value
     )
     return [
         GreekConjugationExercise(
@@ -1316,9 +1544,32 @@ async def mutate_grade_greek_exercise(
     info: strawberry.Info,
     input: GradeGreekExerciseInput,
 ) -> GreekGradeResult:
-    correct, feedback = greek_declension.grade_exercise(
+    """Single grading mutation for both Greek declension and conjugation.
+
+    The ``kind`` input field routes to the right grader and tags the
+    attempt with the right exercise_type so that declension and
+    conjugation pattern weighting stay separate.
+    """
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+
+    is_conj = input.kind == GreekExerciseKind.CONJUGATION
+    grader = greek_conjugation.grade_exercise if is_conj else greek_declension.grade_exercise
+    correct, feedback = grader(
         submitted=input.submitted,
         expected=input.expected,
+    )
+    db_lang = (
+        models.LanguageCode.NT_GREEK if input.variant == GreekVariant.KOINE
+        else models.LanguageCode.ANCIENT_GREEK
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=db_lang,
+        exercise_type="greek_conjugation" if is_conj else "greek_declension",
+        pattern=input.pattern,
+        correct=correct,
+        vocab_lemma=input.vocab_lemma,
     )
     return GreekGradeResult(
         correct=correct,
@@ -1335,7 +1586,11 @@ async def resolve_sanskrit_declension_exercises(
     count: int = 10,
     max_lesson: int = 2,
 ) -> list[SanskritDeclensionExercise]:
-    exercises = sanskrit_declension.generate_exercises(max_lesson=max_lesson, count=count)
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
+    db_lang = models.LanguageCode.SANSKRIT
+    effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
+    exercises = sanskrit_declension.generate_exercises(max_lesson=effective_max, count=count)
     return [
         SanskritDeclensionExercise(
             id=ex.id,
@@ -1356,9 +1611,19 @@ async def mutate_grade_sanskrit_exercise(
     info: strawberry.Info,
     input: GradeSanskritExerciseInput,
 ) -> SanskritGradeResult:
+    session: AsyncSession = info.context["db"]
+    user_id = _maybe_user_id(info)
     correct, feedback = sanskrit_declension.grade_exercise(
         submitted=input.submitted,
         expected=input.expected,
+    )
+    await attempt_svc.record_attempt(
+        session, user_id,
+        language=models.LanguageCode.SANSKRIT,
+        exercise_type="sanskrit_declension",
+        pattern=input.pattern,
+        correct=correct,
+        vocab_lemma=input.vocab_lemma,
     )
     return SanskritGradeResult(
         correct=correct,
@@ -1881,6 +2146,7 @@ async def mutate_import_lesson(
         name=deck.name,
         description=deck.description,
         language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
         created_at=deck.created_at,
         updated_at=deck.updated_at,
         card_count=card_count,
@@ -2161,3 +2427,81 @@ async def mutate_grade_qal_worksheet(
         correct_count=correct_count,
         items=items,
     )
+
+
+# ── Lesson progress + lesson cards ───────────────────────────────────────────
+
+
+def _progress_to_gql(p: lesson_progress_svc.ProgressInfo) -> LessonProgressInfo:
+    return LessonProgressInfo(
+        language=db_language_to_gql(p.language),
+        current_lesson=p.current_lesson,
+        total_lessons=p.total_lessons,
+        vocab_total=p.vocab_total,
+        vocab_mastered=p.vocab_mastered,
+        mastery_percent=p.mastery_percent,
+        due_count=p.due_count,
+        is_ready_to_advance=p.is_ready_to_advance,
+    )
+
+
+async def resolve_lesson_progress(
+    info: strawberry.Info, language: LanguageCode,
+) -> LessonProgressInfo:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    info_ = await lesson_progress_svc.get_progress(
+        session, user_id, gql_language_to_db(language),
+    )
+    return _progress_to_gql(info_)
+
+
+async def resolve_my_progress(info: strawberry.Info) -> list[LessonProgressInfo]:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    rows = await lesson_progress_svc.get_all_progress(session, user_id)
+    return [_progress_to_gql(r) for r in rows]
+
+
+async def mutate_advance_lesson(
+    info: strawberry.Info, language: LanguageCode,
+) -> LessonProgressInfo:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    p = await lesson_progress_svc.advance_lesson(
+        session, user_id, gql_language_to_db(language),
+    )
+    return _progress_to_gql(p)
+
+
+async def mutate_set_current_lesson(
+    info: strawberry.Info, language: LanguageCode, lesson: int,
+) -> LessonProgressInfo:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    p = await lesson_progress_svc.set_current_lesson(
+        session, user_id, gql_language_to_db(language), lesson,
+    )
+    return _progress_to_gql(p)
+
+
+def resolve_lesson_cards(
+    language: LanguageCode, lesson: int,
+) -> list[LessonCard]:
+    """Return the lesson's vocabulary with stable ``vocab_id`` for SRS."""
+    db_lang = gql_language_to_db(language)
+    items = vocab_catalog.load_vocab(db_lang, lesson)
+    only_this = [v for v in items if v.lesson == lesson]
+    from reshith.exercises.vocab_id import vocab_id as _vocab_id
+    return [
+        LessonCard(
+            vocab_id=_vocab_id(db_lang.value, v.lemma),
+            lemma=v.lemma,
+            transliteration=v.transliteration,
+            definition=v.definition,
+            category=v.category,
+            lesson=v.lesson,
+            notes=v.notes,
+        )
+        for v in only_this
+    ]

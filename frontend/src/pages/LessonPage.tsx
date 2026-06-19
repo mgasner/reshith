@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
+import { useMutation } from '@apollo/client'
 import { VocabularyCard, VocabularyCardData } from '@/components/VocabularyCard'
 import { useSwipe } from '@/hooks/useSwipe'
 import { AddToSRSButton } from '@/components/AddToSRSButton'
+import { useAuth } from '@/contexts/AuthContext'
+import { SUBMIT_REVIEW } from '@/graphql/operations'
 
 // Map this page's `languageCode` (db enum value like "hbo") to the GraphQL
 // LanguageCode enum string the backend's `importLesson` mutation expects.
@@ -14,6 +17,8 @@ const LANGUAGE_CODE_TO_GQL: Record<string, string> = {
   gnt: 'NT_GREEK',
   san: 'SANSKRIT',
 }
+// Alias for the by-lemma SUBMIT_REVIEW flow.
+const LANG_TO_GQL = LANGUAGE_CODE_TO_GQL
 
 interface LessonDeck {
   id: string
@@ -43,11 +48,28 @@ interface LessonPageProps {
 
 export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonPageProps) {
   const { lessonId } = useParams()
+  const { user } = useAuth()
   const [deck, setDeck] = useState<LessonDeck | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
+  const gqlLang = LANG_TO_GQL[languageCode]
+  // Note: we deliberately do not pass `refetchQueries` here. A typical
+  // session can flip 20+ cards, and refetching lessonProgress +
+  // myProgress per flip is 40+ network requests — wasteful and slow.
+  // Instead, we evict those queries from the cache on unmount so the
+  // next mount of the study page or navbar refetches fresh state.
+  const [submitReview, { client }] = useMutation(SUBMIT_REVIEW)
+
+  useEffect(() => {
+    return () => {
+      if (!gqlLang) return
+      client.cache.evict({ fieldName: 'lessonProgress' })
+      client.cache.evict({ fieldName: 'myProgress' })
+      client.cache.gc()
+    }
+  }, [client, gqlLang])
 
   useEffect(() => {
     const lessonNum = lessonId || '01'
@@ -70,6 +92,22 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
   const handleReview = (quality: number) => {
     if (quality >= 3) {
       setCompleted((prev) => new Set([...prev, currentIndex]))
+    }
+
+    // Persist the review for authenticated users — the backend
+    // auto-provisions the primary deck and the lesson card on first review.
+    const card = deck?.cards[currentIndex]
+    const lemma = card ? (card.word ?? card.hebrew ?? '') : ''
+    if (user && gqlLang && lemma) {
+      submitReview({
+        variables: {
+          input: { quality, language: gqlLang, vocabLemma: lemma },
+        },
+      }).catch((err) => {
+        // Surfacing the error inline would be noisy mid-deck; log and
+        // continue. SRS state simply won't update for this card.
+        console.error('Failed to record review:', err)
+      })
     }
 
     const filteredCards = getFilteredCards()

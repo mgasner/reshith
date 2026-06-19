@@ -58,6 +58,7 @@ export function GreekConjugationExercisePage() {
             exerciseId: currentExercise.id,
             submitted: userAnswer,
             expected: currentExercise.answer,
+            kind: 'CONJUGATION',
           },
         },
       })

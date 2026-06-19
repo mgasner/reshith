@@ -5,6 +5,7 @@ from uuid import UUID
 import strawberry
 
 from reshith.api.resolvers import (
+    mutate_advance_lesson,
     mutate_create_card,
     mutate_create_deck,
     mutate_generate_drill,
@@ -23,6 +24,7 @@ from reshith.api.resolvers import (
     mutate_import_lesson,
     mutate_login,
     mutate_register,
+    mutate_set_current_lesson,
     mutate_set_primary_deck,
     mutate_submit_review,
     mutate_synthesize_speech,
@@ -47,6 +49,8 @@ from reshith.api.resolvers import (
     resolve_interlinear_passage,
     resolve_latin_conjugation_exercises,
     resolve_latin_declension_exercises,
+    resolve_lesson_cards,
+    resolve_lesson_progress,
     resolve_lexicon_search,
     resolve_lxx_books,
     resolve_lxx_chapter,
@@ -55,6 +59,7 @@ from reshith.api.resolvers import (
     resolve_lxx_search,
     resolve_lxx_verse,
     resolve_me,
+    resolve_my_progress,
     resolve_preposition_exercises,
     resolve_primary_deck,
     resolve_qal_paradigm,
@@ -118,6 +123,8 @@ from reshith.api.types import (
     LatinDeclensionExercise,
     LatinGradeResult,
     LatinVariant,
+    LessonCard,
+    LessonProgressInfo,
     LexiconEntry,
     LoginInput,
     PrepositionExercise,
@@ -170,6 +177,22 @@ class Query:
     @strawberry.field
     async def me(self, info: strawberry.Info) -> User | None:
         return await resolve_me(info)
+
+    @strawberry.field
+    async def lesson_progress(
+        self, info: strawberry.Info, language: LanguageCode,
+    ) -> LessonProgressInfo:
+        return await resolve_lesson_progress(info, language)
+
+    @strawberry.field
+    async def my_progress(self, info: strawberry.Info) -> list[LessonProgressInfo]:
+        return await resolve_my_progress(info)
+
+    @strawberry.field
+    def lesson_cards(
+        self, language: LanguageCode, lesson: int,
+    ) -> list[LessonCard]:
+        return resolve_lesson_cards(language, lesson)
 
     @strawberry.field
     async def decks(
@@ -529,6 +552,18 @@ class Mutation:
     @strawberry.mutation
     async def submit_review(self, info: strawberry.Info, input: ReviewInput) -> ReviewResult:
         return await mutate_submit_review(info, input)
+
+    @strawberry.mutation
+    async def advance_lesson(
+        self, info: strawberry.Info, language: LanguageCode,
+    ) -> LessonProgressInfo:
+        return await mutate_advance_lesson(info, language)
+
+    @strawberry.mutation
+    async def set_current_lesson(
+        self, info: strawberry.Info, language: LanguageCode, lesson: int,
+    ) -> LessonProgressInfo:
+        return await mutate_set_current_lesson(info, language, lesson)
 
     @strawberry.mutation
     async def get_translation_help(
