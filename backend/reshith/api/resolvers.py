@@ -50,6 +50,7 @@ from reshith.api.types import (
     LoginInput,
     PrepositionExercise,
     PrepositionType,
+    RegisterInput,
     RelativeClauseExercise,
     RelativeClauseGradeResult,
     RelativeClausePattern,
@@ -110,7 +111,7 @@ from reshith.services import lxx as lxx_svc
 from reshith.services import tahot as tahot_svc
 from reshith.services import tbesh as tbesh_svc
 from reshith.services import vulgate as vulgate_svc
-from reshith.services.auth import create_access_token, verify_password
+from reshith.services.auth import create_access_token, hash_password, verify_password
 
 
 def db_language_to_gql(db_lang: models.LanguageCode) -> LanguageCode:
@@ -121,13 +122,35 @@ def gql_language_to_db(gql_lang: LanguageCode) -> models.LanguageCode:
     return models.LanguageCode(gql_lang.value)
 
 
+def _require_user_id(info: strawberry.Info) -> UUID:
+    user_id = info.context.get("current_user_id")
+    if user_id is None:
+        raise Exception("Not authenticated")
+    return user_id
+
+
+async def _require_owned_deck(
+    session: AsyncSession, deck_id: UUID, user_id: UUID
+) -> models.Deck:
+    result = await session.execute(
+        select(models.Deck).where(
+            models.Deck.id == deck_id, models.Deck.owner_id == user_id
+        )
+    )
+    deck = result.scalar_one_or_none()
+    if deck is None:
+        raise Exception("Deck not found")
+    return deck
+
+
 async def resolve_decks(
     info: strawberry.Info,
     language: LanguageCode | None = None,
 ) -> list[Deck]:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
 
-    query = select(models.Deck)
+    query = select(models.Deck).where(models.Deck.owner_id == user_id)
     if language:
         query = query.where(models.Deck.language == gql_language_to_db(language))
 
@@ -157,8 +180,11 @@ async def resolve_decks(
 
 async def resolve_deck(info: strawberry.Info, id: UUID) -> Deck | None:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
 
-    result = await session.execute(select(models.Deck).where(models.Deck.id == id))
+    result = await session.execute(
+        select(models.Deck).where(models.Deck.id == id, models.Deck.owner_id == user_id)
+    )
     deck = result.scalar_one_or_none()
 
     if not deck:
@@ -181,6 +207,8 @@ async def resolve_deck(info: strawberry.Info, id: UUID) -> Deck | None:
 
 async def resolve_cards(info: strawberry.Info, deck_id: UUID) -> list[Card]:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    await _require_owned_deck(session, deck_id, user_id)
 
     result = await session.execute(select(models.Card).where(models.Card.deck_id == deck_id))
     cards = result.scalars().all()
@@ -204,21 +232,28 @@ async def resolve_cards(info: strawberry.Info, deck_id: UUID) -> list[Card]:
 
 async def resolve_due_cards(
     info: strawberry.Info,
-    user_id: UUID,
     deck_id: UUID | None = None,
     limit: int = 20,
 ) -> list[CardWithSRS]:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
 
     query = (
         select(models.Card, models.SRSState)
-        .outerjoin(models.SRSState, models.Card.id == models.SRSState.card_id)
+        .join(models.Deck, models.Card.deck_id == models.Deck.id)
+        .outerjoin(
+            models.SRSState,
+            (models.SRSState.card_id == models.Card.id)
+            & (models.SRSState.user_id == user_id),
+        )
+        .where(models.Deck.owner_id == user_id)
         .where(
             (models.SRSState.next_review <= datetime.now()) | (models.SRSState.id.is_(None))
         )
     )
 
     if deck_id:
+        await _require_owned_deck(session, deck_id, user_id)
         query = query.where(models.Card.deck_id == deck_id)
 
     query = query.limit(limit)
@@ -288,12 +323,13 @@ async def resolve_lexicon_search(
 
 async def mutate_create_deck(info: strawberry.Info, input: CreateDeckInput) -> Deck:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
 
     deck = models.Deck(
         name=input.name,
         description=input.description,
         language=gql_language_to_db(input.language),
-        owner_id=info.context.get("user_id"),
+        owner_id=user_id,
     )
     session.add(deck)
     await session.flush()
@@ -311,6 +347,8 @@ async def mutate_create_deck(info: strawberry.Info, input: CreateDeckInput) -> D
 
 async def mutate_create_card(info: strawberry.Info, input: CreateCardInput) -> Card:
     session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    await _require_owned_deck(session, input.deck_id, user_id)
 
     card = models.Card(
         deck_id=input.deck_id,
@@ -343,10 +381,22 @@ async def mutate_submit_review(
     input: ReviewInput,
 ) -> ReviewResult:
     session: AsyncSession = info.context["db"]
-    user_id: UUID = info.context["user_id"]
+    user_id = _require_user_id(info)
+
+    # Verify the card belongs to a deck the current user owns.
+    owner_check = await session.execute(
+        select(models.Card.id)
+        .join(models.Deck, models.Card.deck_id == models.Deck.id)
+        .where(models.Card.id == input.card_id, models.Deck.owner_id == user_id)
+    )
+    if owner_check.scalar_one_or_none() is None:
+        raise Exception("Card not found")
 
     result = await session.execute(
-        select(models.SRSState).where(models.SRSState.card_id == input.card_id)
+        select(models.SRSState).where(
+            models.SRSState.card_id == input.card_id,
+            models.SRSState.user_id == user_id,
+        )
     )
     srs_state = result.scalar_one_or_none()
 
@@ -1312,6 +1362,36 @@ async def mutate_login(info: strawberry.Info, input: LoginInput) -> AuthPayload 
     db_user = result.scalar_one_or_none()
     if db_user is None or not verify_password(input.password, db_user.password_hash):
         return None
+    token = create_access_token(db_user.id)
+    return AuthPayload(token=token, user=_db_user_to_gql(db_user))
+
+
+async def mutate_register(info: strawberry.Info, input: RegisterInput) -> AuthPayload:
+    session: AsyncSession = info.context["db"]
+
+    username = input.username.strip()
+    email = input.email.strip().lower()
+    if not username or not email or not input.password:
+        raise Exception("Username, email and password are required")
+    if len(input.password) < 8:
+        raise Exception("Password must be at least 8 characters")
+
+    existing = await session.execute(
+        select(models.User).where(
+            (models.User.username == username) | (models.User.email == email)
+        )
+    )
+    if existing.scalar_one_or_none() is not None:
+        raise Exception("Username or email already in use")
+
+    db_user = models.User(
+        username=username,
+        email=email,
+        display_name=(input.display_name or username).strip(),
+        password_hash=hash_password(input.password),
+    )
+    session.add(db_user)
+    await session.flush()
     token = create_access_token(db_user.id)
     return AuthPayload(token=token, user=_db_user_to_gql(db_user))
 
