@@ -1,17 +1,12 @@
-"""user_api_keys (and merge of pre-existing branch heads)
+"""user_api_keys
 
 Adds the per-user encrypted LLM provider credentials table. Mirrors the
 shape of ``user_srs_settings``: one row per user, ``user_id`` is a unique
 FK with cascade delete. Both key columns are nullable so a user can
 configure only one provider.
 
-Also acts as a merge point for the two pre-existing branch heads
-``a1b2c3d4e5f6`` (srs config) and ``8a4b2e9c5d12`` (deck is_primary), which
-diverged from ``7f3a1c4b2d10``. Listing both in ``down_revision`` collapses
-them into a single linear history without a no-op merge migration.
-
 Revision ID: b2c3d4e5f6a7
-Revises: a1b2c3d4e5f6, 8a4b2e9c5d12
+Revises: 9a2c5e1b8f30
 Create Date: 2026-06-18
 """
 from typing import Sequence, Union
@@ -22,7 +17,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "b2c3d4e5f6a7"
-down_revision: Union[str, Sequence[str], None] = ("a1b2c3d4e5f6", "8a4b2e9c5d12")
+down_revision: Union[str, Sequence[str], None] = "9a2c5e1b8f30"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
