@@ -208,22 +208,25 @@ function WordCard({ token }: { token: GreekToken }) {
               const eq = token.expanded.indexOf('=')
               const lemma = eq >= 0 ? token.expanded.slice(0, eq) : token.expanded
               const lemmaGloss = eq >= 0 ? token.expanded.slice(eq + 1) : ''
-              const front = lemma || token.greek
-              const back = lemmaGloss || token.translation
-              if (!back) return null
+              // Let AddToDeckButton decide whether to render: with no back
+              // and assist on, it will fall through to the LLM suggestion.
               return (
                 <AddToDeckButton
                   language="NT_GREEK"
-                  front={front}
-                  back={back}
+                  front={lemma || undefined}
+                  back={lemmaGloss || token.translation || undefined}
+                  surfaceForm={token.greek}
+                  lemmaHint={lemma || null}
                   grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+                  // The button itself adds `Form: <surfaceForm>` to notes;
+                  // include only the extras (transliteration, Strong's).
                   notes={
                     [
-                      `Form: ${token.greek} (${token.transliteration})`,
+                      token.transliteration ? `Translit: ${token.transliteration}` : null,
                       token.dstrongs ? `Strong's ${token.dstrongs}` : null,
                     ]
                       .filter(Boolean)
-                      .join(' · ')
+                      .join(' · ') || null
                   }
                   sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
                 />

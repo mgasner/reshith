@@ -36,6 +36,7 @@ export function APIKeysSection() {
   const [openaiInput, setOpenaiInput] = useState('')
   const [anthropicInput, setAnthropicInput] = useState('')
   const [preferred, setPreferred] = useState<LLMProvider | ''>('')
+  const [llmAssist, setLlmAssist] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
 
@@ -46,6 +47,12 @@ export function APIKeysSection() {
       setPreferred(current.preferredProvider)
     }
   }, [current?.preferredProvider])
+
+  useEffect(() => {
+    if (current) {
+      setLlmAssist(current.llmLemmaAssist)
+    }
+  }, [current?.llmLemmaAssist])  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading && !data) {
     return <div className="text-gray-500">Loading API keys…</div>
@@ -63,6 +70,9 @@ export function APIKeysSection() {
       // backend currently has a stored preference, so we send the explicit
       // clear flag instead of null (which means "leave unchanged").
       const clearPreferred = preferred === '' && current?.preferredProvider != null
+      // Only thread the assist toggle through when it differs from server
+      // state, so a no-op save doesn't unnecessarily rewrite the row.
+      const llmAssistChanged = llmAssist !== current?.llmLemmaAssist
       await updateKeys({
         variables: {
           input: {
@@ -70,6 +80,7 @@ export function APIKeysSection() {
             anthropicApiKey: anthropicInput || null,
             preferredProvider: preferred || null,
             clearPreferredProvider: clearPreferred,
+            llmLemmaAssist: llmAssistChanged ? llmAssist : null,
           },
         },
       })
@@ -164,30 +175,19 @@ export function APIKeysSection() {
             <input
               type="checkbox"
               className="mt-0.5"
-              checked={current.llmLemmaAssist}
+              checked={llmAssist}
               disabled={
                 saving || (!current.hasOpenaiKey && !current.hasAnthropicKey)
               }
-              onChange={async (e) => {
-                setStatus(null)
-                setErrMsg(null)
-                try {
-                  await updateKeys({
-                    variables: { input: { llmLemmaAssist: e.target.checked } },
-                  })
-                  await refetch()
-                  setStatus(e.target.checked ? 'LLM assist enabled' : 'LLM assist disabled')
-                } catch (err) {
-                  setErrMsg(err instanceof Error ? err.message : String(err))
-                }
-              }}
+              onChange={(e) => setLlmAssist(e.target.checked)}
             />
             <span>
               <span className="font-medium">Use LLM lemma/gloss assist</span>
               <span className="block text-xs text-gray-500 mt-0.5">
                 When you click Add-to-deck in a reader and the corpus has no
                 clean lemma or gloss, ask your configured model (e.g. Haiku)
-                to fill it in. Off by default to avoid surprise billing.
+                to fill it in. Off by default to avoid surprise billing. Click
+                Save to apply.
               </span>
             </span>
           </label>

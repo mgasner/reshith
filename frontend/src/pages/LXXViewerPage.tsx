@@ -198,13 +198,16 @@ function WordCard({ token }: { token: GreekToken }) {
               surfaceForm={token.greek}
               lemmaHint={token.expanded || null}
               grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+              // AddToDeckButton stitches `Form: <surfaceForm>` into notes
+              // itself; only include the extras the button doesn't know about
+              // (transliteration, Strong's ID).
               notes={
                 [
-                  `Form: ${token.greek} (${token.transliteration})`,
+                  token.transliteration ? `Translit: ${token.transliteration}` : null,
                   token.dstrongs ? `Strong's ${token.dstrongs}` : null,
                 ]
                   .filter(Boolean)
-                  .join(' · ')
+                  .join(' · ') || null
               }
               sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
             />

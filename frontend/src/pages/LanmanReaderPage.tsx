@@ -288,7 +288,9 @@ function WordCard({
                 .filter(Boolean)
                 .join(' · ') || null
             }
-            notes={`Form: ${word.form}`}
+            // AddToDeckButton already stitches `Form: <surfaceForm>` into
+            // notes when it differs from the front.
+            notes={null}
             sourceReference={sourceReference ?? null}
           />
         </span>
