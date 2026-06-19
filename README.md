@@ -128,8 +128,21 @@ If the index has not been built, the reference service automatically falls back 
 Create a `.env` file in the `backend/` directory:
 
 ```bash
-# Required for LLM features (translation help, drill generation)
-OPENAI_API_KEY=your-api-key
+# At least one LLM provider key is required for translation help and drill
+# generation. Users can also paste their own key into the in-app Settings
+# page, which overrides the env-level key per request.
+OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Default provider used when neither the user nor the env config picks one.
+# Either "openai" or "anthropic".
+DEFAULT_LLM_PROVIDER=openai
+
+# Fernet key used to encrypt user-supplied API keys at rest. Generate with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Without this, the Settings page refuses to save user keys (the env-level
+# keys still work for everyone).
+SECRETS_ENCRYPTION_KEY=
 
 # Optional: Google Cloud TTS for pronunciation
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json

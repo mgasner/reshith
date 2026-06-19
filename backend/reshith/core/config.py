@@ -18,6 +18,19 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
 
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5"
+
+    # Default LLM provider used when a user has not selected one explicitly.
+    # Must be "openai" or "anthropic".
+    default_llm_provider: str = "openai"
+
+    # Fernet key (base64-encoded 32 bytes) used to encrypt user-supplied API
+    # keys at rest. Generate with: ``python -c "from cryptography.fernet import
+    # Fernet; print(Fernet.generate_key().decode())"``. When empty the API-key
+    # storage endpoints reject writes so we never persist plaintext secrets.
+    secrets_encryption_key: str = ""
+
     google_cloud_api_key: str = ""
     google_tts_voice: str = "he-IL-Wavenet-A"
 

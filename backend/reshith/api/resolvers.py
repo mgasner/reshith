@@ -106,6 +106,14 @@ from reshith.api.types import (
 from reshith.api.types import (
     VulgateToken as VulgateTokenGQL,
 )
+from reshith.api.types import (
+    LLMProvider as LLMProviderGQL,
+)
+from reshith.api.types import (
+    UpdateUserAPIKeysInput,
+    UserAPIKeysType,
+)
+from reshith.core.config import get_settings
 from reshith.db import models
 from reshith.exercises import advanced as advanced_exercises
 from reshith.exercises import article as article_exercises
@@ -120,6 +128,7 @@ from reshith.exercises.latin import conjugation as latin_conjugation
 from reshith.exercises.latin import declension as latin_declension
 from reshith.exercises.sanskrit import declension as sanskrit_declension
 from reshith.services import brenton as brenton_svc
+from reshith.services import crypto as secrets_crypto
 from reshith.services import drc as drc_svc
 from reshith.services import (
     exercise_attempts as attempt_svc,
@@ -143,6 +152,11 @@ from reshith.services import tahot as tahot_svc
 from reshith.services import tbesh as tbesh_svc
 from reshith.services import vulgate as vulgate_svc
 from reshith.services.auth import create_access_token, hash_password, verify_password
+from reshith.services.llm_providers import (
+    DEFAULT_MODELS,
+    LLMProvider,
+    normalize_provider,
+)
 
 
 def db_language_to_gql(db_lang: models.LanguageCode) -> LanguageCode:
@@ -683,10 +697,16 @@ async def mutate_get_translation_help(
         LanguageCode.MIDRASHIC_HEBREW: "Midrashic Hebrew",
     }
 
+    provider, api_key, model = await _resolve_llm_credentials(info)
+    embedding_key = await _resolve_openai_api_key(info)
     result = await llm.get_translation_help(
         text=text,
         language=language_names.get(language, "Unknown"),
         context=context,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        embedding_api_key=embedding_key,
     )
 
     return TranslationHelp(translation=result, notes=None)
@@ -709,10 +729,14 @@ async def mutate_generate_drill(
         LanguageCode.MIDRASHIC_HEBREW: "Midrashic Hebrew",
     }
 
+    provider, api_key, model = await _resolve_llm_credentials(info)
     result = await llm.generate_drill(
         vocabulary=vocabulary,
         language=language_names.get(language, "Unknown"),
         difficulty=difficulty,
+        provider=provider,
+        api_key=api_key,
+        model=model,
     )
 
     return Drill(
@@ -1017,10 +1041,14 @@ async def resolve_sentence_exercises(
     if patterns:
         pattern_strs = [sentence_pattern_to_str(p) for p in patterns]
 
+    provider, api_key, model = await _resolve_llm_credentials(info)
     exercises = await sentence_exercises.generate_sentence_exercises(
         max_lesson=effective_max,
         count=count,
         patterns=pattern_strs,
+        provider=provider,
+        api_key=api_key,
+        model=model,
     )
 
     result = []
@@ -1149,10 +1177,14 @@ async def resolve_verbal_exercises(
     if patterns:
         pattern_strs = [verbal_pattern_to_str(p) for p in patterns]
 
+    provider, api_key, model = await _resolve_llm_credentials(info)
     exercises = await verbal_exercises.generate_verbal_exercises(
         max_lesson=effective_max,
         count=count,
         patterns=pattern_strs,
+        provider=provider,
+        api_key=api_key,
+        model=model,
     )
 
     result = []
@@ -1223,9 +1255,13 @@ async def resolve_comparative_exercises(
     db_lang = models.LanguageCode.BIBLICAL_HEBREW
     effective_max = await _resolve_max_lesson(session, user_id, db_lang, max_lesson)
 
+    provider, api_key, model = await _resolve_llm_credentials(info)
     exercises = await advanced_exercises.generate_comparative_exercises(
         max_lesson=effective_max,
         count=count,
+        provider=provider,
+        api_key=api_key,
+        model=model,
     )
 
     result = []
@@ -1966,6 +2002,196 @@ async def resolve_effective_srs_config(
         await _require_owned_deck(session, deck_id, user_id)
     config = await _effective_srs_config(session, user_id, deck_id)
     return _config_to_gql(config)
+
+
+# ── User API keys ─────────────────────────────────────────────────────────────
+
+
+async def _get_user_api_keys(
+    session: AsyncSession, user_id: UUID
+) -> models.UserAPIKeys | None:
+    result = await session.execute(
+        select(models.UserAPIKeys).where(models.UserAPIKeys.user_id == user_id)
+    )
+    return result.scalar_one_or_none()
+
+
+def _last4(plaintext: str | None) -> str | None:
+    """Last 4 chars of a key for UI display, or None if no key set.
+
+    Keys shorter than 8 chars are masked entirely to avoid surfacing the
+    bulk of a short test key.
+    """
+    if not plaintext:
+        return None
+    if len(plaintext) < 8:
+        return None
+    return plaintext[-4:]
+
+
+def _user_api_keys_to_gql(row: models.UserAPIKeys | None) -> UserAPIKeysType:
+    encryption_configured = secrets_crypto.is_configured()
+    if row is None:
+        return UserAPIKeysType(
+            preferred_provider=None,
+            has_openai_key=False,
+            has_anthropic_key=False,
+            openai_key_last4=None,
+            anthropic_key_last4=None,
+            encryption_configured=encryption_configured,
+        )
+    openai_plain = (
+        secrets_crypto.decrypt(row.openai_api_key_encrypted)
+        if encryption_configured
+        else None
+    )
+    anthropic_plain = (
+        secrets_crypto.decrypt(row.anthropic_api_key_encrypted)
+        if encryption_configured
+        else None
+    )
+    preferred = (
+        LLMProviderGQL(row.preferred_provider)
+        if row.preferred_provider in ("openai", "anthropic")
+        else None
+    )
+    return UserAPIKeysType(
+        preferred_provider=preferred,
+        has_openai_key=bool(row.openai_api_key_encrypted),
+        has_anthropic_key=bool(row.anthropic_api_key_encrypted),
+        openai_key_last4=_last4(openai_plain),
+        anthropic_key_last4=_last4(anthropic_plain),
+        encryption_configured=encryption_configured,
+    )
+
+
+async def resolve_user_api_keys(info: strawberry.Info) -> UserAPIKeysType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    row = await _get_user_api_keys(session, user_id)
+    return _user_api_keys_to_gql(row)
+
+
+async def mutate_update_user_api_keys(
+    info: strawberry.Info, input: UpdateUserAPIKeysInput
+) -> UserAPIKeysType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+
+    # Refuse to write if encryption isn't configured — better to fail loudly
+    # than to silently drop the key or persist it in plaintext.
+    needs_encryption = (
+        (input.openai_api_key and input.openai_api_key.strip())
+        or (input.anthropic_api_key and input.anthropic_api_key.strip())
+    )
+    if needs_encryption and not secrets_crypto.is_configured():
+        raise Exception(
+            "Server is not configured to store API keys (SECRETS_ENCRYPTION_KEY unset). "
+            "Ask an administrator to set it before saving keys."
+        )
+
+    row = await _get_user_api_keys(session, user_id)
+    if row is None:
+        row = models.UserAPIKeys(user_id=user_id)
+        session.add(row)
+        await session.flush()
+
+    if input.clear_openai:
+        row.openai_api_key_encrypted = None
+    elif input.openai_api_key and input.openai_api_key.strip():
+        row.openai_api_key_encrypted = secrets_crypto.encrypt(input.openai_api_key.strip())
+
+    if input.clear_anthropic:
+        row.anthropic_api_key_encrypted = None
+    elif input.anthropic_api_key and input.anthropic_api_key.strip():
+        row.anthropic_api_key_encrypted = secrets_crypto.encrypt(
+            input.anthropic_api_key.strip()
+        )
+
+    if input.preferred_provider is not None:
+        row.preferred_provider = input.preferred_provider.value
+
+    await session.flush()
+    return _user_api_keys_to_gql(row)
+
+
+async def _resolve_llm_credentials(
+    info: strawberry.Info,
+) -> tuple[LLMProvider, str | None, str | None]:
+    """Resolve (provider, api_key, model) for an LLM call.
+
+    Prefers per-user credentials when the request is authenticated and the
+    user has stored a key for their preferred provider; otherwise falls back
+    to the server's env-configured key. Returns ``(provider, None, model)``
+    if no key is available anywhere — callers surface that to the user.
+    """
+    settings = get_settings()
+    session: AsyncSession = info.context["db"]
+    user_id = info.context.get("current_user_id")
+
+    if user_id is not None and secrets_crypto.is_configured():
+        row = await _get_user_api_keys(session, user_id)
+        if row is not None:
+            preferred = normalize_provider(
+                row.preferred_provider or settings.default_llm_provider
+            )
+            # Try the preferred provider first, then the other one.
+            for candidate in (preferred, _other_provider(preferred)):
+                ciphertext = (
+                    row.openai_api_key_encrypted
+                    if candidate == LLMProvider.OPENAI
+                    else row.anthropic_api_key_encrypted
+                )
+                plaintext = secrets_crypto.decrypt(ciphertext)
+                if plaintext:
+                    model = (
+                        settings.openai_model
+                        if candidate == LLMProvider.OPENAI
+                        else settings.anthropic_model
+                    )
+                    return candidate, plaintext, model
+
+    # Fall back to env keys, preferring the configured default provider.
+    default_provider = normalize_provider(settings.default_llm_provider)
+    for candidate in (default_provider, _other_provider(default_provider)):
+        env_key = (
+            settings.openai_api_key
+            if candidate == LLMProvider.OPENAI
+            else settings.anthropic_api_key
+        )
+        if env_key:
+            model = (
+                settings.openai_model
+                if candidate == LLMProvider.OPENAI
+                else settings.anthropic_model
+            )
+            return candidate, env_key, model
+
+    return default_provider, None, DEFAULT_MODELS[default_provider]
+
+
+def _other_provider(provider: LLMProvider) -> LLMProvider:
+    return (
+        LLMProvider.ANTHROPIC if provider == LLMProvider.OPENAI else LLMProvider.OPENAI
+    )
+
+
+async def _resolve_openai_api_key(info: strawberry.Info) -> str | None:
+    """OpenAI-only credential resolver — used for embedding-based search,
+    which Anthropic does not provide.
+    """
+    settings = get_settings()
+    session: AsyncSession = info.context["db"]
+    user_id = info.context.get("current_user_id")
+
+    if user_id is not None and secrets_crypto.is_configured():
+        row = await _get_user_api_keys(session, user_id)
+        if row is not None:
+            plaintext = secrets_crypto.decrypt(row.openai_api_key_encrypted)
+            if plaintext:
+                return plaintext
+
+    return settings.openai_api_key or None
 
 
 async def mutate_update_user_srs_settings(

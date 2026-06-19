@@ -12,6 +12,7 @@ import {
   SRSFieldKey,
   SRSFormValues,
 } from '@/components/SRSSettingsForm'
+import { APIKeysSection } from '@/components/APIKeysSection'
 
 export function SettingsPage() {
   const { user } = useAuth()
@@ -40,7 +41,7 @@ export function SettingsPage() {
   if (!user) {
     return (
       <div className="px-4 text-center py-12 text-gray-600">
-        <p>You need to log in to view your SRS settings.</p>
+        <p>You need to log in to view your settings.</p>
       </div>
     )
   }
@@ -64,7 +65,11 @@ export function SettingsPage() {
 
   return (
     <div className="px-4 max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">SRS Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
+
+      <APIKeysSection />
+
+      <h2 className="text-2xl font-bold text-gray-900 mb-2 mt-10">SRS</h2>
       <p className="text-sm text-gray-600 mb-6">
         Anki-style parameters applied to every deck that doesn't override them.
         Daily caps reset at <strong>UTC midnight</strong>.

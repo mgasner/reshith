@@ -572,9 +572,8 @@ class TestGenerateVerbMappings:
         nouns = load_nouns_for_exercises(4)
         preps = load_prepositions(4)
 
-        with patch("reshith.exercises.verbal.get_settings") as mock_settings:
-            mock_settings.return_value.openai_api_key = None
-            mappings = await generate_verb_mappings(verbs, nouns, preps)
+        # Omitting api_key triggers the deterministic fallback path.
+        mappings = await generate_verb_mappings(verbs, nouns, preps, api_key=None)
 
         assert "subjects" in mappings
         assert "objects" in mappings

@@ -16,10 +16,8 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
-from openai import AsyncOpenAI
-
-from reshith.core.config import get_settings
 from reshith.exercises.article import Noun, add_definite_article, load_nouns_for_exercises
+from reshith.services.llm_providers import DEFAULT_MODELS, LLMProvider, chat_complete
 from reshith.exercises.sentences import (
     Preposition,
     attach_inseparable_preposition,
@@ -101,6 +99,10 @@ async def generate_verb_mappings(
     nouns: list[Noun],
     preps: list[Preposition],
     force_refresh: bool = False,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> dict:
     """
     Generate mappings for verb-noun relationships using LLM.
@@ -116,12 +118,9 @@ async def generate_verb_mappings(
         with open(cache_path, encoding="utf-8") as f:
             return json.load(f)
 
-    settings = get_settings()
-    if not settings.openai_api_key:
-        logger.warning("OpenAI API key not set, using fallback verb mappings")
+    if not api_key:
+        logger.warning("LLM API key not provided, using fallback verb mappings")
         return _generate_fallback_verb_mappings(verbs, nouns, preps)
-
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
 
     verb_list = [f"{v.transliteration} ({v.definition})" for v in verbs]
     noun_list = [f"{n.transliteration} ({n.definition})" for n in nouns]
@@ -153,8 +152,10 @@ async def generate_verb_mappings(
     )
 
     try:
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
+        raw = await chat_complete(
+            provider=provider,
+            api_key=api_key,
+            model=model or DEFAULT_MODELS[provider],
             messages=[
                 {
                     "role": "system",
@@ -166,10 +167,10 @@ async def generate_verb_mappings(
                 {"role": "user", "content": prompt},
             ],
             temperature=0.3,
-            response_format={"type": "json_object"},
+            json_mode=True,
         )
 
-        result = json.loads(response.choices[0].message.content or "{}")
+        result = json.loads(raw or "{}")
 
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
@@ -520,6 +521,10 @@ async def generate_verbal_exercises(
     count: int = 10,
     patterns: list[str] | None = None,
     pattern_weights: dict[str, float] | None = None,
+    *,
+    provider: LLMProvider = LLMProvider.OPENAI,
+    api_key: str | None = None,
+    model: str | None = None,
 ) -> list[VerbalExercise]:
     """
     Generate Hebrew-to-English verbal sentence exercises.
@@ -560,7 +565,9 @@ async def generate_verbal_exercises(
     if not verbs or not nouns:
         return []
 
-    verb_mappings = await generate_verb_mappings(verbs, nouns, preps)
+    verb_mappings = await generate_verb_mappings(
+        verbs, nouns, preps, provider=provider, api_key=api_key, model=model,
+    )
 
     exercises: list[VerbalExercise] = []
     attempts = 0
