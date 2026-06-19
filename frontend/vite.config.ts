@@ -10,6 +10,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/graphql': {
         target: 'http://localhost:8000',
