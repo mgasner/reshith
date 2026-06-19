@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useLazyQuery, useMutation } from '@apollo/client'
-import { CREATE_CARD, PRIMARY_DECK } from '@/graphql/operations'
+import { CREATE_CARD, CREATE_DECK, PRIMARY_DECK } from '@/graphql/operations'
 import { useAuth } from '@/contexts/AuthContext'
 
 const LANGUAGE_LABELS: Record<string, string> = {
@@ -19,6 +19,10 @@ const LANGUAGE_LABELS: Record<string, string> = {
 
 interface PrimaryDeckResult {
   primaryDeck: { id: string; name: string; language: string } | null
+}
+
+interface CreateDeckResult {
+  createDeck: { id: string; name: string; language: string; isPrimary: boolean }
 }
 
 interface AddToDeckButtonProps {
@@ -44,13 +48,13 @@ export function AddToDeckButton({
   const location = useLocation()
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [noPrimary, setNoPrimary] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const [fetchPrimaryDeck] = useLazyQuery<PrimaryDeckResult>(PRIMARY_DECK, {
     variables: { language },
     fetchPolicy: 'network-only',
   })
+  const [createDeck] = useMutation<CreateDeckResult>(CREATE_DECK)
   const [createCard] = useMutation(CREATE_CARD)
 
   if (!user) {
@@ -74,18 +78,28 @@ export function AddToDeckButton({
     if (submitting || saved) return
     setSubmitting(true)
     setError(null)
-    setNoPrimary(false)
     try {
       const { data } = await fetchPrimaryDeck()
-      const primary = data?.primaryDeck
-      if (!primary) {
-        setNoPrimary(true)
-        return
+      let deckId = data?.primaryDeck?.id
+      if (!deckId) {
+        // No primary deck for this language — auto-create one. The backend
+        // marks the first deck per language as primary automatically.
+        const created = await createDeck({
+          variables: {
+            input: {
+              name: `${languageLabel} Vocab`,
+              description: `Words saved from the ${languageLabel} reader`,
+              language,
+            },
+          },
+        })
+        deckId = created.data?.createDeck.id
+        if (!deckId) throw new Error('Could not create deck')
       }
       await createCard({
         variables: {
           input: {
-            deckId: primary.id,
+            deckId,
             front,
             back,
             transliteration: transliteration ?? null,
@@ -119,15 +133,6 @@ export function AddToDeckButton({
       >
         {saved ? '✓ Saved' : submitting ? 'Saving…' : '+ Add to deck'}
       </button>
-      {noPrimary && (
-        <span className="text-[11px] text-stone-500" onClick={(e) => e.stopPropagation()}>
-          No primary deck for {languageLabel}.{' '}
-          <Link to="/decks" className="text-blue-600 hover:underline">
-            Set one on the Decks page
-          </Link>
-          .
-        </span>
-      )}
       {error && (
         <span className="text-[11px] text-red-600">{error}</span>
       )}
