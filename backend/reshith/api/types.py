@@ -258,6 +258,9 @@ class UserAPIKeysType:
     # update mutation will reject writes — surface this in the UI so users
     # aren't confused by a save failure.
     encryption_configured: bool
+    # Opt-in: when True, the reader Add-to-deck button calls the user's LLM
+    # to fill in a missing lemma / gloss before saving the card.
+    llm_lemma_assist: bool
 
 
 @strawberry.input
@@ -276,6 +279,42 @@ class UpdateUserAPIKeysInput:
     clear_anthropic: bool = False
     preferred_provider: LLMProvider | None = None
     clear_preferred_provider: bool = False
+    # Opt-in toggle for the LLM lemma/gloss assist on Add-to-deck. ``None``
+    # leaves the existing preference unchanged.
+    llm_lemma_assist: bool | None = None
+
+
+@strawberry.input
+class SuggestLemmaGlossInput:
+    """Ask the configured LLM for a card-quality lemma/gloss pair.
+
+    ``form`` is the surface form pulled from the corpus; ``lemma_hint`` is
+    whatever the morphological analyzer gave us (often present but
+    sometimes empty, e.g. Vulgate has no gloss column, LXX/Lanman have
+    sparse coverage). ``context`` is the surrounding verse / sentence so
+    the model can disambiguate homographs.
+    """
+    language: LanguageCode
+    form: str
+    lemma_hint: str | None = None
+    context: str | None = None
+
+
+@strawberry.type
+class LemmaGlossSuggestion:
+    """LLM-generated card-fill for a single token.
+
+    When ``available`` is False, ``message`` explains why (typically no
+    API key, or the LLM lemma assist toggle is off). Otherwise the
+    ``lemma`` / ``gloss`` fields are populated and may be merged into a
+    card on save.
+    """
+    available: bool
+    message: str | None
+    lemma: str | None
+    gloss: str | None
+    transliteration: str | None
+    notes: str | None
 
 
 @strawberry.input

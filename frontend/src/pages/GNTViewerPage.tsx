@@ -200,15 +200,38 @@ function WordCard({ token }: { token: GreekToken }) {
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
           <span className="mt-1.5">
-            <AddToDeckButton
-              language="NT_GREEK"
-              front={token.greek}
-              back={token.translation}
-              transliteration={token.transliteration}
-              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
-              notes={token.dstrongs ? `Strong's ${token.dstrongs}` : null}
-              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
-            />
+            {(() => {
+              // TAGNT `expanded` is "lemma=gloss". Compound rows (~157 in the
+              // corpus) look like "μήποτε=lest + πότε=when"; split on the
+              // first `=` only — Array#split's second arg is a result cap,
+              // not Python's maxsplit, so it would drop the trailing piece.
+              const eq = token.expanded.indexOf('=')
+              const lemma = eq >= 0 ? token.expanded.slice(0, eq) : token.expanded
+              const lemmaGloss = eq >= 0 ? token.expanded.slice(eq + 1) : ''
+              // Let AddToDeckButton decide whether to render: with no back
+              // and assist on, it will fall through to the LLM suggestion.
+              return (
+                <AddToDeckButton
+                  language="NT_GREEK"
+                  front={lemma || undefined}
+                  back={lemmaGloss || token.translation || undefined}
+                  surfaceForm={token.greek}
+                  lemmaHint={lemma || null}
+                  grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+                  // The button itself adds `Form: <surfaceForm>` to notes;
+                  // include only the extras (transliteration, Strong's).
+                  notes={
+                    [
+                      token.transliteration ? `Translit: ${token.transliteration}` : null,
+                      token.dstrongs ? `Strong's ${token.dstrongs}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || null
+                  }
+                  sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
+                />
+              )
+            })()}
           </span>
         </span>
       ) : (

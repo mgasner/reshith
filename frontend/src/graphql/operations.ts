@@ -159,6 +159,7 @@ const USER_API_KEYS_FIELDS = `
   openaiKeyLast4
   anthropicKeyLast4
   encryptionConfigured
+  llmLemmaAssist
 `
 
 export const GET_USER_API_KEYS = gql`
@@ -173,6 +174,19 @@ export const UPDATE_USER_API_KEYS = gql`
   mutation UpdateUserApiKeys($input: UpdateUserAPIKeysInput!) {
     updateUserApiKeys(input: $input) {
       ${USER_API_KEYS_FIELDS}
+    }
+  }
+`
+
+export const SUGGEST_LEMMA_GLOSS = gql`
+  mutation SuggestLemmaGloss($input: SuggestLemmaGlossInput!) {
+    suggestLemmaGloss(input: $input) {
+      available
+      message
+      lemma
+      gloss
+      transliteration
+      notes
     }
   }
 `

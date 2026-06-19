@@ -189,13 +189,26 @@ function WordCard({ token }: { token: GreekToken }) {
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
           <span className="mt-1.5">
+            {/* TALXX often has no English translation; AddToDeckButton hides
+                itself unless the user enables LLM lemma/gloss assist. */}
             <AddToDeckButton
               language="NT_GREEK"
-              front={token.greek}
-              back={token.translation || token.expanded}
-              transliteration={token.transliteration}
+              front={token.expanded || token.greek}
+              back={token.translation || undefined}
+              surfaceForm={token.greek}
+              lemmaHint={token.expanded || null}
               grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
-              notes={token.dstrongs ? `Strong's ${token.dstrongs}` : null}
+              // AddToDeckButton stitches `Form: <surfaceForm>` into notes
+              // itself; only include the extras the button doesn't know about
+              // (transliteration, Strong's ID).
+              notes={
+                [
+                  token.transliteration ? `Translit: ${token.transliteration}` : null,
+                  token.dstrongs ? `Strong's ${token.dstrongs}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || null
+              }
               sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
             />
           </span>

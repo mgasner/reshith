@@ -271,12 +271,15 @@ function WordCard({
             {lexEntry.gloss}
           </span>
         )}
+        {/* When the MW lexicon has no gloss, AddToDeckButton hides itself
+            unless the user enables the LLM lemma/gloss assist. */}
         <span className="mt-1.5">
           <AddToDeckButton
             language="SANSKRIT"
-            front={word.form}
-            back={lexEntry?.gloss ?? word.lemma ?? word.form}
-            transliteration={word.unsandhied || null}
+            front={word.lemma || word.form}
+            back={lexEntry?.gloss}
+            surfaceForm={word.form}
+            lemmaHint={word.lemma}
             grammaticalInfo={
               [
                 word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
@@ -285,7 +288,9 @@ function WordCard({
                 .filter(Boolean)
                 .join(' · ') || null
             }
-            notes={word.lemma ? `Lemma ${word.lemma}` : null}
+            // AddToDeckButton already stitches `Form: <surfaceForm>` into
+            // notes when it differs from the front.
+            notes={null}
             sourceReference={sourceReference ?? null}
           />
         </span>

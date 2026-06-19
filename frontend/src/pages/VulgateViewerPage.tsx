@@ -170,11 +170,14 @@ function WordCard({ token }: { token: VulgateToken }) {
             <span className="text-stone-400 text-xs mt-0.5 italic">{token.relation}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
+          {/* Vulgate has no gloss column. The button only renders if the
+              user enables LLM lemma/gloss assist (in Settings); otherwise
+              AddToDeckButton no-ops. */}
           <span className="mt-1.5">
             <AddToDeckButton
               language="LATIN"
-              front={token.form}
-              back={token.lemma}
+              surfaceForm={token.form}
+              lemmaHint={token.lemma}
               grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : null}
               notes={posName}
               sourceReference={`${token.book} ${token.chapter}:${token.verse}`}

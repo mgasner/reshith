@@ -200,6 +200,12 @@ class UserAPIKeys(Base):
     anthropic_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
     # "openai" or "anthropic"; NULL means use the server default.
     preferred_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # When True, the Add-to-deck button calls the configured LLM to fill in a
+    # missing lemma / gloss before saving the card. Opt-in so users don't get
+    # surprise LLM billing for routine reader interactions.
+    llm_lemma_assist: Mapped[bool] = mapped_column(
+        Boolean, server_default=text("false"), nullable=False
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

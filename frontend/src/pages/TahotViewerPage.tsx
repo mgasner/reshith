@@ -258,14 +258,17 @@ function WordCard({
           <div className="pt-2">
             <AddToDeckButton
               language="BIBLICAL_HEBREW"
-              front={cleanNative.replace(/\//g, '')}
-              back={displayGloss}
-              transliteration={displayTranslit}
+              front={word.lemma || cleanNative.replace(/\//g, '')}
+              back={isTetragrammaton ? 'LORD' : (word.lemmaDefinition || displayGloss)}
+              transliteration={word.lemma ? hebrewToLambdin(word.lemma) : displayTranslit}
               grammaticalInfo={word.morphology}
               notes={
-                word.lemma || word.lemmaId
-                  ? `Lemma ${word.lemma} (Strong's ${word.lemmaId})`
-                  : null
+                [
+                  `Form: ${cleanNative.replace(/\//g, '')} (${displayTranslit})`,
+                  word.lemmaId ? `Strong's ${word.lemmaId}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
               }
               sourceReference={`${BOOK_NAMES[book] ?? book} ${chapter}:${verse}`}
             />

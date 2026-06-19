@@ -27,6 +27,7 @@ from reshith.api.resolvers import (
     mutate_set_current_lesson,
     mutate_set_primary_deck,
     mutate_submit_review,
+    mutate_suggest_lemma_gloss,
     mutate_synthesize_speech,
     mutate_update_deck_srs_settings,
     mutate_update_user_api_keys,
@@ -125,6 +126,7 @@ from reshith.api.types import (
     LatinDeclensionExercise,
     LatinGradeResult,
     LatinVariant,
+    LemmaGlossSuggestion,
     LessonCard,
     LessonProgressInfo,
     LexiconEntry,
@@ -146,6 +148,7 @@ from reshith.api.types import (
     SpeechSynthesisResult,
     SRSConfigType,
     StrongsEntry,
+    SuggestLemmaGlossInput,
     TahotBookInfo,
     TahotChapterInfo,
     TahotVerseTranslation,
@@ -705,6 +708,14 @@ class Mutation:
         input: UpdateUserAPIKeysInput,
     ) -> UserAPIKeysType:
         return await mutate_update_user_api_keys(info, input)
+
+    @strawberry.mutation
+    async def suggest_lemma_gloss(
+        self,
+        info: strawberry.Info,
+        input: SuggestLemmaGlossInput,
+    ) -> LemmaGlossSuggestion:
+        return await mutate_suggest_lemma_gloss(info, input)
 
     @strawberry.mutation
     async def update_deck_srs_settings(

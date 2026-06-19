@@ -116,3 +116,72 @@ Format as JSON with keys: "text", "translation", "notes"
         return json.loads(raw or "{}")
     except json.JSONDecodeError:
         return {"error": "Model returned non-JSON response", "text": raw}
+
+
+LEMMA_ASSIST_SYSTEM_PROMPT = """\
+You are a lexicographer producing flashcard entries for a classical-languages \
+student. Given a surface form pulled from a sacred or classical text, return \
+JSON with the dictionary lemma, a short English gloss (≤8 words), an \
+optional romanization, and an optional short note (etymology, register, or \
+cross-reference). Never invent forms — if you're unsure, prefer leaving a \
+field empty. Respond with JSON only."""
+
+
+async def suggest_lemma_gloss(
+    *,
+    form: str,
+    language: str,
+    lemma_hint: str | None = None,
+    context: str | None = None,
+    provider: LLMProvider = LLMProvider.ANTHROPIC,
+    api_key: str | None = None,
+    model: str | None = None,
+) -> dict[str, str | None]:
+    """Ask an LLM to fill in a card-quality lemma + gloss for a token.
+
+    Returns ``{"error": ...}`` when no API key is configured; otherwise a
+    dict with optional ``lemma``, ``gloss``, ``transliteration``, ``notes``
+    keys. The caller decides which fields to merge into the card.
+    """
+    if not api_key:
+        return {"error": _NOT_CONFIGURED_MSG}
+
+    parts = [
+        f"Language: {language}",
+        f"Surface form: {form}",
+    ]
+    if lemma_hint:
+        parts.append(f"Lemma hint from morphological analyzer: {lemma_hint}")
+    if context:
+        parts.append(f"Surrounding passage: {context}")
+    parts.append(
+        'Respond with a JSON object using these keys (omit a field by setting '
+        'it to null): "lemma" (dictionary form), "gloss" (short English '
+        'translation, ≤8 words), "transliteration" (romanization, if '
+        'applicable), "notes" (one short usage note, optional).'
+    )
+    user_prompt = "\n".join(parts)
+
+    raw = await chat_complete(
+        provider=provider,
+        api_key=api_key,
+        model=model or DEFAULT_MODELS[provider],
+        messages=[
+            {"role": "system", "content": LEMMA_ASSIST_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.1,
+        json_mode=True,
+    )
+
+    try:
+        parsed = json.loads(raw or "{}")
+    except json.JSONDecodeError:
+        return {"error": "Model returned non-JSON response", "text": raw}
+
+    return {
+        "lemma": parsed.get("lemma") or None,
+        "gloss": parsed.get("gloss") or None,
+        "transliteration": parsed.get("transliteration") or None,
+        "notes": parsed.get("notes") or None,
+    }
