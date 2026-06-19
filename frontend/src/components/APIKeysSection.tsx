@@ -11,6 +11,7 @@ interface UserAPIKeys {
   openaiKeyLast4: string | null
   anthropicKeyLast4: string | null
   encryptionConfigured: boolean
+  llmLemmaAssist: boolean
 }
 
 /**
@@ -156,6 +157,40 @@ export function APIKeysSection() {
           <p className="text-xs text-gray-500 mt-1">
             Determines which of your keys is used when both are configured.
           </p>
+        </div>
+
+        <div>
+          <label className="flex items-start gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={current.llmLemmaAssist}
+              disabled={
+                saving || (!current.hasOpenaiKey && !current.hasAnthropicKey)
+              }
+              onChange={async (e) => {
+                setStatus(null)
+                setErrMsg(null)
+                try {
+                  await updateKeys({
+                    variables: { input: { llmLemmaAssist: e.target.checked } },
+                  })
+                  await refetch()
+                  setStatus(e.target.checked ? 'LLM assist enabled' : 'LLM assist disabled')
+                } catch (err) {
+                  setErrMsg(err instanceof Error ? err.message : String(err))
+                }
+              }}
+            />
+            <span>
+              <span className="font-medium">Use LLM lemma/gloss assist</span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                When you click Add-to-deck in a reader and the corpus has no
+                clean lemma or gloss, ask your configured model (e.g. Haiku)
+                to fill it in. Off by default to avoid surprise billing.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 

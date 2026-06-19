@@ -52,6 +52,7 @@ from reshith.api.types import (
     LatinDeclensionExercise,
     LatinGradeResult,
     LatinVariant,
+    LemmaGlossSuggestion,
     LessonCard,
     LessonProgressInfo,
     LexiconEntry,
@@ -73,6 +74,7 @@ from reshith.api.types import (
     SpeechSynthesisResult,
     SRSConfigType,
     SRSState,
+    SuggestLemmaGlossInput,
     TahotBookInfo,
     TahotChapterInfo,
     TahotVerseTranslation,
@@ -2039,6 +2041,7 @@ def _user_api_keys_to_gql(row: models.UserAPIKeys | None) -> UserAPIKeysType:
             openai_key_last4=None,
             anthropic_key_last4=None,
             encryption_configured=encryption_configured,
+            llm_lemma_assist=False,
         )
     openai_plain = (
         secrets_crypto.decrypt(row.openai_api_key_encrypted)
@@ -2062,6 +2065,7 @@ def _user_api_keys_to_gql(row: models.UserAPIKeys | None) -> UserAPIKeysType:
         openai_key_last4=_last4(openai_plain),
         anthropic_key_last4=_last4(anthropic_plain),
         encryption_configured=encryption_configured,
+        llm_lemma_assist=bool(row.llm_lemma_assist),
     )
 
 
@@ -2113,8 +2117,93 @@ async def mutate_update_user_api_keys(
     elif input.preferred_provider is not None:
         row.preferred_provider = input.preferred_provider.value
 
+    if input.llm_lemma_assist is not None:
+        row.llm_lemma_assist = input.llm_lemma_assist
+
     await session.flush()
     return _user_api_keys_to_gql(row)
+
+
+_LLM_LANGUAGE_LABELS: dict[LanguageCode, str] = {
+    LanguageCode.BIBLICAL_HEBREW: "Biblical Hebrew",
+    LanguageCode.LATIN: "Latin",
+    LanguageCode.ECCLESIASTICAL_LATIN: "Ecclesiastical Latin",
+    LanguageCode.ANCIENT_GREEK: "Ancient Greek",
+    LanguageCode.NT_GREEK: "New Testament Greek (Koine)",
+    LanguageCode.SANSKRIT: "Sanskrit",
+    LanguageCode.PALI: "Pali",
+    LanguageCode.BUDDHIST_HYBRID_SANSKRIT: "Buddhist Hybrid Sanskrit",
+    LanguageCode.ARAMAIC: "Aramaic",
+    LanguageCode.MIDRASHIC_HEBREW: "Midrashic Hebrew",
+}
+
+
+async def mutate_suggest_lemma_gloss(
+    info: strawberry.Info, input: SuggestLemmaGlossInput
+) -> LemmaGlossSuggestion:
+    """LLM fallback for the reader Add-to-deck button.
+
+    Honors the per-user opt-in flag and the per-user API key. Returns
+    ``available=False`` (instead of raising) when the user hasn't enabled
+    the assist or hasn't configured a key, so the frontend can render a
+    helpful message inline.
+    """
+    _require_user_id(info)
+    row = await _load_user_api_keys_row(info)
+    if row is None or not row.llm_lemma_assist:
+        return LemmaGlossSuggestion(
+            available=False,
+            message=(
+                "Enable the LLM lemma/gloss assist in Settings to fill in "
+                "cards automatically."
+            ),
+            lemma=None,
+            gloss=None,
+            transliteration=None,
+            notes=None,
+        )
+
+    provider, api_key, model = _user_llm_credentials_from_row(row)
+    if not api_key:
+        return LemmaGlossSuggestion(
+            available=False,
+            message=(
+                "Add an OpenAI or Anthropic API key in Settings to use the "
+                "lemma/gloss assist."
+            ),
+            lemma=None,
+            gloss=None,
+            transliteration=None,
+            notes=None,
+        )
+
+    result = await llm.suggest_lemma_gloss(
+        form=input.form,
+        language=_LLM_LANGUAGE_LABELS.get(input.language, input.language.value),
+        lemma_hint=input.lemma_hint,
+        context=input.context,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+    )
+    if "error" in result:
+        return LemmaGlossSuggestion(
+            available=False,
+            message=str(result.get("error")),
+            lemma=None,
+            gloss=None,
+            transliteration=None,
+            notes=None,
+        )
+
+    return LemmaGlossSuggestion(
+        available=True,
+        message=None,
+        lemma=result.get("lemma"),
+        gloss=result.get("gloss"),
+        transliteration=result.get("transliteration"),
+        notes=result.get("notes"),
+    )
 
 
 async def _load_user_api_keys_row(

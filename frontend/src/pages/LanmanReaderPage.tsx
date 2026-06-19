@@ -271,25 +271,27 @@ function WordCard({
             {lexEntry.gloss}
           </span>
         )}
-        {lexEntry?.gloss && (
-          <span className="mt-1.5">
-            <AddToDeckButton
-              language="SANSKRIT"
-              front={word.lemma || word.form}
-              back={lexEntry.gloss}
-              grammaticalInfo={
-                [
-                  word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
-                  Object.keys(word.feats).length > 0 ? morphGloss(word.feats) : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || null
-              }
-              notes={`Form: ${word.form}`}
-              sourceReference={sourceReference ?? null}
-            />
-          </span>
-        )}
+        {/* When the MW lexicon has no gloss, AddToDeckButton hides itself
+            unless the user enables the LLM lemma/gloss assist. */}
+        <span className="mt-1.5">
+          <AddToDeckButton
+            language="SANSKRIT"
+            front={word.lemma || word.form}
+            back={lexEntry?.gloss}
+            surfaceForm={word.form}
+            lemmaHint={word.lemma}
+            grammaticalInfo={
+              [
+                word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
+                Object.keys(word.feats).length > 0 ? morphGloss(word.feats) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || null
+            }
+            notes={`Form: ${word.form}`}
+            sourceReference={sourceReference ?? null}
+          />
+        </span>
       </span>
     )
   }

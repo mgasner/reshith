@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { gql } from '@apollo/client'
 import { SYNTHESIZE_SPEECH } from '@/graphql/operations'
+import { AddToDeckButton } from '@/components/AddToDeckButton'
 
 // ── GraphQL ──────────────────────────────────────────────────────────────────
 
@@ -169,10 +170,19 @@ function WordCard({ token }: { token: VulgateToken }) {
             <span className="text-stone-400 text-xs mt-0.5 italic">{token.relation}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
-          {/* Add-to-deck is disabled for Vulgate until a Latin lexicon lookup
-              (Whitaker / Lewis & Short) is wired up — PROIEL tokens carry no
-              gloss column, so any saved card would pair the lemma with its
-              part of speech and be useless for vocab study. */}
+          {/* Vulgate has no gloss column. The button only renders if the
+              user enables LLM lemma/gloss assist (in Settings); otherwise
+              AddToDeckButton no-ops. */}
+          <span className="mt-1.5">
+            <AddToDeckButton
+              language="LATIN"
+              surfaceForm={token.form}
+              lemmaHint={token.lemma}
+              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : null}
+              notes={posName}
+              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
+            />
+          </span>
         </span>
       ) : (
         <span className="inline-flex flex-col items-center hover:bg-stone-100 rounded px-1.5 py-1 transition-colors">
