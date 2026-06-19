@@ -3,6 +3,7 @@ import { SpeakButton } from './SpeakButton'
 
 export interface VowelCardData {
   name: string
+  hebrewName?: string
   hebrewExample: string
   transliteration: string
 }
@@ -47,7 +48,14 @@ export function VowelCard({ card, onReview }: VowelCardProps) {
       case 'example':
         return <p className="text-8xl font-hebrew rtl">{card.hebrewExample}</p>
       case 'name':
-        return <p className="text-3xl">{card.name}</p>
+        return (
+          <div className="flex flex-col items-center gap-2">
+            {card.hebrewName && (
+              <p className="text-4xl font-hebrew rtl" dir="rtl">{card.hebrewName}</p>
+            )}
+            <p className="text-3xl">{card.name}</p>
+          </div>
+        )
       case 'transliteration':
         return <p className="text-4xl font-mono">{card.transliteration}</p>
     }
