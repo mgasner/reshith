@@ -271,24 +271,25 @@ function WordCard({
             {lexEntry.gloss}
           </span>
         )}
-        <span className="mt-1.5">
-          <AddToDeckButton
-            language="SANSKRIT"
-            front={word.lemma || word.form}
-            back={lexEntry?.gloss ?? ''}
-            transliteration={word.unsandhied || null}
-            grammaticalInfo={
-              [
-                word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
-                Object.keys(word.feats).length > 0 ? morphGloss(word.feats) : null,
-              ]
-                .filter(Boolean)
-                .join(' · ') || null
-            }
-            notes={`Form: ${word.form}`}
-            sourceReference={sourceReference ?? null}
-          />
-        </span>
+        {lexEntry?.gloss && (
+          <span className="mt-1.5">
+            <AddToDeckButton
+              language="SANSKRIT"
+              front={word.lemma || word.form}
+              back={lexEntry.gloss}
+              grammaticalInfo={
+                [
+                  word.upos ? (UPOS_LABEL[word.upos] ?? word.upos) : null,
+                  Object.keys(word.feats).length > 0 ? morphGloss(word.feats) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || null
+              }
+              notes={`Form: ${word.form}`}
+              sourceReference={sourceReference ?? null}
+            />
+          </span>
+        )}
       </span>
     )
   }
