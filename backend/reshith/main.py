@@ -37,7 +37,12 @@ async def get_context(request: Request):
     current_user_id = decode_token(token) if token else None
 
     async with async_session_maker() as session:
-        yield {"db": session, "current_user_id": current_user_id}
+        try:
+            yield {"db": session, "current_user_id": current_user_id}
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 graphql_app = GraphQLRouter(

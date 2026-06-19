@@ -1,6 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from '@/components/Layout'
+import { RequireAuth } from '@/components/RequireAuth'
 import { HomePage } from '@/pages/HomePage'
+import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
 import { DecksPage } from '@/pages/DecksPage'
 import { StudyPage } from '@/pages/StudyPage'
 import { AlphabetPage } from '@/pages/AlphabetPage'
@@ -52,8 +55,24 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
-        <Route path="decks" element={<DecksPage />} />
-        <Route path="study/:deckId?" element={<StudyPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route
+          path="decks"
+          element={
+            <RequireAuth>
+              <DecksPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="study/:deckId?"
+          element={
+            <RequireAuth>
+              <StudyPage />
+            </RequireAuth>
+          }
+        />
 
         {/* Hebrew */}
         <Route path="hebrew/alphabet" element={<AlphabetPage />} />

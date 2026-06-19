@@ -20,6 +20,7 @@ from reshith.api.resolvers import (
     mutate_grade_translation_exercise,
     mutate_grade_verbal_exercise,
     mutate_login,
+    mutate_register,
     mutate_submit_review,
     mutate_synthesize_speech,
     resolve_article_exercises,
@@ -107,6 +108,7 @@ from reshith.api.types import (
     LoginInput,
     PrepositionExercise,
     PrepositionType,
+    RegisterInput,
     RelativeClauseExercise,
     RelativeClauseGradeResult,
     ReviewInput,
@@ -169,11 +171,10 @@ class Query:
     async def due_cards(
         self,
         info: strawberry.Info,
-        user_id: UUID,
         deck_id: UUID | None = None,
         limit: int = 20,
     ) -> list[CardWithSRS]:
-        return await resolve_due_cards(info, user_id, deck_id, limit)
+        return await resolve_due_cards(info, deck_id, limit)
 
     @strawberry.field
     async def lexicon_search(
@@ -444,6 +445,10 @@ class Mutation:
     @strawberry.mutation
     async def login(self, info: strawberry.Info, input: LoginInput) -> AuthPayload | None:
         return await mutate_login(info, input)
+
+    @strawberry.mutation
+    async def register(self, info: strawberry.Info, input: RegisterInput) -> AuthPayload:
+        return await mutate_register(info, input)
 
     @strawberry.mutation
     async def create_deck(self, info: strawberry.Info, input: CreateDeckInput) -> Deck:

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useApolloClient } from '@apollo/client'
+import { useAuth } from '@/contexts/AuthContext'
 
 const LANGUAGES = [
   {
@@ -131,7 +133,15 @@ const LANGUAGES = [
 export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const apollo = useApolloClient()
+  const { user, logout } = useAuth()
   const [lessonsOpen, setLessonsOpen] = useState(false)
+
+  const handleLogout = async () => {
+    logout()
+    await apollo.resetStore()
+    navigate('/login', { replace: true })
+  }
 
   const getActiveLang = () => {
     if (
@@ -209,7 +219,7 @@ export function Layout() {
             <Link to={activeLang.homePath} className="flex-shrink-0">
               <span className="text-xl font-semibold text-gray-900">Reshith</span>
             </Link>
-            <div className="hidden sm:flex sm:items-center sm:gap-6">
+            <div className="hidden sm:flex sm:items-center sm:gap-6 flex-1">
               {activeLang.hasAlphabet && activeLang.alphabetPath && (
                 <Link
                   to={activeLang.alphabetPath}
@@ -276,6 +286,36 @@ export function Layout() {
               >
                 Decks
               </Link>
+            </div>
+            <div className="hidden sm:flex sm:items-center sm:gap-3 ml-auto">
+              {user ? (
+                <>
+                  <span className="text-sm text-gray-600">
+                    {user.displayName || user.username}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Log out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded"
+                  >
+                    Sign up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

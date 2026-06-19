@@ -1,6 +1,27 @@
-import { ApolloClient, InMemoryCache } from '@apollo/client'
+import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+
+const STORAGE_KEY = 'reshith_auth'
+
+const httpLink = new HttpLink({ uri: '/graphql' })
+
+const authLink = setContext((_, { headers }) => {
+  let token: string | null = null
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) token = JSON.parse(raw).token ?? null
+  } catch {
+    token = null
+  }
+  return {
+    headers: {
+      ...(headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  }
+})
 
 export const client = new ApolloClient({
-  uri: '/graphql',
+  link: from([authLink, httpLink]),
   cache: new InMemoryCache(),
 })

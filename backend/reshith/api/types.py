@@ -42,6 +42,14 @@ class LoginInput:
     password: str
 
 
+@strawberry.input
+class RegisterInput:
+    username: str
+    email: str
+    password: str
+    display_name: str | None = None
+
+
 @strawberry.type
 class Deck:
     id: UUID

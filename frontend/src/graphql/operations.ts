@@ -14,6 +14,20 @@ export const LOGIN = gql`
   }
 `
 
+export const REGISTER = gql`
+  mutation Register($input: RegisterInput!) {
+    register(input: $input) {
+      token
+      user {
+        id
+        username
+        email
+        displayName
+      }
+    }
+  }
+`
+
 export const ME = gql`
   query Me {
     me {
@@ -71,8 +85,8 @@ export const GET_CARDS = gql`
 `
 
 export const GET_DUE_CARDS = gql`
-  query GetDueCards($userId: UUID!, $deckId: UUID, $limit: Int) {
-    dueCards(userId: $userId, deckId: $deckId, limit: $limit) {
+  query GetDueCards($deckId: UUID, $limit: Int) {
+    dueCards(deckId: $deckId, limit: $limit) {
       card {
         id
         deckId

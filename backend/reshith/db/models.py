@@ -1,9 +1,18 @@
 import enum
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -79,8 +88,8 @@ class Card(Base):
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="card", cascade="all, delete-orphan"
     )
-    srs_state: Mapped[Optional["SRSState"]] = relationship(
-        back_populates="card", cascade="all, delete-orphan", uselist=False
+    srs_states: Mapped[list["SRSState"]] = relationship(
+        back_populates="card", cascade="all, delete-orphan"
     )
 
 
@@ -88,9 +97,10 @@ class SRSState(Base):
     """SM-2 spaced repetition state for a card-user pair."""
 
     __tablename__ = "srs_states"
+    __table_args__ = (UniqueConstraint("card_id", "user_id", name="uq_srs_card_user"),)
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    card_id: Mapped[UUID] = mapped_column(ForeignKey("cards.id", ondelete="CASCADE"), unique=True)
+    card_id: Mapped[UUID] = mapped_column(ForeignKey("cards.id", ondelete="CASCADE"))
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     easiness_factor: Mapped[float] = mapped_column(Float, default=2.5)
@@ -100,7 +110,7 @@ class SRSState(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    card: Mapped["Card"] = relationship(back_populates="srs_state")
+    card: Mapped["Card"] = relationship(back_populates="srs_states")
 
 
 class Review(Base):
