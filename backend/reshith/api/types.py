@@ -553,6 +553,10 @@ class GradeLatinExerciseInput:
     expected: str
     vocab_lemma: str | None = None
     pattern: str | None = None
+    # Routes the attempt to the right LessonProgress / primary deck.
+    # Defaults to CLASSICAL for backward-compat with callers that don't
+    # yet send the variant.
+    variant: LatinVariant = LatinVariant.CLASSICAL
 
 
 # ── Qal paradigm types ───────────────────────────────────────────────────────
@@ -825,6 +829,12 @@ class GreekGradeResult:
     feedback: str
 
 
+@strawberry.enum
+class GreekExerciseKind(enum.Enum):
+    DECLENSION = "declension"
+    CONJUGATION = "conjugation"
+
+
 @strawberry.input
 class GradeGreekExerciseInput:
     exercise_id: str
@@ -832,7 +842,12 @@ class GradeGreekExerciseInput:
     expected: str
     vocab_lemma: str | None = None
     pattern: str | None = None
-    variant: GreekVariant | None = None
+    # Defaults preserve backward-compat: ANCIENT + DECLENSION mirror the
+    # original single-mutation behaviour. Conjugation pages and NT-Greek
+    # pages must set these explicitly so attempts are attributed to the
+    # right language and exercise type.
+    variant: GreekVariant = GreekVariant.ANCIENT
+    kind: GreekExerciseKind = GreekExerciseKind.DECLENSION
 
 
 # ── Sanskrit exercise types ───────────────────────────────────────────────────

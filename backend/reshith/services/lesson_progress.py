@@ -157,24 +157,25 @@ async def advance_lesson(
 async def get_all_progress(
     session: AsyncSession, user_id: UUID,
 ) -> list[ProgressInfo]:
-    """Return progress for every existing LessonProgress row + every language
-    with lesson data the user has not yet started."""
-    result = await session.execute(
-        select(models.LessonProgress.language).where(
-            models.LessonProgress.user_id == user_id,
+    """Return progress *only* for languages the user has interacted with.
+
+    Read-only: never inserts a `LessonProgress` row. The navbar uses this
+    to render its per-language strip — surfacing rows the user has never
+    touched would clutter the UI and (more importantly) make a navbar
+    render do a write per supported language.
+    """
+    rows = (
+        await session.execute(
+            select(models.LessonProgress).where(
+                models.LessonProgress.user_id == user_id,
+            )
         )
-    )
-    seen = {r[0] for r in result.all()}
-    languages = list(seen)
-    # Also include all languages that have lesson data so the navbar can show
-    # "L1" for languages the user hasn't visited yet.
-    for lang in vocab_catalog._LESSON_DIRS.keys():
-        if lang not in seen and vocab_catalog.total_lessons(lang) > 0:
-            languages.append(lang)
-    out = []
-    for lang in languages:
-        out.append(await get_progress(session, user_id, lang))
-    return out
+    ).scalars().all()
+    if not rows:
+        return []
+    # Reuse `get_progress` for the mastery + due-count rollup, but only
+    # for languages that already have a row — no implicit insert.
+    return [await get_progress(session, user_id, r.language) for r in rows]
 
 
 # Avoid unused-import warning for func; kept for future aggregations.

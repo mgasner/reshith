@@ -40,6 +40,7 @@ from reshith.api.types import (
     GreekChapterInfo,
     GreekConjugationExercise,
     GreekDeclensionExercise,
+    GreekExerciseKind,
     GreekGradeResult,
     GreekVariant,
     GreekVerseTranslation,
@@ -174,11 +175,19 @@ async def _resolve_max_lesson(
     language: "models.LanguageCode",
     fallback: int,
 ) -> int:
-    """For authed users, return their ``LessonProgress.current_lesson``; for
-    anonymous users, return ``fallback`` (the legacy per-page selector)."""
+    """Resolve the effective max-lesson for an exercise query.
+
+    Anonymous users get the per-page selector value directly. Authenticated
+    users get the *higher* of ``fallback`` (per-page selector, defaults to
+    the page's hardcoded constant) and ``current_lesson`` — that way a
+    user-driven selector still has visible effect (it can broaden scope
+    beyond the current lesson) but a stale page default cannot accidentally
+    drop their pool below where they've progressed to.
+    """
     if user_id is None:
         return fallback
-    return await lesson_progress_svc.get_current_lesson(session, user_id, language)
+    current = await lesson_progress_svc.get_current_lesson(session, user_id, language)
+    return max(current, fallback)
 
 
 async def _require_owned_deck(
@@ -1413,9 +1422,14 @@ async def mutate_grade_latin_declension_exercise(
         submitted=input.submitted,
         expected=input.expected,
     )
+    db_lang = (
+        models.LanguageCode.ECCLESIASTICAL_LATIN
+        if input.variant == LatinVariant.ECCLESIASTICAL
+        else models.LanguageCode.LATIN
+    )
     await attempt_svc.record_attempt(
         session, user_id,
-        language=models.LanguageCode.LATIN,
+        language=db_lang,
         exercise_type="latin_declension",
         pattern=input.pattern,
         correct=correct,
@@ -1439,9 +1453,14 @@ async def mutate_grade_latin_conjugation_exercise(
         submitted=input.submitted,
         expected=input.expected,
     )
+    db_lang = (
+        models.LanguageCode.ECCLESIASTICAL_LATIN
+        if input.variant == LatinVariant.ECCLESIASTICAL
+        else models.LanguageCode.LATIN
+    )
     await attempt_svc.record_attempt(
         session, user_id,
-        language=models.LanguageCode.LATIN,
+        language=db_lang,
         exercise_type="latin_conjugation",
         pattern=input.pattern,
         correct=correct,
@@ -1525,9 +1544,18 @@ async def mutate_grade_greek_exercise(
     info: strawberry.Info,
     input: GradeGreekExerciseInput,
 ) -> GreekGradeResult:
+    """Single grading mutation for both Greek declension and conjugation.
+
+    The ``kind`` input field routes to the right grader and tags the
+    attempt with the right exercise_type so that declension and
+    conjugation pattern weighting stay separate.
+    """
     session: AsyncSession = info.context["db"]
     user_id = _maybe_user_id(info)
-    correct, feedback = greek_declension.grade_exercise(
+
+    is_conj = input.kind == GreekExerciseKind.CONJUGATION
+    grader = greek_conjugation.grade_exercise if is_conj else greek_declension.grade_exercise
+    correct, feedback = grader(
         submitted=input.submitted,
         expected=input.expected,
     )
@@ -1538,7 +1566,7 @@ async def mutate_grade_greek_exercise(
     await attempt_svc.record_attempt(
         session, user_id,
         language=db_lang,
-        exercise_type="greek_declension",
+        exercise_type="greek_conjugation" if is_conj else "greek_declension",
         pattern=input.pattern,
         correct=correct,
         vocab_lemma=input.vocab_lemma,

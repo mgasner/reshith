@@ -74,7 +74,7 @@ def load_vocab(language: models.LanguageCode, max_lesson: int) -> list[VocabSeed
     return []
 
 
-_LESSON_DIRS: dict[models.LanguageCode, str] = {
+LESSON_DIRS: dict[models.LanguageCode, str] = {
     models.LanguageCode.BIBLICAL_HEBREW: "hebrew",
     models.LanguageCode.LATIN: "latin",
     models.LanguageCode.ECCLESIASTICAL_LATIN: "ecclesiastical_latin",
@@ -84,9 +84,14 @@ _LESSON_DIRS: dict[models.LanguageCode, str] = {
 }
 
 
+def supported_languages() -> list[models.LanguageCode]:
+    """Languages with at least one lesson JSON file on disk."""
+    return [lang for lang in LESSON_DIRS if total_lessons(lang) > 0]
+
+
 def total_lessons(language: models.LanguageCode) -> int:
     """Number of lesson JSON files present for ``language``."""
-    dirname = _LESSON_DIRS.get(language)
+    dirname = LESSON_DIRS.get(language)
     if not dirname:
         return 0
     lesson_dir = _DATA_BASE / dirname

@@ -5,11 +5,7 @@ import { VocabularyCard, VocabularyCardData } from '@/components/VocabularyCard'
 import { useSwipe } from '@/hooks/useSwipe'
 import { AddToSRSButton } from '@/components/AddToSRSButton'
 import { useAuth } from '@/contexts/AuthContext'
-import {
-  GET_LESSON_PROGRESS,
-  GET_MY_PROGRESS,
-  SUBMIT_REVIEW,
-} from '@/graphql/operations'
+import { SUBMIT_REVIEW } from '@/graphql/operations'
 
 // Map this page's `languageCode` (db enum value like "hbo") to the GraphQL
 // LanguageCode enum string the backend's `importLesson` mutation expects.
@@ -59,16 +55,21 @@ export function LessonPage({ languageCode = 'hbo', dataDir = 'hebrew' }: LessonP
   const [loading, setLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const gqlLang = LANG_TO_GQL[languageCode]
-  const [submitReview] = useMutation(SUBMIT_REVIEW, {
-    // Refresh progress queries after each review so the lesson study page
-    // and nav indicator stay in sync without a page reload.
-    refetchQueries: gqlLang
-      ? [
-          { query: GET_LESSON_PROGRESS, variables: { language: gqlLang } },
-          { query: GET_MY_PROGRESS },
-        ]
-      : [],
-  })
+  // Note: we deliberately do not pass `refetchQueries` here. A typical
+  // session can flip 20+ cards, and refetching lessonProgress +
+  // myProgress per flip is 40+ network requests — wasteful and slow.
+  // Instead, we evict those queries from the cache on unmount so the
+  // next mount of the study page or navbar refetches fresh state.
+  const [submitReview, { client }] = useMutation(SUBMIT_REVIEW)
+
+  useEffect(() => {
+    return () => {
+      if (!gqlLang) return
+      client.cache.evict({ fieldName: 'lessonProgress' })
+      client.cache.evict({ fieldName: 'myProgress' })
+      client.cache.gc()
+    }
+  }, [client, gqlLang])
 
   useEffect(() => {
     const lessonNum = lessonId || '01'

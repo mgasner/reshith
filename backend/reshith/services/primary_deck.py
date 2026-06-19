@@ -117,10 +117,42 @@ async def ensure_cards_for_vocab(
     if not rows:
         return {}
 
-    stmt = pg_insert(models.Card).values(rows).on_conflict_do_nothing(index_elements=["id"])
+    # On conflict, backfill any column the existing row left blank. This
+    # matters because the by-lemma SUBMIT_REVIEW flow inserts a stub
+    # card (definition="") before the user has visited the lesson page;
+    # when set_current_lesson later calls us with the full lesson data,
+    # we need to overwrite those blanks rather than silently keep the stub.
+    stmt = pg_insert(models.Card).values(rows)
+    excluded = stmt.excluded
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["id"],
+        set_={
+            "back": _coalesce_if_blank(models.Card.back, excluded.back),
+            "transliteration": _coalesce_if_blank(
+                models.Card.transliteration, excluded.transliteration
+            ),
+            "grammatical_info": _coalesce_if_blank(
+                models.Card.grammatical_info, excluded.grammatical_info
+            ),
+            "source_reference": _coalesce_if_blank(
+                models.Card.source_reference, excluded.source_reference
+            ),
+            "notes": _coalesce_if_blank(models.Card.notes, excluded.notes),
+        },
+    )
     await session.execute(stmt)
 
     # Fetch the (now-present) rows so callers can map id → card.
     ids = [r["id"] for r in rows]
     fetched = await session.execute(select(models.Card).where(models.Card.id.in_(ids)))
     return {c.id: c for c in fetched.scalars().all()}
+
+
+def _coalesce_if_blank(existing, new_value):
+    """SQL expression: return ``new_value`` when ``existing`` is NULL or
+    empty string, else keep ``existing``."""
+    from sqlalchemy import case
+    return case(
+        ((existing.is_(None)) | (existing == ""), new_value),
+        else_=existing,
+    )

@@ -427,6 +427,9 @@ export function Layout() {
             {activeLang.hasVowels && activeLang.vowelsPath && (
               <Link to={activeLang.vowelsPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Vowels</Link>
             )}
+            {user && activeLang.studyPath && (
+              <Link to={activeLang.studyPath} className="block py-2 text-sm font-medium text-blue-700 hover:text-blue-900">Study</Link>
+            )}
             <Link to={activeLang.exercisesPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Exercises</Link>
             <div className="py-2">
               <span className="text-sm font-medium text-gray-700">Lessons</span>
