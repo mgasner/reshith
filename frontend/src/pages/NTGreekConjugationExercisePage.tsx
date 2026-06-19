@@ -58,6 +58,8 @@ export function NTGreekConjugationExercisePage() {
             exerciseId: currentExercise.id,
             submitted: userAnswer,
             expected: currentExercise.answer,
+            variant: 'KOINE',
+            kind: 'CONJUGATION',
           },
         },
       })

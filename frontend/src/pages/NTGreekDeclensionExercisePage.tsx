@@ -58,6 +58,8 @@ export function NTGreekDeclensionExercisePage() {
             exerciseId: currentExercise.id,
             submitted: userAnswer,
             expected: currentExercise.answer,
+            variant: 'KOINE',
+            kind: 'DECLENSION',
           },
         },
       })

@@ -59,6 +59,7 @@ export function EcclesiasticalLatinDeclensionExercisePage() {
             exerciseId: currentExercise.id,
             submitted: userAnswer,
             expected: currentExercise.answer,
+            variant: 'ECCLESIASTICAL',
           },
         },
       })
