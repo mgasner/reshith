@@ -177,6 +177,7 @@ async def resolve_decks(
                 name=deck.name,
                 description=deck.description,
                 language=db_language_to_gql(deck.language),
+                is_primary=deck.is_primary,
                 created_at=deck.created_at,
                 updated_at=deck.updated_at,
                 card_count=card_count,
@@ -207,6 +208,7 @@ async def resolve_deck(info: strawberry.Info, id: UUID) -> Deck | None:
         name=deck.name,
         description=deck.description,
         language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
         created_at=deck.created_at,
         updated_at=deck.updated_at,
         card_count=card_count,
@@ -342,14 +344,99 @@ async def mutate_create_deck(info: strawberry.Info, input: CreateDeckInput) -> D
     session.add(deck)
     await session.flush()
 
+    # If this is the user's first deck in this language, mark it primary so
+    # there's never a "no primary deck" state for users who have any deck here.
+    existing_count = await session.execute(
+        select(func.count()).where(
+            models.Deck.owner_id == user_id,
+            models.Deck.language == deck.language,
+            models.Deck.id != deck.id,
+        )
+    )
+    if (existing_count.scalar() or 0) == 0:
+        deck.is_primary = True
+        await session.flush()
+
     return Deck(
         id=deck.id,
         name=deck.name,
         description=deck.description,
         language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
         created_at=deck.created_at,
         updated_at=deck.updated_at,
         card_count=0,
+    )
+
+
+async def resolve_primary_deck(
+    info: strawberry.Info, language: LanguageCode
+) -> Deck | None:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+
+    result = await session.execute(
+        select(models.Deck).where(
+            models.Deck.owner_id == user_id,
+            models.Deck.language == gql_language_to_db(language),
+            models.Deck.is_primary.is_(True),
+        )
+    )
+    deck = result.scalar_one_or_none()
+    if deck is None:
+        return None
+
+    count_query = select(func.count()).where(models.Card.deck_id == deck.id)
+    count_result = await session.execute(count_query)
+    card_count = count_result.scalar() or 0
+
+    return Deck(
+        id=deck.id,
+        name=deck.name,
+        description=deck.description,
+        language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
+        created_at=deck.created_at,
+        updated_at=deck.updated_at,
+        card_count=card_count,
+    )
+
+
+async def mutate_set_primary_deck(info: strawberry.Info, deck_id: UUID) -> Deck:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    deck = await _require_owned_deck(session, deck_id, user_id)
+
+    # Clear primary on any other deck the user owns in the same language so the
+    # partial unique index is honoured.
+    other = await session.execute(
+        select(models.Deck).where(
+            models.Deck.owner_id == user_id,
+            models.Deck.language == deck.language,
+            models.Deck.id != deck.id,
+            models.Deck.is_primary.is_(True),
+        )
+    )
+    for other_deck in other.scalars().all():
+        other_deck.is_primary = False
+    await session.flush()
+
+    deck.is_primary = True
+    await session.flush()
+
+    count_query = select(func.count()).where(models.Card.deck_id == deck.id)
+    count_result = await session.execute(count_query)
+    card_count = count_result.scalar() or 0
+
+    return Deck(
+        id=deck.id,
+        name=deck.name,
+        description=deck.description,
+        language=db_language_to_gql(deck.language),
+        is_primary=deck.is_primary,
+        created_at=deck.created_at,
+        updated_at=deck.updated_at,
+        card_count=card_count,
     )
 
 

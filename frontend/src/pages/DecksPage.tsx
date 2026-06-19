@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery } from '@apollo/client'
-import { CREATE_DECK, GET_DECKS } from '@/graphql/operations'
+import { CREATE_DECK, GET_DECKS, SET_PRIMARY_DECK } from '@/graphql/operations'
 
 const LANGUAGE_NAMES: Record<string, string> = {
   BIBLICAL_HEBREW: 'Biblical Hebrew',
@@ -21,12 +21,14 @@ interface Deck {
   name: string
   description: string | null
   language: string
+  isPrimary: boolean
   cardCount: number
 }
 
 export function DecksPage() {
   const { data, loading, error, refetch } = useQuery<{ decks: Deck[] }>(GET_DECKS)
   const [createDeck, { loading: creating }] = useMutation(CREATE_DECK)
+  const [setPrimaryDeck] = useMutation(SET_PRIMARY_DECK)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -139,14 +141,38 @@ export function DecksPage() {
         <ul className="space-y-3">
           {decks.map((deck) => (
             <li key={deck.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">{deck.name}</h2>
-                <p className="text-sm text-gray-500">
-                  {LANGUAGE_NAMES[deck.language] ?? deck.language} · {deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}
-                </p>
-                {deck.description && (
-                  <p className="text-sm text-gray-600 mt-1">{deck.description}</p>
-                )}
+              <div className="flex items-start gap-2 min-w-0">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (deck.isPrimary) return
+                    await setPrimaryDeck({ variables: { deckId: deck.id } })
+                    await refetch()
+                  }}
+                  disabled={deck.isPrimary}
+                  className={`text-lg leading-none mt-0.5 transition-colors ${
+                    deck.isPrimary
+                      ? 'text-amber-500 cursor-default'
+                      : 'text-stone-300 hover:text-amber-500'
+                  }`}
+                  title={
+                    deck.isPrimary
+                      ? `Primary ${LANGUAGE_NAMES[deck.language] ?? deck.language} deck`
+                      : `Make primary ${LANGUAGE_NAMES[deck.language] ?? deck.language} deck`
+                  }
+                  aria-label={deck.isPrimary ? 'Primary deck' : 'Set as primary deck'}
+                >
+                  {deck.isPrimary ? '★' : '☆'}
+                </button>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-gray-900">{deck.name}</h2>
+                  <p className="text-sm text-gray-500">
+                    {LANGUAGE_NAMES[deck.language] ?? deck.language} · {deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}
+                  </p>
+                  {deck.description && (
+                    <p className="text-sm text-gray-600 mt-1">{deck.description}</p>
+                  )}
+                </div>
               </div>
               <Link
                 to={`/study/${deck.id}`}
