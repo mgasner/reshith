@@ -20,17 +20,22 @@ from reshith.api.resolvers import (
     mutate_grade_sanskrit_exercise,
     mutate_grade_translation_exercise,
     mutate_grade_verbal_exercise,
+    mutate_import_lesson,
     mutate_login,
     mutate_register,
     mutate_set_primary_deck,
     mutate_submit_review,
     mutate_synthesize_speech,
+    mutate_update_deck_srs_settings,
+    mutate_update_user_srs_settings,
     resolve_article_exercises,
     resolve_cards,
     resolve_comparative_exercises,
     resolve_deck,
+    resolve_deck_srs_settings,
     resolve_decks,
     resolve_due_cards,
+    resolve_effective_srs_config,
     resolve_gnt_books,
     resolve_gnt_chapter,
     resolve_gnt_chapter_translations,
@@ -65,6 +70,7 @@ from reshith.api.resolvers import (
     resolve_tahot_search,
     resolve_tahot_verse,
     resolve_translation_exercises,
+    resolve_user_srs_settings,
     resolve_verbal_exercises,
     resolve_vulgate_books,
     resolve_vulgate_chapter,
@@ -84,6 +90,7 @@ from reshith.api.types import (
     CreateCardInput,
     CreateDeckInput,
     Deck,
+    DeckSRSConfigType,
     Drill,
     ExerciseDirection,
     ExerciseGradeResult,
@@ -104,6 +111,7 @@ from reshith.api.types import (
     GreekGradeResult,
     GreekVariant,
     GreekVerseTranslation,
+    ImportLessonInput,
     InterlinearVerse,
     LanguageCode,
     LatinConjugationExercise,
@@ -127,6 +135,7 @@ from reshith.api.types import (
     SentenceExercise,
     SentencePattern,
     SpeechSynthesisResult,
+    SRSConfigType,
     StrongsEntry,
     TahotBookInfo,
     TahotChapterInfo,
@@ -135,6 +144,8 @@ from reshith.api.types import (
     TranslationGradeResult,
     TranslationHelp,
     TranslationPattern,
+    UpdateDeckSRSSettingsInput,
+    UpdateUserSRSSettingsInput,
     User,
     VerbalExercise,
     VerbalGradeResult,
@@ -190,6 +201,22 @@ class Query:
         limit: int = 20,
     ) -> list[CardWithSRS]:
         return await resolve_due_cards(info, deck_id, limit)
+
+    @strawberry.field
+    async def user_srs_settings(self, info: strawberry.Info) -> SRSConfigType:
+        return await resolve_user_srs_settings(info)
+
+    @strawberry.field
+    async def deck_srs_settings(
+        self, info: strawberry.Info, deck_id: UUID
+    ) -> DeckSRSConfigType:
+        return await resolve_deck_srs_settings(info, deck_id)
+
+    @strawberry.field
+    async def effective_srs_config(
+        self, info: strawberry.Info, deck_id: UUID | None = None
+    ) -> SRSConfigType:
+        return await resolve_effective_srs_config(info, deck_id)
 
     @strawberry.field
     async def lexicon_search(
@@ -619,6 +646,30 @@ class Mutation:
         input: GradeSanskritExerciseInput,
     ) -> SanskritGradeResult:
         return await mutate_grade_sanskrit_exercise(info, input)
+
+    @strawberry.mutation
+    async def update_user_srs_settings(
+        self,
+        info: strawberry.Info,
+        input: UpdateUserSRSSettingsInput,
+    ) -> SRSConfigType:
+        return await mutate_update_user_srs_settings(info, input)
+
+    @strawberry.mutation
+    async def update_deck_srs_settings(
+        self,
+        info: strawberry.Info,
+        input: UpdateDeckSRSSettingsInput,
+    ) -> DeckSRSConfigType:
+        return await mutate_update_deck_srs_settings(info, input)
+
+    @strawberry.mutation
+    async def import_lesson(
+        self,
+        info: strawberry.Info,
+        input: ImportLessonInput,
+    ) -> Deck:
+        return await mutate_import_lesson(info, input)
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

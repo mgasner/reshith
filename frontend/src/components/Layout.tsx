@@ -319,6 +319,22 @@ export function Layout() {
               >
                 Decks
               </Link>
+              {user && (
+                <>
+                  <Link
+                    to="/study"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Study
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Settings
+                  </Link>
+                </>
+              )}
             </div>
             </div>
             <div className="hidden sm:flex sm:items-center sm:gap-3 ml-auto">

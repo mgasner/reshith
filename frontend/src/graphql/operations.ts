@@ -121,6 +121,75 @@ export const GET_DUE_CARDS = gql`
   }
 `
 
+const SRS_CONFIG_FIELDS = `
+  initialEf
+  minimumEf
+  graduatingIntervalDays
+  easyIntervalDays
+  hardMultiplier
+  easyBonus
+  intervalModifier
+  maximumIntervalDays
+  lapseMultiplier
+  lapseMinimumIntervalDays
+  newCardsPerDay
+  reviewsPerDay
+`
+
+export const GET_USER_SRS_SETTINGS = gql`
+  query GetUserSRSSettings {
+    userSrsSettings {
+      ${SRS_CONFIG_FIELDS}
+    }
+  }
+`
+
+export const UPDATE_USER_SRS_SETTINGS = gql`
+  mutation UpdateUserSRSSettings($input: UpdateUserSRSSettingsInput!) {
+    updateUserSrsSettings(input: $input) {
+      ${SRS_CONFIG_FIELDS}
+    }
+  }
+`
+
+export const GET_DECK_SRS_SETTINGS = gql`
+  query GetDeckSRSSettings($deckId: UUID!) {
+    deckSrsSettings(deckId: $deckId) {
+      deckId
+      ${SRS_CONFIG_FIELDS}
+    }
+  }
+`
+
+export const GET_EFFECTIVE_SRS_CONFIG = gql`
+  query GetEffectiveSRSConfig($deckId: UUID) {
+    effectiveSrsConfig(deckId: $deckId) {
+      ${SRS_CONFIG_FIELDS}
+    }
+  }
+`
+
+export const UPDATE_DECK_SRS_SETTINGS = gql`
+  mutation UpdateDeckSRSSettings($input: UpdateDeckSRSSettingsInput!) {
+    updateDeckSrsSettings(input: $input) {
+      deckId
+      ${SRS_CONFIG_FIELDS}
+    }
+  }
+`
+
+export const IMPORT_LESSON_TO_DECK = gql`
+  mutation ImportLessonToDeck($input: ImportLessonInput!) {
+    importLesson(input: $input) {
+      id
+      name
+      description
+      language
+      cardCount
+    }
+  }
+`
+
 export const LEXICON_SEARCH = gql`
   query LexiconSearch($query: String!, $language: LanguageCode!, $limit: Int) {
     lexiconSearch(query: $query, language: $language, limit: $limit) {

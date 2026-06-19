@@ -1,7 +1,9 @@
 """GraphQL resolvers."""
 
+import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
+from pathlib import Path
 from uuid import UUID
 
 import strawberry
@@ -20,6 +22,7 @@ from reshith.api.types import (
     CreateCardInput,
     CreateDeckInput,
     Deck,
+    DeckSRSConfigType,
     Drill,
     ExerciseDirection,
     ExerciseGradeResult,
@@ -40,6 +43,7 @@ from reshith.api.types import (
     GreekGradeResult,
     GreekVariant,
     GreekVerseTranslation,
+    ImportLessonInput,
     InterlinearVerse,
     InterlinearWord,
     LanguageCode,
@@ -64,6 +68,7 @@ from reshith.api.types import (
     SentenceExercise,
     SentencePattern,
     SpeechSynthesisResult,
+    SRSConfigType,
     SRSState,
     TahotBookInfo,
     TahotChapterInfo,
@@ -72,6 +77,8 @@ from reshith.api.types import (
     TranslationGradeResult,
     TranslationHelp,
     TranslationPattern,
+    UpdateDeckSRSSettingsInput,
+    UpdateUserSRSSettingsInput,
     User,
     VerbalExercise,
     VerbalGradeResult,
@@ -245,11 +252,43 @@ async def resolve_due_cards(
     deck_id: UUID | None = None,
     limit: int = 20,
 ) -> list[CardWithSRS]:
+    """Return cards due for review for the authenticated user.
+
+    New cards (no SRS row yet) come first, capped by ``new_cards_per_day``;
+    review cards (SRS row whose ``next_review`` has passed) follow, capped by
+    ``reviews_per_day`` minus the number already reviewed since midnight UTC.
+    Both caps are read from the effective :class:`SRSConfig` for the deck
+    (defaults when ``deck_id`` is omitted).
+    """
     session: AsyncSession = info.context["db"]
     user_id = _require_user_id(info)
+    if deck_id:
+        await _require_owned_deck(session, deck_id, user_id)
 
-    query = (
-        select(models.Card, models.SRSState)
+    config = await _effective_srs_config(session, user_id, deck_id)
+
+    now = datetime.now(UTC)
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Count today's reviews so daily caps wind down as the user studies.
+    reviewed_today_query = (
+        select(func.count())
+        .select_from(models.Review)
+        .where(
+            models.Review.user_id == user_id,
+            models.Review.reviewed_at >= midnight,
+        )
+    )
+    if deck_id:
+        reviewed_today_query = reviewed_today_query.join(
+            models.Card, models.Card.id == models.Review.card_id
+        ).where(models.Card.deck_id == deck_id)
+    reviewed_today = (await session.execute(reviewed_today_query)).scalar() or 0
+    reviews_remaining = max(0, config.reviews_per_day - reviewed_today)
+
+    # New cards: cards owned by this user with no SRS row yet.
+    new_cards_query = (
+        select(models.Card)
         .join(models.Deck, models.Card.deck_id == models.Deck.id)
         .outerjoin(
             models.SRSState,
@@ -257,22 +296,35 @@ async def resolve_due_cards(
             & (models.SRSState.user_id == user_id),
         )
         .where(models.Deck.owner_id == user_id)
-        .where(
-            (models.SRSState.next_review <= datetime.now()) | (models.SRSState.id.is_(None))
-        )
+        .where(models.SRSState.id.is_(None))
+        .order_by(models.Card.created_at.asc())
     )
-
     if deck_id:
-        await _require_owned_deck(session, deck_id, user_id)
-        query = query.where(models.Card.deck_id == deck_id)
+        new_cards_query = new_cards_query.where(models.Card.deck_id == deck_id)
+    new_card_limit = min(limit, config.new_cards_per_day)
+    new_cards_query = new_cards_query.limit(new_card_limit)
+    new_cards = (await session.execute(new_cards_query)).scalars().all()
 
-    query = query.limit(limit)
+    review_slots = max(0, limit - len(new_cards))
+    review_limit = min(review_slots, reviews_remaining)
+    review_rows: list[tuple] = []
+    if review_limit > 0:
+        review_query = (
+            select(models.Card, models.SRSState)
+            .join(models.Deck, models.Card.deck_id == models.Deck.id)
+            .join(models.SRSState, models.SRSState.card_id == models.Card.id)
+            .where(models.Deck.owner_id == user_id)
+            .where(models.SRSState.user_id == user_id)
+            .where(models.SRSState.next_review <= now)
+            .order_by(models.SRSState.next_review.asc())
+            .limit(review_limit)
+        )
+        if deck_id:
+            review_query = review_query.where(models.Card.deck_id == deck_id)
+        review_rows = (await session.execute(review_query)).all()
 
-    result = await session.execute(query)
-    rows = result.all()
-
-    return [
-        CardWithSRS(
+    def _card_gql(card: models.Card, srs_state: models.SRSState | None) -> CardWithSRS:
+        return CardWithSRS(
             card=Card(
                 id=card.id,
                 deck_id=card.deck_id,
@@ -294,7 +346,9 @@ async def resolve_due_cards(
             if srs_state
             else None,
         )
-        for card, srs_state in rows
+
+    return [_card_gql(c, None) for c in new_cards] + [
+        _card_gql(card, srs_state) for card, srs_state in review_rows
     ]
 
 
@@ -478,14 +532,18 @@ async def mutate_submit_review(
     session: AsyncSession = info.context["db"]
     user_id = _require_user_id(info)
 
-    # Verify the card belongs to a deck the current user owns.
+    # Verify the card belongs to a deck the current user owns and pick up the
+    # deck id so we can look up per-deck SRS config overrides.
     owner_check = await session.execute(
-        select(models.Card.id)
+        select(models.Card)
         .join(models.Deck, models.Card.deck_id == models.Deck.id)
         .where(models.Card.id == input.card_id, models.Deck.owner_id == user_id)
     )
-    if owner_check.scalar_one_or_none() is None:
+    card = owner_check.scalar_one_or_none()
+    if card is None:
         raise Exception("Card not found")
+
+    config = await _effective_srs_config(session, user_id, card.deck_id)
 
     result = await session.execute(
         select(models.SRSState).where(
@@ -501,6 +559,7 @@ async def mutate_submit_review(
             easiness_factor=srs_state.easiness_factor,
             interval_days=srs_state.interval_days,
             repetitions=srs_state.repetitions,
+            config=config,
         )
         srs_state.easiness_factor = update.easiness_factor
         srs_state.interval_days = update.interval_days
@@ -509,9 +568,10 @@ async def mutate_submit_review(
     else:
         update = srs.calculate_sm2(
             quality=input.quality,
-            easiness_factor=2.5,
+            easiness_factor=config.initial_ef,
             interval_days=0,
             repetitions=0,
+            config=config,
         )
         srs_state = models.SRSState(
             card_id=input.card_id,
@@ -1489,6 +1549,342 @@ async def mutate_register(info: strawberry.Info, input: RegisterInput) -> AuthPa
     await session.flush()
     token = create_access_token(db_user.id)
     return AuthPayload(token=token, user=_db_user_to_gql(db_user))
+
+
+# ── SRS configuration helpers / resolvers ─────────────────────────────────────
+
+
+def _user_settings_to_dict(row: models.UserSRSSettings | None) -> dict:
+    if row is None:
+        return {}
+    return {name: getattr(row, name) for name in srs.CONFIG_FIELD_NAMES}
+
+
+def _deck_settings_to_dict(row: models.DeckSRSSettings | None) -> dict:
+    if row is None:
+        return {}
+    # Only include keys whose value is not None — null = inherit.
+    return {
+        name: getattr(row, name)
+        for name in srs.CONFIG_FIELD_NAMES
+        if getattr(row, name) is not None
+    }
+
+
+async def _get_or_create_user_settings(
+    session: AsyncSession, user_id: UUID
+) -> models.UserSRSSettings:
+    result = await session.execute(
+        select(models.UserSRSSettings).where(models.UserSRSSettings.user_id == user_id)
+    )
+    row = result.scalar_one_or_none()
+    if row is not None:
+        return row
+    row = models.UserSRSSettings(user_id=user_id)
+    session.add(row)
+    await session.flush()
+    return row
+
+
+async def _get_deck_settings(
+    session: AsyncSession, deck_id: UUID
+) -> models.DeckSRSSettings | None:
+    result = await session.execute(
+        select(models.DeckSRSSettings).where(models.DeckSRSSettings.deck_id == deck_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def _effective_srs_config(
+    session: AsyncSession,
+    user_id: UUID,
+    deck_id: UUID | None,
+) -> srs.SRSConfig:
+    user_row = await _get_or_create_user_settings(session, user_id)
+    deck_row = await _get_deck_settings(session, deck_id) if deck_id else None
+    return srs.merge_config(_user_settings_to_dict(user_row), _deck_settings_to_dict(deck_row))
+
+
+def _user_settings_to_gql(row: models.UserSRSSettings) -> SRSConfigType:
+    return SRSConfigType(
+        initial_ef=row.initial_ef,
+        minimum_ef=row.minimum_ef,
+        graduating_interval_days=row.graduating_interval_days,
+        easy_interval_days=row.easy_interval_days,
+        hard_multiplier=row.hard_multiplier,
+        easy_bonus=row.easy_bonus,
+        interval_modifier=row.interval_modifier,
+        maximum_interval_days=row.maximum_interval_days,
+        lapse_multiplier=row.lapse_multiplier,
+        lapse_minimum_interval_days=row.lapse_minimum_interval_days,
+        new_cards_per_day=row.new_cards_per_day,
+        reviews_per_day=row.reviews_per_day,
+    )
+
+
+def _config_to_gql(config: srs.SRSConfig) -> SRSConfigType:
+    return SRSConfigType(
+        initial_ef=config.initial_ef,
+        minimum_ef=config.minimum_ef,
+        graduating_interval_days=config.graduating_interval_days,
+        easy_interval_days=config.easy_interval_days,
+        hard_multiplier=config.hard_multiplier,
+        easy_bonus=config.easy_bonus,
+        interval_modifier=config.interval_modifier,
+        maximum_interval_days=config.maximum_interval_days,
+        lapse_multiplier=config.lapse_multiplier,
+        lapse_minimum_interval_days=config.lapse_minimum_interval_days,
+        new_cards_per_day=config.new_cards_per_day,
+        reviews_per_day=config.reviews_per_day,
+    )
+
+
+def _deck_settings_to_gql(
+    deck_id: UUID, row: models.DeckSRSSettings | None
+) -> DeckSRSConfigType:
+    if row is None:
+        return DeckSRSConfigType(
+            deck_id=deck_id,
+            initial_ef=None,
+            minimum_ef=None,
+            graduating_interval_days=None,
+            easy_interval_days=None,
+            hard_multiplier=None,
+            easy_bonus=None,
+            interval_modifier=None,
+            maximum_interval_days=None,
+            lapse_multiplier=None,
+            lapse_minimum_interval_days=None,
+            new_cards_per_day=None,
+            reviews_per_day=None,
+        )
+    return DeckSRSConfigType(
+        deck_id=deck_id,
+        initial_ef=row.initial_ef,
+        minimum_ef=row.minimum_ef,
+        graduating_interval_days=row.graduating_interval_days,
+        easy_interval_days=row.easy_interval_days,
+        hard_multiplier=row.hard_multiplier,
+        easy_bonus=row.easy_bonus,
+        interval_modifier=row.interval_modifier,
+        maximum_interval_days=row.maximum_interval_days,
+        lapse_multiplier=row.lapse_multiplier,
+        lapse_minimum_interval_days=row.lapse_minimum_interval_days,
+        new_cards_per_day=row.new_cards_per_day,
+        reviews_per_day=row.reviews_per_day,
+    )
+
+
+async def resolve_user_srs_settings(info: strawberry.Info) -> SRSConfigType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    row = await _get_or_create_user_settings(session, user_id)
+    return _user_settings_to_gql(row)
+
+
+async def resolve_deck_srs_settings(
+    info: strawberry.Info, deck_id: UUID
+) -> DeckSRSConfigType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    await _require_owned_deck(session, deck_id, user_id)
+    row = await _get_deck_settings(session, deck_id)
+    return _deck_settings_to_gql(deck_id, row)
+
+
+async def resolve_effective_srs_config(
+    info: strawberry.Info, deck_id: UUID | None = None
+) -> SRSConfigType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    if deck_id:
+        await _require_owned_deck(session, deck_id, user_id)
+    config = await _effective_srs_config(session, user_id, deck_id)
+    return _config_to_gql(config)
+
+
+async def mutate_update_user_srs_settings(
+    info: strawberry.Info, input: UpdateUserSRSSettingsInput
+) -> SRSConfigType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    row = await _get_or_create_user_settings(session, user_id)
+    for name in srs.CONFIG_FIELD_NAMES:
+        value = getattr(input, name)
+        if value is not None:
+            setattr(row, name, value)
+    await session.flush()
+    return _user_settings_to_gql(row)
+
+
+async def mutate_update_deck_srs_settings(
+    info: strawberry.Info, input: UpdateDeckSRSSettingsInput
+) -> DeckSRSConfigType:
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+    await _require_owned_deck(session, input.deck_id, user_id)
+    row = await _get_deck_settings(session, input.deck_id)
+    if row is None:
+        row = models.DeckSRSSettings(deck_id=input.deck_id)
+        session.add(row)
+    # Null fields explicitly clear an override (revert to inherit).
+    for name in srs.CONFIG_FIELD_NAMES:
+        setattr(row, name, getattr(input, name))
+    await session.flush()
+    return _deck_settings_to_gql(input.deck_id, row)
+
+
+# ── Lesson import ─────────────────────────────────────────────────────────────
+
+
+_LANG_TO_DIR: dict[LanguageCode, str] = {
+    LanguageCode.BIBLICAL_HEBREW: "hebrew",
+    LanguageCode.LATIN: "latin",
+    LanguageCode.ECCLESIASTICAL_LATIN: "ecclesiastical_latin",
+    LanguageCode.ANCIENT_GREEK: "greek",
+    LanguageCode.NT_GREEK: "nt_greek",
+    LanguageCode.SANSKRIT: "sanskrit",
+}
+
+
+def _resolve_lesson_path(language: LanguageCode, lesson_id: str) -> Path:
+    """Locate ``data/<lang>/lesson<NN>.json`` for the given language.
+
+    ``lesson_id`` may be ``"01"``, ``"1"``, the raw numeric string used in
+    the URL, or a named deck like ``"alphabet"`` / ``"vowels"`` — we tolerate
+    all forms because the different language pages use different conventions.
+    """
+    subdir = _LANG_TO_DIR.get(language)
+    if subdir is None:
+        raise ValueError(f"Unsupported language for lesson import: {language}")
+    repo_root = Path(__file__).resolve().parents[3]
+    data_dir = repo_root / "data" / subdir
+    # Try lesson<id>, the zero-padded form, and the unpadded form in turn.
+    candidates: list[str] = [lesson_id]
+    if lesson_id.isdigit():
+        candidates.append(lesson_id.zfill(2))
+        candidates.append(str(int(lesson_id)))
+    for cand in candidates:
+        path = data_dir / f"lesson{cand}.json"
+        if path.is_file():
+            return path
+    # Support non-lesson decks like alphabet.json / vowels.json.
+    path = data_dir / f"{lesson_id}.json"
+    if path.is_file():
+        return path
+    raise ValueError(
+        f"Lesson file not found for {language.value} lesson '{lesson_id}' "
+        f"(looked under {data_dir})"
+    )
+
+
+async def mutate_import_lesson(
+    info: strawberry.Info, input: ImportLessonInput
+) -> Deck:
+    """Import a lesson JSON file into a deck for the authenticated user.
+
+    Idempotent: re-running with the same input is a no-op for cards already
+    present (matched on ``(deck_id, source_reference, front)``).
+    """
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+
+    path = _resolve_lesson_path(input.language, input.lesson_id)
+    with path.open("r", encoding="utf-8") as fh:
+        payload = json.load(fh)
+
+    if input.lesson_id.isdigit():
+        norm_id = input.lesson_id.zfill(2)
+        source_reference = f"{_LANG_TO_DIR[input.language]}/lesson{norm_id}"
+        default_deck_name = f"Lesson {norm_id}"
+    else:
+        # Non-numeric ids (alphabet, vowels, …) are referenced as-is, without the
+        # "lesson" prefix so the source_reference reads naturally.
+        norm_id = input.lesson_id
+        source_reference = f"{_LANG_TO_DIR[input.language]}/{norm_id}"
+        default_deck_name = norm_id.capitalize()
+    deck_name = input.deck_name or payload.get("name") or default_deck_name
+    db_lang = gql_language_to_db(input.language)
+
+    # Find an existing deck for this user keyed by source_reference; otherwise create.
+    deck_result = await session.execute(
+        select(models.Deck)
+        .join(models.Card, models.Card.deck_id == models.Deck.id, isouter=True)
+        .where(models.Deck.owner_id == user_id)
+        .where(models.Card.source_reference == source_reference)
+        .limit(1)
+    )
+    deck = deck_result.scalar_one_or_none()
+    if deck is None:
+        deck = models.Deck(
+            owner_id=user_id,
+            name=deck_name,
+            description=payload.get("description"),
+            language=db_lang,
+        )
+        session.add(deck)
+        await session.flush()
+
+    existing_query = select(models.Card.front).where(
+        (models.Card.deck_id == deck.id)
+        & (models.Card.source_reference == source_reference)
+    )
+    existing_fronts = {
+        row[0] for row in (await session.execute(existing_query)).all()
+    }
+
+    for card_payload in payload.get("cards", []):
+        # Vocabulary lessons use word/hebrew (+ devanagari for Sanskrit) and
+        # carry their gloss in `definition`. Alphabet/vowel decks use
+        # letter/hebrewExample and store the gloss in `phoneticValue` or just
+        # the letter `name`. Walk both shapes.
+        front = (
+            card_payload.get("devanagari")
+            or card_payload.get("hebrew")
+            or card_payload.get("word")
+            or card_payload.get("letter")
+            or card_payload.get("hebrewExample")
+            or ""
+        )
+        if not front or front in existing_fronts:
+            continue
+        back = (
+            card_payload.get("definition")
+            or card_payload.get("phoneticValue")
+            or card_payload.get("name")
+            or ""
+        )
+        transliteration = (
+            card_payload.get("transliteration")
+            or card_payload.get("transcription")
+            or card_payload.get("name")
+        )
+        card = models.Card(
+            deck_id=deck.id,
+            front=front,
+            back=back,
+            notes=card_payload.get("notes"),
+            transliteration=transliteration,
+            grammatical_info=card_payload.get("category"),
+            source_reference=source_reference,
+        )
+        session.add(card)
+        existing_fronts.add(front)
+
+    await session.flush()
+
+    count_query = select(func.count()).where(models.Card.deck_id == deck.id)
+    card_count = (await session.execute(count_query)).scalar() or 0
+
+    return Deck(
+        id=deck.id,
+        name=deck.name,
+        description=deck.description,
+        language=db_language_to_gql(deck.language),
+        created_at=deck.created_at,
+        updated_at=deck.updated_at,
+        card_count=card_count,
+    )
 
 
 # ── Vulgate interlinear resolvers ─────────────────────────────────────────────
