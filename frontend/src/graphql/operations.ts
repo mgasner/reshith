@@ -257,6 +257,78 @@ export const SUBMIT_REVIEW = gql`
   }
 `
 
+export const GET_LESSON_PROGRESS = gql`
+  query GetLessonProgress($language: LanguageCode!) {
+    lessonProgress(language: $language) {
+      language
+      currentLesson
+      totalLessons
+      vocabTotal
+      vocabMastered
+      masteryPercent
+      dueCount
+      isReadyToAdvance
+    }
+  }
+`
+
+export const GET_MY_PROGRESS = gql`
+  query GetMyProgress {
+    myProgress {
+      language
+      currentLesson
+      totalLessons
+      masteryPercent
+      dueCount
+      isReadyToAdvance
+    }
+  }
+`
+
+export const GET_LESSON_CARDS = gql`
+  query GetLessonCards($language: LanguageCode!, $lesson: Int!) {
+    lessonCards(language: $language, lesson: $lesson) {
+      vocabId
+      lemma
+      transliteration
+      definition
+      category
+      lesson
+      notes
+    }
+  }
+`
+
+export const ADVANCE_LESSON = gql`
+  mutation AdvanceLesson($language: LanguageCode!) {
+    advanceLesson(language: $language) {
+      language
+      currentLesson
+      totalLessons
+      vocabTotal
+      vocabMastered
+      masteryPercent
+      dueCount
+      isReadyToAdvance
+    }
+  }
+`
+
+export const SET_CURRENT_LESSON = gql`
+  mutation SetCurrentLesson($language: LanguageCode!, $lesson: Int!) {
+    setCurrentLesson(language: $language, lesson: $lesson) {
+      language
+      currentLesson
+      totalLessons
+      vocabTotal
+      vocabMastered
+      masteryPercent
+      dueCount
+      isReadyToAdvance
+    }
+  }
+`
+
 export const GET_TRANSLATION_HELP = gql`
   mutation GetTranslationHelp($text: String!, $language: LanguageCode!, $context: String) {
     getTranslationHelp(text: $text, language: $language, context: $context) {

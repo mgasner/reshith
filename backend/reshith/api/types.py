@@ -141,8 +141,36 @@ class CreateCardInput:
 
 @strawberry.input
 class ReviewInput:
-    card_id: UUID
     quality: int
+    # Either card_id (legacy: explicit deck card) or (language, vocab_lemma)
+    # for the auto-provisioned primary-deck flow used by the lesson page.
+    card_id: UUID | None = None
+    language: LanguageCode | None = None
+    vocab_lemma: str | None = None
+
+
+@strawberry.type
+class LessonProgressInfo:
+    language: LanguageCode
+    current_lesson: int
+    total_lessons: int
+    vocab_total: int
+    vocab_mastered: int
+    mastery_percent: float
+    due_count: int
+    is_ready_to_advance: bool
+
+
+@strawberry.type
+class LessonCard:
+    """A single lesson vocab card with its stable ``vocab_id``."""
+    vocab_id: UUID
+    lemma: str
+    transliteration: str | None
+    definition: str
+    category: str | None
+    lesson: int | None
+    notes: str | None
 
 
 # ── SRS configuration types ───────────────────────────────────────────────────
@@ -271,6 +299,9 @@ class GradeExerciseInput:
     direction: ExerciseDirection
     expected_hebrew: str
     expected_english: str
+    # Optional native-script lemma used to attribute the attempt to a
+    # specific lesson card for SRS weighting. Anonymous users may omit.
+    vocab_lemma: str | None = None
 
 
 @strawberry.type
@@ -313,6 +344,7 @@ class GradeArticleExerciseInput:
     direction: ArticleDirection
     expected_definite: str
     expected_indefinite: str
+    vocab_lemma: str | None = None
 
 
 @strawberry.enum
@@ -367,6 +399,7 @@ class GradeTranslationInput:
     submitted: str
     expected_hebrew: str
     expected_transliteration: str
+    pattern: str | None = None
 
 
 @strawberry.enum
@@ -402,6 +435,7 @@ class GradeVerbalInput:
     exercise_id: str
     submitted: str
     expected_english: str
+    pattern: str | None = None
 
 
 @strawberry.enum
@@ -434,6 +468,7 @@ class GradeComparativeInput:
     exercise_id: str
     submitted: str
     expected_english: str
+    pattern: str | None = None
 
 
 @strawberry.enum
@@ -466,6 +501,7 @@ class GradeRelativeClauseInput:
     exercise_id: str
     submitted: str
     expected_english: str
+    pattern: str | None = None
 
 
 # ── Latin exercise types ──────────────────────────────────────────────────────
@@ -515,6 +551,8 @@ class GradeLatinExerciseInput:
     exercise_id: str
     submitted: str
     expected: str
+    vocab_lemma: str | None = None
+    pattern: str | None = None
 
 
 # ── Qal paradigm types ───────────────────────────────────────────────────────
@@ -792,6 +830,9 @@ class GradeGreekExerciseInput:
     exercise_id: str
     submitted: str
     expected: str
+    vocab_lemma: str | None = None
+    pattern: str | None = None
+    variant: GreekVariant | None = None
 
 
 # ── Sanskrit exercise types ───────────────────────────────────────────────────
@@ -822,3 +863,5 @@ class GradeSanskritExerciseInput:
     exercise_id: str
     submitted: str
     expected: str
+    vocab_lemma: str | None = None
+    pattern: str | None = None

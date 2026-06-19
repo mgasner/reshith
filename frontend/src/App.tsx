@@ -42,6 +42,7 @@ import { SanskritHomePage } from '@/pages/SanskritHomePage'
 import { SanskritLessonPage } from '@/pages/SanskritLessonPage'
 import { SanskritExercisesPage } from '@/pages/SanskritExercisesPage'
 import { SanskritDeclensionExercisePage } from '@/pages/SanskritDeclensionExercisePage'
+import { LanguageStudyPage } from '@/pages/LanguageStudyPage'
 import { LanmanReaderPage } from '@/pages/LanmanReaderPage'
 import { OldEnglishHomePage } from '@/pages/OldEnglishHomePage'
 import { BeowulfReaderPage } from '@/pages/BeowulfReaderPage'
@@ -91,6 +92,74 @@ function App() {
             <RequireAuth>
               <StudyPage />
             </RequireAuth>
+          }
+        />
+
+        {/* Per-language study landing pages — self-paced lesson hub. */}
+        <Route
+          path="hebrew/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="BIBLICAL_HEBREW"
+              displayName="Biblical Hebrew"
+              lessonPath={(n) => `/hebrew/lesson/${n}`}
+              exercisesPath="/exercises/hebrew"
+            />
+          }
+        />
+        <Route
+          path="latin/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="LATIN"
+              displayName="Classical Latin"
+              lessonPath={(n) => `/latin/lesson/${n}`}
+              exercisesPath="/exercises/latin"
+            />
+          }
+        />
+        <Route
+          path="ecclesiastical-latin/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="ECCLESIASTICAL_LATIN"
+              displayName="Ecclesiastical Latin"
+              lessonPath={(n) => `/ecclesiastical-latin/lesson/${n}`}
+              exercisesPath="/exercises/ecclesiastical-latin"
+            />
+          }
+        />
+        <Route
+          path="greek/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="ANCIENT_GREEK"
+              displayName="Ancient Greek"
+              lessonPath={(n) => `/greek/lesson/${n}`}
+              exercisesPath="/exercises/greek"
+            />
+          }
+        />
+        <Route
+          path="nt-greek/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="NT_GREEK"
+              displayName="NT Greek"
+              lessonPath={(n) => `/nt-greek/lesson/${n}`}
+              exercisesPath="/exercises/nt-greek"
+            />
+          }
+        />
+        <Route
+          path="sanskrit/study"
+          element={
+            <LanguageStudyPage
+              gqlLanguage="SANSKRIT"
+              displayName="Sanskrit"
+              lessonPath={(n) => `/sanskrit/lesson/${n}`}
+              exercisesPath="/exercises/sanskrit"
+            />
           }
         />
 

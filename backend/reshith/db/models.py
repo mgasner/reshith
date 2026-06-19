@@ -8,6 +8,7 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -208,4 +209,43 @@ class DeckSRSSettings(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class LessonProgress(Base):
+    """Per-user, per-language current lesson tracker."""
+
+    __tablename__ = "lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("user_id", "language", name="uq_lesson_progress_user_language"),
+    )
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    language: Mapped[LanguageCode] = mapped_column(Enum(LanguageCode))
+    current_lesson: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class ExerciseAttempt(Base):
+    """Per-attempt record of an exercise grading, used for pattern/vocab weighting."""
+
+    __tablename__ = "exercise_attempts"
+    __table_args__ = (
+        Index("ix_exercise_attempts_user_lang_type", "user_id", "language", "exercise_type"),
+        Index("ix_exercise_attempts_user_vocab", "user_id", "vocab_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    language: Mapped[LanguageCode] = mapped_column(Enum(LanguageCode))
+    exercise_type: Mapped[str] = mapped_column(String(50))
+    pattern: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    vocab_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    correct: Mapped[bool] = mapped_column(Boolean)
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    attempted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )

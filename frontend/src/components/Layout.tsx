@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useApolloClient } from '@apollo/client'
+import { useApolloClient, useQuery } from '@apollo/client'
 import { useAuth } from '@/contexts/AuthContext'
+import { GET_MY_PROGRESS } from '@/graphql/operations'
 
 const LANGUAGES = [
   {
@@ -17,6 +18,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/hebrew/lesson/${num}`,
     homePath: '/',
+    studyPath: '/hebrew/study',
     alphabetPath: '/hebrew/alphabet',
     vowelsPath: '/hebrew/vowels',
     babylonianVowelsPath: '/hebrew/babylonian-vowels',
@@ -36,6 +38,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/latin/lesson/${num}`,
     homePath: '/latin',
+    studyPath: '/latin/study',
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -55,6 +58,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/greek/lesson/${num}`,
     homePath: '/greek',
+    studyPath: '/greek/study',
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -74,6 +78,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/nt-greek/lesson/${num}`,
     homePath: '/nt-greek',
+    studyPath: '/nt-greek/study',
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -93,6 +98,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/sanskrit/lesson/${num}`,
     homePath: '/sanskrit',
+    studyPath: '/sanskrit/study',
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -108,6 +114,7 @@ const LANGUAGES = [
     lessons: [{ num: '1', name: 'Lesson 1' }],
     lessonPath: (num: string) => `/old-english/lesson/${num}`,
     homePath: '/old-english',
+    studyPath: null,
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -127,6 +134,7 @@ const LANGUAGES = [
     ],
     lessonPath: (num: string) => `/ecclesiastical-latin/lesson/${num}`,
     homePath: '/ecclesiastical-latin',
+    studyPath: '/ecclesiastical-latin/study',
     alphabetPath: null,
     vowelsPath: null,
     babylonianVowelsPath: null,
@@ -137,6 +145,25 @@ const LANGUAGES = [
   },
 ]
 
+// Map GraphQL LanguageCode enum values back to the navbar's lang codes so
+// the per-language progress indicator can route into the right home page.
+const GQL_TO_LANG_CODE: Record<string, string> = {
+  BIBLICAL_HEBREW: 'hbo',
+  LATIN: 'lat',
+  ECCLESIASTICAL_LATIN: 'ecl',
+  ANCIENT_GREEK: 'grc',
+  NT_GREEK: 'gnt',
+  SANSKRIT: 'san',
+}
+
+interface ProgressRow {
+  language: string
+  currentLesson: number
+  totalLessons: number
+  dueCount: number
+  isReadyToAdvance: boolean
+}
+
 export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -145,6 +172,8 @@ export function Layout() {
   const [lessonsOpen, setLessonsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const { data: progressData } = useQuery(GET_MY_PROGRESS, { skip: !user })
+  const progressRows: ProgressRow[] = progressData?.myProgress ?? []
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -267,6 +296,14 @@ export function Layout() {
                   className="text-sm font-medium text-gray-500 hover:text-gray-900"
                 >
                   Babylonian Vowels
+                </Link>
+              )}
+              {user && activeLang.studyPath && (
+                <Link
+                  to={activeLang.studyPath}
+                  className="text-sm font-medium text-blue-700 hover:text-blue-900"
+                >
+                  Study
                 </Link>
               )}
               <Link
@@ -406,6 +443,37 @@ export function Layout() {
           </div>
         )}
       </nav>
+
+      {user && progressRows.length > 0 && (
+        <div className="bg-blue-50 border-b border-blue-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-900">
+            {progressRows.map((row) => {
+              const code = GQL_TO_LANG_CODE[row.language]
+              const lang = LANGUAGES.find((l) => l.code === code)
+              if (!lang) return null
+              return (
+                <Link
+                  key={row.language}
+                  to={lang.homePath}
+                  className="inline-flex items-center gap-1 hover:underline"
+                  title={`Lesson ${row.currentLesson} of ${row.totalLessons}`}
+                >
+                  <span className="font-medium">{lang.name}</span>
+                  <span className="text-blue-700">· L{row.currentLesson}</span>
+                  {row.dueCount > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] leading-none">
+                      {row.dueCount} due
+                    </span>
+                  )}
+                  {row.isReadyToAdvance && (
+                    <span className="ml-1 text-green-700 font-semibold">↑ ready</span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Outlet />
