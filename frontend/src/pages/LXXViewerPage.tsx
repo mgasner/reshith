@@ -188,24 +188,25 @@ function WordCard({ token }: { token: GreekToken }) {
             <span className="text-stone-500 text-xs mt-1">{morphParts.join(', ')}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
-          <span className="mt-1.5">
-            <AddToDeckButton
-              language="NT_GREEK"
-              front={token.expanded || token.greek}
-              back={token.translation || ''}
-              transliteration={token.transliteration}
-              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
-              notes={
-                [
-                  `Form: ${token.greek}`,
-                  token.dstrongs ? `Strong's ${token.dstrongs}` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')
-              }
-              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
-            />
-          </span>
+          {token.translation && (
+            <span className="mt-1.5">
+              <AddToDeckButton
+                language="NT_GREEK"
+                front={token.expanded || token.greek}
+                back={token.translation}
+                grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
+                notes={
+                  [
+                    `Form: ${token.greek} (${token.transliteration})`,
+                    token.dstrongs ? `Strong's ${token.dstrongs}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                }
+                sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
+              />
+            </span>
+          )}
         </span>
       ) : (
         <span className="inline-flex flex-col items-center hover:bg-emerald-50 rounded px-1.5 py-1 transition-colors">

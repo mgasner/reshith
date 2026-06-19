@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery, useLazyQuery, useMutation } from '@apollo/client'
 import { gql } from '@apollo/client'
 import { SYNTHESIZE_SPEECH } from '@/graphql/operations'
-import { AddToDeckButton } from '@/components/AddToDeckButton'
 
 // ── GraphQL ──────────────────────────────────────────────────────────────────
 
@@ -170,16 +169,10 @@ function WordCard({ token }: { token: VulgateToken }) {
             <span className="text-stone-400 text-xs mt-0.5 italic">{token.relation}</span>
           )}
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
-          <span className="mt-1.5">
-            <AddToDeckButton
-              language="LATIN"
-              front={token.lemma || token.form}
-              back={posName}
-              grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : null}
-              notes={`Form: ${token.form}`}
-              sourceReference={`${token.book} ${token.chapter}:${token.verse}`}
-            />
-          </span>
+          {/* Add-to-deck is disabled for Vulgate until a Latin lexicon lookup
+              (Whitaker / Lewis & Short) is wired up — PROIEL tokens carry no
+              gloss column, so any saved card would pair the lemma with its
+              part of speech and be useless for vocab study. */}
         </span>
       ) : (
         <span className="inline-flex flex-col items-center hover:bg-stone-100 rounded px-1.5 py-1 transition-colors">

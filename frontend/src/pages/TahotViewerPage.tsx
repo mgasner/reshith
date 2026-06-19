@@ -260,11 +260,11 @@ function WordCard({
               language="BIBLICAL_HEBREW"
               front={word.lemma || cleanNative.replace(/\//g, '')}
               back={isTetragrammaton ? 'LORD' : (word.lemmaDefinition || displayGloss)}
-              transliteration={displayTranslit}
+              transliteration={word.lemma ? hebrewToLambdin(word.lemma) : displayTranslit}
               grammaticalInfo={word.morphology}
               notes={
                 [
-                  `Form: ${cleanNative.replace(/\//g, '')}`,
+                  `Form: ${cleanNative.replace(/\//g, '')} (${displayTranslit})`,
                   word.lemmaId ? `Strong's ${word.lemmaId}` : null,
                 ]
                   .filter(Boolean)

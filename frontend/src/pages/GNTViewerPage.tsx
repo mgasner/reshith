@@ -201,20 +201,25 @@ function WordCard({ token }: { token: GreekToken }) {
           <span className="text-stone-300 text-[10px] mt-1 font-mono">{token.ref}</span>
           <span className="mt-1.5">
             {(() => {
-              // TAGNT `expanded` is "lemma=gloss"; fall back to surface form / translation.
-              const [lemma, lemmaGloss] = token.expanded.includes('=')
-                ? token.expanded.split('=', 2)
-                : [token.expanded, '']
+              // TAGNT `expanded` is "lemma=gloss". Compound rows (~157 in the
+              // corpus) look like "μήποτε=lest + πότε=when"; split on the
+              // first `=` only — Array#split's second arg is a result cap,
+              // not Python's maxsplit, so it would drop the trailing piece.
+              const eq = token.expanded.indexOf('=')
+              const lemma = eq >= 0 ? token.expanded.slice(0, eq) : token.expanded
+              const lemmaGloss = eq >= 0 ? token.expanded.slice(eq + 1) : ''
+              const front = lemma || token.greek
+              const back = lemmaGloss || token.translation
+              if (!back) return null
               return (
                 <AddToDeckButton
                   language="NT_GREEK"
-                  front={lemma || token.greek}
-                  back={lemmaGloss || token.translation}
-                  transliteration={token.transliteration}
+                  front={front}
+                  back={back}
                   grammaticalInfo={morphParts.length > 0 ? morphParts.join(', ') : token.grammar}
                   notes={
                     [
-                      `Form: ${token.greek}`,
+                      `Form: ${token.greek} (${token.transliteration})`,
                       token.dstrongs ? `Strong's ${token.dstrongs}` : null,
                     ]
                       .filter(Boolean)
