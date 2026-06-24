@@ -3,7 +3,9 @@ import { setContext } from '@apollo/client/link/context'
 
 const STORAGE_KEY = 'reshith_auth'
 
-const httpLink = new HttpLink({ uri: '/graphql' })
+const graphqlUri = import.meta.env.VITE_GRAPHQL_URL || '/graphql'
+
+const httpLink = new HttpLink({ uri: graphqlUri })
 
 const authLink = setContext((_operation, { headers }) => {
   try {
