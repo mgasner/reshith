@@ -2,6 +2,8 @@
 
 from abc import ABC, abstractmethod
 
+CANTILLATION_RANGE = range(0x0591, 0x05AF + 1)
+
 
 class LanguageModule(ABC):
     """Abstract base class for language-specific functionality."""

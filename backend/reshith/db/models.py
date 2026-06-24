@@ -33,6 +33,7 @@ class LanguageCode(enum.StrEnum):
     BUDDHIST_HYBRID_SANSKRIT = "bhs"
     ARAMAIC = "arc"
     MIDRASHIC_HEBREW = "heb"
+    OLD_ENGLISH = "ang"
 
 
 class User(Base):
