@@ -1,7 +1,12 @@
 import { FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery } from '@apollo/client'
-import { CREATE_DECK, GET_DECKS, SET_PRIMARY_DECK } from '@/graphql/operations'
+import {
+  CREATE_DECK,
+  CREATE_DECK_FROM_PASSAGE,
+  GET_DECKS,
+  SET_PRIMARY_DECK,
+} from '@/graphql/operations'
 
 const LANGUAGE_NAMES: Record<string, string> = {
   BIBLICAL_HEBREW: 'Biblical Hebrew',
@@ -28,12 +33,23 @@ interface Deck {
 export function DecksPage() {
   const { data, loading, error, refetch } = useQuery<{ decks: Deck[] }>(GET_DECKS)
   const [createDeck, { loading: creating }] = useMutation(CREATE_DECK)
+  const [createFromPassage, { loading: generating }] = useMutation(
+    CREATE_DECK_FROM_PASSAGE,
+  )
   const [setPrimaryDeck] = useMutation(SET_PRIMARY_DECK)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [language, setLanguage] = useState('BIBLICAL_HEBREW')
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Passage-based deck generation.
+  const [showPassageForm, setShowPassageForm] = useState(false)
+  const [reference, setReference] = useState('')
+  const [passageName, setPassageName] = useState('')
+  const [setPrimary, setSetPrimary] = useState(false)
+  const [passageError, setPassageError] = useState<string | null>(null)
+  const [passageNotice, setPassageNotice] = useState<string | null>(null)
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -54,19 +70,133 @@ export function DecksPage() {
     }
   }
 
+  async function handleCreateFromPassage(e: FormEvent) {
+    e.preventDefault()
+    setPassageError(null)
+    setPassageNotice(null)
+    try {
+      const res = await createFromPassage({
+        variables: {
+          input: { reference, name: passageName || null, setPrimary },
+        },
+      })
+      const result = res.data?.createDeckFromPassage
+      setReference('')
+      setPassageName('')
+      setSetPrimary(false)
+      setShowPassageForm(false)
+      if (result) {
+        setPassageNotice(
+          `Created \u201c${result.deck.name}\u201d \u2014 ${result.cardCount} word` +
+            `${result.cardCount === 1 ? '' : 's'} from ${result.reference}.`,
+        )
+      }
+      await refetch()
+    } catch (err) {
+      setPassageError(
+        err instanceof Error ? err.message : 'Failed to build deck from passage.',
+      )
+    }
+  }
+
   const decks = data?.decks ?? []
 
   return (
     <div className="px-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Your Decks</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          {showForm ? 'Cancel' : 'Create Deck'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowPassageForm((v) => !v)
+              setShowForm(false)
+              setPassageNotice(null)
+            }}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+          >
+            {showPassageForm ? 'Cancel' : 'Deck from passage'}
+          </button>
+          <button
+            onClick={() => {
+              setShowForm((v) => !v)
+              setShowPassageForm(false)
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            {showForm ? 'Cancel' : 'Create Deck'}
+          </button>
+        </div>
       </div>
+
+      {passageNotice && !showPassageForm && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg px-4 py-3 mb-6 text-sm">
+          {passageNotice}
+        </div>
+      )}
+
+      {showPassageForm && (
+        <form
+          onSubmit={handleCreateFromPassage}
+          className="bg-white rounded-lg shadow p-6 mb-6 space-y-4"
+        >
+          <p className="text-sm text-gray-600">
+            Auto-build a vocabulary deck from any Hebrew OT or Greek NT passage.
+            One card per distinct word (lemma), glossed and parsed.
+          </p>
+          <div>
+            <label
+              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="passage-ref"
+            >
+              Passage reference
+            </label>
+            <input
+              id="passage-ref"
+              className="w-full border rounded px-3 py-2"
+              placeholder="e.g. Genesis 1:1-2:3, John 1:1-18, Psalm 23"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              required
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Book + chapter (whole chapter), or a verse range. Hebrew OT and
+              Greek NT only.
+            </p>
+          </div>
+          <div>
+            <label
+              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="passage-name"
+            >
+              Deck name{' '}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              id="passage-name"
+              className="w-full border rounded px-3 py-2"
+              placeholder="Defaults to &ldquo;Vocab: &lt;passage&gt;&rdquo;"
+              value={passageName}
+              onChange={(e) => setPassageName(e.target.value)}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={setPrimary}
+              onChange={(e) => setSetPrimary(e.target.checked)}
+            />
+            Make this my primary deck for its language
+          </label>
+          {passageError && <p className="text-sm text-red-600">{passageError}</p>}
+          <button
+            type="submit"
+            disabled={generating}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {generating ? 'Building\u2026' : 'Build deck'}
+          </button>
+        </form>
+      )}
 
       {showForm && (
         <form
