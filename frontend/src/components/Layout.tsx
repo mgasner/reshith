@@ -24,6 +24,7 @@ const LANGUAGES = [
     babylonianVowelsPath: '/hebrew/babylonian-vowels',
     exercisesPath: '/exercises/hebrew',
     resourcesPath: '/hebrew/tahot',
+    verbSheetsPath: '/exercises/hebrew/qal-paradigm',
     hasAlphabet: true,
     hasVowels: true,
   },
@@ -44,6 +45,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/exercises/latin',
     resourcesPath: null,
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -64,6 +66,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/exercises/greek',
     resourcesPath: null,
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -84,6 +87,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/exercises/nt-greek',
     resourcesPath: null,
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -104,6 +108,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/exercises/sanskrit',
     resourcesPath: null,
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -120,6 +125,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/old-english',
     resourcesPath: '/old-english/beowulf',
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -140,6 +146,7 @@ const LANGUAGES = [
     babylonianVowelsPath: null,
     exercisesPath: '/exercises/ecclesiastical-latin',
     resourcesPath: null,
+    verbSheetsPath: null,
     hasAlphabet: false,
     hasVowels: false,
   },
@@ -350,6 +357,14 @@ export function Layout() {
                   Resources
                 </Link>
               )}
+              {activeLang.verbSheetsPath && (
+                <Link
+                  to={activeLang.verbSheetsPath}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Verb Sheets
+                </Link>
+              )}
               <Link
                 to="/decks"
                 className="text-sm font-medium text-gray-500 hover:text-gray-900"
@@ -441,6 +456,9 @@ export function Layout() {
             </div>
             {activeLang.resourcesPath && (
               <Link to={activeLang.resourcesPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Resources</Link>
+            )}
+            {activeLang.verbSheetsPath && (
+              <Link to={activeLang.verbSheetsPath} className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Verb Sheets</Link>
             )}
             <Link to="/decks" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Decks</Link>
           </div>
