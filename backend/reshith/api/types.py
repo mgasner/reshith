@@ -129,6 +129,27 @@ class CreateDeckInput:
 
 
 @strawberry.input
+class CreateDeckFromPassageInput:
+    # Free-form reference, e.g. "Genesis 1:1-2:3", "John 1:1-18", "Ps 23".
+    reference: str
+    # Optional deck name; defaults to the normalised passage display, e.g.
+    # "Vocab: Genesis 1:1-2:3".
+    name: str | None = None
+    # When true (default), make the new deck the user's primary deck for its
+    # language so SRS reviews draw from it.
+    set_primary: bool = False
+
+
+@strawberry.type
+class CreateDeckFromPassageResult:
+    deck: Deck
+    # Human-readable normalised passage, e.g. "Genesis 1:1-2:3".
+    reference: str
+    # Distinct lemmas found in the passage.
+    card_count: int
+
+
+@strawberry.input
 class CreateCardInput:
     deck_id: UUID
     front: str

@@ -8,6 +8,7 @@ from reshith.api.resolvers import (
     mutate_advance_lesson,
     mutate_create_card,
     mutate_create_deck,
+    mutate_create_deck_from_passage,
     mutate_generate_drill,
     mutate_get_translation_help,
     mutate_grade_article_exercise,
@@ -95,6 +96,8 @@ from reshith.api.types import (
     ComparativeExercise,
     ComparativeGradeResult,
     CreateCardInput,
+    CreateDeckFromPassageInput,
+    CreateDeckFromPassageResult,
     CreateDeckInput,
     Deck,
     DeckSRSConfigType,
@@ -548,6 +551,12 @@ class Mutation:
     @strawberry.mutation
     async def create_deck(self, info: strawberry.Info, input: CreateDeckInput) -> Deck:
         return await mutate_create_deck(info, input)
+
+    @strawberry.mutation
+    async def create_deck_from_passage(
+        self, info: strawberry.Info, input: CreateDeckFromPassageInput
+    ) -> CreateDeckFromPassageResult:
+        return await mutate_create_deck_from_passage(info, input)
 
     @strawberry.mutation
     async def set_primary_deck(self, info: strawberry.Info, deck_id: UUID) -> Deck:

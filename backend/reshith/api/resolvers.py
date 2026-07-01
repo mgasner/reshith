@@ -20,6 +20,8 @@ from reshith.api.types import (
     ComparativeGradeResult,
     ComparativePattern,
     CreateCardInput,
+    CreateDeckFromPassageInput,
+    CreateDeckFromPassageResult,
     CreateDeckInput,
     Deck,
     DeckSRSConfigType,
@@ -127,6 +129,7 @@ from reshith.exercises.latin import declension as latin_declension
 from reshith.exercises.sanskrit import declension as sanskrit_declension
 from reshith.services import brenton as brenton_svc
 from reshith.services import crypto as secrets_crypto
+from reshith.services import deck_from_passage as dfp_svc
 from reshith.services import drc as drc_svc
 from reshith.services import (
     exercise_attempts as attempt_svc,
@@ -478,6 +481,108 @@ async def mutate_create_deck(info: strawberry.Info, input: CreateDeckInput) -> D
         created_at=deck.created_at,
         updated_at=deck.updated_at,
         card_count=0,
+    )
+
+
+async def mutate_create_deck_from_passage(
+    info: strawberry.Info, input: CreateDeckFromPassageInput
+) -> CreateDeckFromPassageResult:
+    """Auto-build a vocab deck from a Biblical passage reference.
+
+    Parses ``input.reference`` (e.g. "Genesis 1:1-2:3", "John 1:1-18"),
+    collects one card per distinct lemma in the passage, and inserts them into
+    a fresh, self-contained deck in the passage's language.
+
+    Unlike the primary-deck seeding path, cards here get fresh random IDs (not
+    ``vocab_id(language, lemma)``) so a lemma can appear in multiple passage
+    decks independently — otherwise overlapping vocabulary between, say,
+    Genesis 1 and Genesis 2 would land in whichever deck was built first and
+    silently vanish from the other.
+    """
+    session: AsyncSession = info.context["db"]
+    user_id = _require_user_id(info)
+
+    try:
+        ref = dfp_svc.parse_reference(input.reference)
+    except dfp_svc.ReferenceError as e:
+        raise Exception(str(e)) from e
+
+    seeds = dfp_svc.build_seeds_for_passage(ref)
+    if not seeds:
+        raise Exception(
+            f"No words found for {ref.display}. Only the Hebrew OT and Greek "
+            "NT are supported."
+        )
+
+    db_lang = ref.language
+    name = (input.name or "").strip() or f"Vocab: {ref.display}"
+
+    deck = models.Deck(
+        name=name,
+        description=f"Auto-generated from {ref.display}",
+        language=db_lang,
+        owner_id=user_id,
+    )
+    session.add(deck)
+    await session.flush()
+
+    for seed in seeds:
+        session.add(
+            models.Card(
+                deck_id=deck.id,
+                front=seed.lemma,
+                back=seed.definition,
+                transliteration=seed.transliteration,
+                grammatical_info=seed.category,
+                notes=seed.notes,
+                source_reference=ref.display,
+            )
+        )
+    await session.flush()
+
+    # Make primary if requested, or if it's the user's first deck in this
+    # language (so there's never a "no primary deck" state).
+    other_count = await session.execute(
+        select(func.count()).where(
+            models.Deck.owner_id == user_id,
+            models.Deck.language == db_lang,
+            models.Deck.id != deck.id,
+        )
+    )
+    make_primary = input.set_primary or (other_count.scalar() or 0) == 0
+    if make_primary:
+        clear = await session.execute(
+            select(models.Deck).where(
+                models.Deck.owner_id == user_id,
+                models.Deck.language == db_lang,
+                models.Deck.id != deck.id,
+                models.Deck.is_primary.is_(True),
+            )
+        )
+        for other_deck in clear.scalars().all():
+            other_deck.is_primary = False
+        await session.flush()
+        deck.is_primary = True
+        await session.flush()
+
+    count_result = await session.execute(
+        select(func.count()).where(models.Card.deck_id == deck.id)
+    )
+    card_count = count_result.scalar() or 0
+
+    return CreateDeckFromPassageResult(
+        deck=Deck(
+            id=deck.id,
+            name=deck.name,
+            description=deck.description,
+            language=db_language_to_gql(deck.language),
+            is_primary=deck.is_primary,
+            created_at=deck.created_at,
+            updated_at=deck.updated_at,
+            card_count=card_count,
+        ),
+        reference=ref.display,
+        card_count=card_count,
     )
 
 

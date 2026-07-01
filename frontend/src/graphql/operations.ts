@@ -243,6 +243,23 @@ export const CREATE_DECK = gql`
   }
 `
 
+export const CREATE_DECK_FROM_PASSAGE = gql`
+  mutation CreateDeckFromPassage($input: CreateDeckFromPassageInput!) {
+    createDeckFromPassage(input: $input) {
+      reference
+      cardCount
+      deck {
+        id
+        name
+        description
+        language
+        isPrimary
+        cardCount
+      }
+    }
+  }
+`
+
 export const SET_PRIMARY_DECK = gql`
   mutation SetPrimaryDeck($deckId: UUID!) {
     setPrimaryDeck(deckId: $deckId) {
